@@ -64,8 +64,9 @@ class SpykeeClient
 	}
 
 
-	private function sendAction($message)
+	public function sendAction($message)
 	{
+		
 		if( ! socket_send ($this->_sock ,$message , strlen($message) , 0))
 		{
 			$errorcode = socket_last_error();

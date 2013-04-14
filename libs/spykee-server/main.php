@@ -40,10 +40,10 @@ class SpykeeServer{
 	function __construct($robotName, $robotIp, $serverPort=''){
 		self::$_noRobot++;
 		// TODO verifier que les ports sont disponibles
-		$this->$_serverPort = ($serverPort=='') ? self::FIRSTPORT + self::$_noRobot : $serverPort;
+		$this->_serverPort = ($serverPort=='') ? self::FIRSTPORT + self::$_noRobot : $serverPort;
 		// TODO vérifier les valeurs entrées avec un geter
-		$this->_logFile = realpath(__FILE__).'../../logs/'.$name.'.log';
 		$this->_robotName = $robotName;
+		$this->_logFile = realpath(__FILE__).'../../logs/'.$this->_robotName.'.log';
 		$this->_robotIp = $robotIp;
 		date_default_timezone_set(self::TIMEZONE);
 
@@ -91,7 +91,7 @@ class SpykeeServer{
 		//echo "Socket created \n";
 
 		// Bind the source address
-		if( !socket_bind($sock, self::SERVEURIP , $this->$_serverPort) )
+		if( !socket_bind($sock, self::SERVEURIP , $this->_serverPort) )
 		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);

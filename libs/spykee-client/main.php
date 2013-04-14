@@ -11,6 +11,8 @@ class SpykeeClient
 	const FORWARD = 3;
 	const BACK = 4;
 	const STOP = 5;
+	const STOPSERVER = 13;
+	const MOVE = 'MV';
 	
 	private function createSocket()
 	{

@@ -9,13 +9,14 @@ class SpykeeServer{
 	/*
 	 * Actions
 	*/
-	const MOVE = 0;
+	//const MOVE = 0;
 	const TURNLEFT = 1;
 	const TURNRIGHT = 2;
 	const FORWARD = 3;
 	const BACK = 4;
 	const STOP = 5;
 	const STOPSERVER = 13;
+	const MOVE = 'MV';
 
 	/*
 	 * Etats de l'action
@@ -203,6 +204,9 @@ class SpykeeServer{
 						case self::STOPSERVER;
 							$this->_stopServer=true;
 							break;
+						case (preg_match('/^'.self::MOVE.'([0-9]):([0-9])/', $input, $matches) ? true : false):
+							$state = $this->move($matches[1], $matches[2]);
+							break;
 							
 						default:
 							$state = self::STATEERROR;
@@ -217,11 +221,20 @@ class SpykeeServer{
 
 	private function turnLeft(){
 
+		$state = self::STATEOK;
+		
 		return $state;
 	}
 
 	private function turnRight(){
+		$state = self::STATEOK;
 
+		return $state;
+	}
+	
+	private function move(){
+		$state = $state = self::STATEOK;
+		
 		return $state;
 	}
 

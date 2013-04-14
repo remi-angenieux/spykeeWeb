@@ -11,6 +11,7 @@ class SpykeeServer{
 	*/
 	const TURNLEFT = 1;
 	const TURNRIGHT = 2;
+	const STOPSERVER = 13;
 
 	/*
 	 * Etats de l'action
@@ -192,6 +193,10 @@ class SpykeeServer{
 						case self::TURNRIGHT:
 							$state = $this->turnRight();
 							break;
+						case self::STOPSERVER;
+							$this->_stopServer=true;
+							break;
+							
 						default:
 							$state = self::STATEERROR;
 					}

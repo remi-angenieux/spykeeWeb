@@ -133,7 +133,7 @@ class SpykeeServer{
 			//now add the existing client sockets
 			for ($i = 0; $i < self::MAXCONNECTION; $i++)
 			{
-				if($client_socks[$i] != null){
+				if(!empty($client_socks[$i]) AND $client_socks[$i] != null){
 					$read[$i+1] = $client_socks[$i];
 				}
 			}

@@ -43,7 +43,7 @@ class SpykeeServer{
 		$this->_serverPort = ($serverPort=='') ? self::FIRSTPORT + self::$_noRobot : $serverPort;
 		// TODO vérifier les valeurs entrées avec un geter
 		$this->_robotName = $robotName;
-		$this->_logFile = realpath(__FILE__).'../../logs/'.$this->_robotName.'.log';
+		$this->_logFile = realpath(__DIR__).'/../../logs/'.$this->_robotName.'.log';
 		$this->_robotIp = $robotIp;
 		date_default_timezone_set(self::TIMEZONE);
 
@@ -58,7 +58,7 @@ class SpykeeServer{
 
 	private function writeLog($txt){
 		$content = date('[d/m/y] à H:i:s ', time());
-		$content .= '@'.$this->_robotName.'('.$this->_robotIp.') ';
+		$content .= '@'.$this->_robotName.'('.$this->_robotIp.') : ';
 		$content .= $txt;
 
 		/*

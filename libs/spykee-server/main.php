@@ -133,7 +133,7 @@ class SpykeeServer{
 			//now add the existing client sockets
 			for ($i = 0; $i < self::MAXCONNECTION; $i++)
 			{
-				if($client_socks[$i] != null){
+				if(!empty($client_socks[$i])){
 					$read[$i+1] = $client_socks[$i];
 				}
 			}
@@ -151,7 +151,7 @@ class SpykeeServer{
 			//if read contains the master socket, then a new connection has come in
 			if (in_array($sock, $read)){
 				for ($i = 0; $i < self::MAXCONNECTION; $i++){
-					if ($client_socks[$i] == null){
+					if (empty($client_socks[$i])){
 						$client_socks[$i] = socket_accept($sock);
 						/*
 						 * Code exécuté lors de la connexion entre le client et le serveur
@@ -172,7 +172,7 @@ class SpykeeServer{
 
 			//check each client if they send any data
 			for ($i = 0; $i < self::MAXCONNECTION; $i++){
-				if (in_array($client_socks[$i] , $read)){
+				if (!empty($client_socks[$i]) AND in_array($client_socks[$i] , $read)){
 					/*
 					 * Code exécuté
 					*/

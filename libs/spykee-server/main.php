@@ -9,7 +9,6 @@ class SpykeeServer{
 	/*
 	 * Actions
 	*/
-	//const MOVE = 0;
 	const TURNLEFT = 1;
 	const TURNRIGHT = 2;
 	const FORWARD = 3;
@@ -32,6 +31,10 @@ class SpykeeServer{
 	const FIRSTPORT = 2000; // Numero de port du premier server
 	const SERVEURIP = '127.0.0.1';
 	const CLIENTIP = '127.0.0.1'; // Utilisé lors du flitrage des trames
+	// 1 - Log juste les erreurs
+	// 2 - Log les connexions
+	// 3 - Log tout (erreurs, connexion, actions)
+	const LOGLEVEL = 3;
 
 	/*
 	 * Définition des attributs
@@ -61,24 +64,25 @@ class SpykeeServer{
 
 	}
 
-	private function writeLog($txt){
-		$content = date('[d/m/y] à H:i:s ', time());
-		$content .= '@'.$this->_robotName.'('.$this->_robotIp.') : ';
-		$content .= $txt;
-
-		/*
-		 * Création/Mise à jour du fichier de log
-		*/
-		if (!$file = fopen($this->_logFile, 'a')){
-			echo 'Impossible d\'ouvrir le fichier : '.$this->_logFile;
-		}
-		else {
-			if (fwrite($file, $content) === FALSE ){
-				echo 'Impossible d\'écrire dans le fichier : '.$this->_logFile;
+	private function writeLog($txt, $level=1){
+		if (self::LOGLEVEL >= $level){
+			$content = date('[d/m/y] à H:i:s ', time());
+			$content .= '@'.$this->_robotName.'('.$this->_robotIp.') : ';
+			$content .= $txt;
+	
+			/*
+			 * Création/Mise à jour du fichier de log
+			*/
+			if (!$file = fopen($this->_logFile, 'a')){
+				echo 'Impossible d\'ouvrir le fichier : '.$this->_logFile;
 			}
-			fclose($file);
+			else {
+				if (fwrite($file, $content) === FALSE ){
+					echo 'Impossible d\'écrire dans le fichier : '.$this->_logFile;
+				}
+				fclose($file);
+			}
 		}
-			
 	}
 
 	private function listenNetwork(){
@@ -89,7 +93,7 @@ class SpykeeServer{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 
-			$this->writeLog('Impossible de créer le socket : ['.$errorcode.'] '.$errormsg."\n");
+			$this->writeLog('Impossible de créer le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
 			die;
 		}
 
@@ -101,7 +105,7 @@ class SpykeeServer{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 
-			$this->writeLog('Impossible de lier le socket : ['.$errorcode.'] '.$errormsg."\n");
+			$this->writeLog('Impossible de lier le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
 			die;
 		}
 
@@ -112,7 +116,7 @@ class SpykeeServer{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 
-			$this->writeLog('Impossible d\'écouter le socket : ['.$errorcode.'] '.$errormsg."\n");
+			$this->writeLog('Impossible d\'écouter le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
 			die;
 		}
 
@@ -149,7 +153,7 @@ class SpykeeServer{
 				$errorcode = socket_last_error();
 				$errormsg = socket_strerror($errorcode);
 					
-				$this->writeLog('Impossible d\'écouter le socket : ['.$errorcode.'] '.$errormsg."\n");
+				$this->writeLog('Impossible d\'écouter le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
 				die;
 			}
 
@@ -165,11 +169,13 @@ class SpykeeServer{
 						// Filtrage IP
 						socket_getpeername($client_socks[$i], $clientIp);
 						if ($clientIp != self::CLIENTIP){
+							$this->writeLog('Le client '.$clientIp.' à tenté de se connecter mais à été rejetté par l\'ACL'."\n", 2);
 							unset($client_socks[$i]);
 							socket_close($client_socks[$i]);
 						}
 						else{
 							socket_write($client_socks[$i], self::STATEOK);
+							$this->writeLog('Le client '.$clientIp.' s\'est bien connecté'."\n", 2);
 						}
 
 						// TODO Connexion TCP -> Session crée. On as besoin d'envoyer des données pour confirmer la connexion ?
@@ -185,14 +191,19 @@ class SpykeeServer{
 					 * Code exécuté
 					*/
 					$input = socket_read($client_socks[$i] , 1024);
+					// Recupère l'ip du client
+					socket_getpeername($client_socks[$i], $clientIp);
 
 					// Suppression de la Session(connexion)
 					if ($input == null){
 						//zero length string meaning disconnected, remove and close the socket
 						unset($client_socks[$i]);
 						socket_close($client_socks[$i]);
+						$this->writeLog('Le client '.$clientIp.' s\'est déconnecté'."\n", 2);
 					}
 
+					$this->writeLog('Le client '.$clientIp.' à envoyer au serveur : "'.trim($input).'"'."\n", 3);
+					
 					// Fait l'action demandé
 					switch($input){
 						case self::TURNLEFT:
@@ -207,7 +218,7 @@ class SpykeeServer{
 						case (preg_match('/^'.self::MOVE.'([0-9]):([0-9])/', $input, $matches) ? true : false):
 							$state = $this->move($matches[1], $matches[2]);
 							break;
-								
+
 						default:
 							$state = self::STATEERROR;
 					}

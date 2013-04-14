@@ -202,12 +202,12 @@ class SpykeeServer{
 							$state = $this->turnRight();
 							break;
 						case self::STOPSERVER;
-							$this->_stopServer=true;
-							break;
+						$this->_stopServer=true;
+						break;
 						case (preg_match('/^'.self::MOVE.'([0-9]):([0-9])/', $input, $matches) ? true : false):
 							$state = $this->move($matches[1], $matches[2]);
 							break;
-							
+								
 						default:
 							$state = self::STATEERROR;
 					}
@@ -222,7 +222,7 @@ class SpykeeServer{
 	private function turnLeft(){
 
 		$state = self::STATEOK;
-		
+
 		return $state;
 	}
 
@@ -231,10 +231,10 @@ class SpykeeServer{
 
 		return $state;
 	}
-	
+
 	private function move(){
 		$state = $state = self::STATEOK;
-		
+
 		return $state;
 	}
 

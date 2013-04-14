@@ -9,8 +9,12 @@ class SpykeeServer{
 	/*
 	 * Actions
 	*/
+	const MOVE = 0;
 	const TURNLEFT = 1;
 	const TURNRIGHT = 2;
+	const FORWARD = 3;
+	const BACK = 4;
+	const STOP = 5;
 	const STOPSERVER = 13;
 
 	/*
@@ -162,6 +166,9 @@ class SpykeeServer{
 						if ($clientIp != self::CLIENTIP){
 							unset($client_socks[$i]);
 							socket_close($client_socks[$i]);
+						}
+						else{
+							socket_write($client_socks[$i], self::STATEOK);
 						}
 
 						// TODO Connexion TCP -> Session crée. On as besoin d'envoyer des données pour confirmer la connexion ?

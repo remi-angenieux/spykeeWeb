@@ -37,7 +37,7 @@ class SpykeeClient
 	const SERVEURIP = '127.0.0.1';
 
 	/*
-	 * D�finition des attributs
+	 * Définition des attributs
 	*/
 	private $_serverPort;
 	private $_stopclient = false;

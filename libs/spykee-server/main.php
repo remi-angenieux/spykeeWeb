@@ -16,6 +16,29 @@ class SpykeeServer{
 	const STOP = 5;
 	const STOPSERVER = 13;
 	const MOVE = 'MV';
+	
+	/*
+	 * SOCKET du robot
+	 */
+	// TODO voir si ça vaut pas le cout de changer de notation
+	const PACKET_HEADER_SIZE = 5;
+	const PACKET_DATA_SIZE_MAX = 32768; //32*1024
+	
+	const PACKET_TYPE_AUDIO = 1;
+	const PACKET_TYPE_VIDEO = 2;
+	const PACKET_TYPE_POWER = 3;
+	const PACKET_TYPE_MOVE = 5;
+	const PACKET_TYPE_FILE =  6;
+	const PACKET_TYPE_PLAY = 7;
+	const PACKET_TYPE_STOP = 8;
+	const PACKET_TYPE_AUTH_REQUEST = 10;
+	const PACKET_TYPE_AUTH_REPLY = 11;
+	const PACKET_TYPE_CONFIG  = 13;
+	const PACKET_TYPE_WIRELESS_NETWORKS = 14;
+	const PACKET_TYPE_STREAMCTL = 15;
+	const PACKET_TYPE_ENGINE = 16;
+	const PACKET_TYPE_LOG = 17;
+	
 
 	/*
 	 * Etats de l'action
@@ -35,6 +58,7 @@ class SpykeeServer{
 	// 2 - Log les connexions
 	// 3 - Log tout (erreurs, connexion, actions)
 	const LOGLEVEL = 3;
+	const ROBOTPORT = 9000;
 
 	/*
 	 * Définition des attributs
@@ -42,15 +66,19 @@ class SpykeeServer{
 	private $_serverPort;
 	private $_stopServer = false;
 	private $_robotName;
+	private $_robotUsername;
+	private $_robotPassword;
 	private $_robotIp;
 	private $_logFile;
 
-	function __construct($robotName, $robotIp, $serverPort=''){
+	function __construct($robotName, $robotIp, $serverPort='', $robotUsername, $robotPassword){
 		self::$_noRobot++;
 		// TODO verifier que les ports sont disponibles
 		$this->_serverPort = ($serverPort=='') ? self::FIRSTPORT + self::$_noRobot : $serverPort;
 		// TODO vérifier les valeurs entrées avec un geter
 		$this->_robotName = $robotName;
+		$this->_robotUsername = $robotUsername;
+		$this->_robotPassword = $robotPassword;
 		$this->_logFile = realpath(__DIR__).'/../../logs/'.$this->_robotName.'.log';
 		$this->_robotIp = $robotIp;
 		date_default_timezone_set(self::TIMEZONE);
@@ -61,6 +89,33 @@ class SpykeeServer{
 	}
 
 	private function connectionToTheRobot(){
+		
+		if(!($sock = socket_create(AF_INET, SOCK_STREAM, 0)))
+		{
+			$errorcode = socket_last_error();
+			$errormsg = socket_strerror($errorcode);
+		
+			$this->writeLog('(Robot) Impossible de créer le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
+			die;
+		}
+		
+		if( !socket_bind($sock, $this->_robotIp, self::ROBOTPORT) )
+		{
+			$errorcode = socket_last_error();
+			$errormsg = socket_strerror($errorcode);
+		
+			$this->writeLog('(Robot) Impossible de lier le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
+			die;
+		}
+		
+		// TODO A finir d'adapter
+		if( ! socket_send ($sock, self::PACKET_TYPE_AUTH_REQUEST, strlen($message), 0))
+		{
+			$errorcode = socket_last_error();
+			$errormsg = socket_strerror($errorcode);
+			 
+			die("Could not send data: [$errorcode] $errormsg \n");
+		}
 
 	}
 
@@ -88,35 +143,32 @@ class SpykeeServer{
 	private function listenNetwork(){
 		// Source : http://www.binarytides.com/php-socket-programming-tutorial/
 
-		if(!($sock = socket_create(AF_INET, SOCK_STREAM, 0)))
-		{
+		if(!($sock = socket_create(AF_INET, SOCK_STREAM, 0)))		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 
-			$this->writeLog('Impossible de créer le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
+			$this->writeLog('(Serveur) Impossible de créer le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
 			die;
 		}
 
 		//echo "Socket created \n";
 
 		// Bind the source address
-		if( !socket_bind($sock, self::SERVEURIP , $this->_serverPort) )
-		{
+		if( !socket_bind($sock, self::SERVEURIP , $this->_serverPort) )		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 
-			$this->writeLog('Impossible de lier le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
+			$this->writeLog('(Serveur) Impossible de lier le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
 			die;
 		}
 
 		//echo "Socket bind OK \n";
 
-		if(!socket_listen ($sock , self::MAXCONNECTION))
-		{
+		if(!socket_listen ($sock , self::MAXCONNECTION))		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 
-			$this->writeLog('Impossible d\'écouter le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
+			$this->writeLog('(Serveur) Impossible d\'écouter le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
 			die;
 		}
 
@@ -131,8 +183,7 @@ class SpykeeServer{
 		$read = array();
 
 		//start loop to listen for incoming connections and process existing connections
-		while (!$this->_stopServer)
-		{
+		while (!$this->_stopServer){
 			//prepare array of readable client sockets
 			$read = array();
 
@@ -140,8 +191,7 @@ class SpykeeServer{
 			$read[0] = $sock;
 
 			//now add the existing client sockets
-			for ($i = 0; $i < self::MAXCONNECTION; $i++)
-			{
+			for ($i = 0; $i < self::MAXCONNECTION; $i++){
 				if(!empty($client_socks[$i])){
 					$read[$i+1] = $client_socks[$i];
 				}
@@ -153,7 +203,7 @@ class SpykeeServer{
 				$errorcode = socket_last_error();
 				$errormsg = socket_strerror($errorcode);
 					
-				$this->writeLog('Impossible d\'écouter le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
+				$this->writeLog('(Serveur) Impossible d\'écouter le socket : ['.$errorcode.'] '.$errormsg."\n", 1);
 				die;
 			}
 
@@ -169,13 +219,13 @@ class SpykeeServer{
 						// Filtrage IP
 						socket_getpeername($client_socks[$i], $clientIp);
 						if ($clientIp != self::CLIENTIP){
-							$this->writeLog('Le client '.$clientIp.' à tenté de se connecter mais à été rejetté par l\'ACL'."\n", 2);
+							$this->writeLog('(Serveur) Le client '.$clientIp.' à tenté de se connecter mais à été rejetté par l\'ACL'."\n", 2);
 							unset($client_socks[$i]);
 							socket_close($client_socks[$i]);
 						}
 						else{
 							socket_write($client_socks[$i], self::STATEOK);
-							$this->writeLog('Le client '.$clientIp.' s\'est bien connecté'."\n", 2);
+							$this->writeLog('(Serveur) Le client '.$clientIp.' s\'est bien connecté'."\n", 2);
 						}
 
 						// TODO Connexion TCP -> Session crée. On as besoin d'envoyer des données pour confirmer la connexion ?
@@ -199,10 +249,10 @@ class SpykeeServer{
 						//zero length string meaning disconnected, remove and close the socket
 						unset($client_socks[$i]);
 						socket_close($client_socks[$i]);
-						$this->writeLog('Le client '.$clientIp.' s\'est déconnecté'."\n", 2);
+						$this->writeLog('(Serveur) Le client '.$clientIp.' s\'est déconnecté'."\n", 2);
 					}
 
-					$this->writeLog('Le client '.$clientIp.' à envoyer au serveur : "'.trim($input).'"'."\n", 3);
+					$this->writeLog('(Serveur) Le client '.$clientIp.' à envoyer au serveur : "'.trim($input).'"'."\n", 3);
 					
 					// Fait l'action demandé
 					switch($input){
@@ -232,18 +282,21 @@ class SpykeeServer{
 
 	private function turnLeft(){
 
+		$this->move(140, 110);
 		$state = self::STATEOK;
 
 		return $state;
 	}
 
 	private function turnRight(){
+		
+		$this->move(110, 140);
 		$state = self::STATEOK;
 
 		return $state;
 	}
 
-	private function move(){
+	private function move($left, $right){
 		$state = $state = self::STATEOK;
 
 		return $state;

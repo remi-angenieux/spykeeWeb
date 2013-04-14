@@ -2,13 +2,11 @@
 
 class SpykeeClient
 {
-	function __construct($robotName, $robotIp, $serverPort='')
+	function __construct($robotName, $serverIp, $serverPort)
 	{
-		self::$_noRobot++;
-		$this->_serverPort = ($serverPort=='') ? self::FIRSTPORT + self::$_noRobot : $serverPort;
+		$this->_serverPort =$serverPort;
 		$this->_robotName = $robotName;
-		$this->_robotIp = $robotIp;
-		date_default_timezone_set(self::TIMEZONE);
+		$this->_serverIp = $serverIp;
 		$this->connectToTheServer();
 	}
 
@@ -19,9 +17,10 @@ class SpykeeClient
 	const TURNLEFT = 1;
 	const TURNRIGHT = 2;
 	const FORWARD = 3;
-	const BACKWARD = 4;
-	const LEDON=5;
-	const STOPCLIENT = 13;
+	const BACK = 4;
+	const STOP = 5;
+	const STOPSERVER = 13;
+	const MOVE = 'MV';
 
 	/*
 	 * Etats de l'action
@@ -29,22 +28,15 @@ class SpykeeClient
 	const STATEOK = 0;
 	const STATEERROR = 1;
 
-	/*
-	 * Configuration
-	*/
-	const TIMEZONE = 'Europe/Paris';
-	const MAXCONNECTION = 10;
-	const SERVEURIP = '127.0.0.1';
+
 
 	/*
 	 * Définition des attributs
 	*/
 	private $_serverPort;
-	private $_stopclient = false;
 	private $_robotName;
-	private $_robotIp;
-	private $_logFile;
-
+	private $_serverIp;
+    private $_sock;
 
 
 	private function connectToTheServer()
@@ -59,7 +51,7 @@ class SpykeeClient
 
 		echo "Socket created \n";                            //Connected
 
-		if(!socket_connect($sock , 'SERVERIP' ,$serverport))
+		if(!socket_connect($sock ,$this->_serverIp,$this->_serverPort))
 		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
@@ -68,12 +60,13 @@ class SpykeeClient
 		}
 
 		echo "Connection established \n";
+		$this->_sock =$sock;
 	}
 
 
-	private function sendAction()
+	private function sendAction($message)
 	{
-		if( ! socket_send ( $sock , $message , strlen($message) , 0))
+		if( ! socket_send ($this->_sock ,$message , strlen($message) , 0))
 		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
@@ -101,27 +94,23 @@ class SpykeeClient
 
 	public function forward()  //Tout droit
 	{
-		sendAction(FORWARD);
+		$this->sendAction(self::FORWARD);
 	}
 	public function backward()  //en Arriere
 	{
-		sendAction(BACKWARD);
+		$this->sendAction(self::BACKWARD);
 	}
 
 
 	public function turnLeft() //Tourne a gauche
 	{
-		sendAction(TURNLEFT);
+		$this->sendAction(self::TURNLEFT);
 	}
 	public function turnRight() //Tourne a droite
 	{
-		sendAction(TURNRIGHT);
+		$this->sendAction(self::TURNRIGHT);
 	}
 
-	private function ledOn()    //Allume la led
-	{
-		sendAction(LEDON);
-	}
 
 
 

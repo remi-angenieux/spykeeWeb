@@ -9,42 +9,42 @@ class SpykeeServer{
 	/*
 	 * Actions
 	*/
-	const TURNLEFT = 1;
-	const TURNRIGHT = 2;
-	const FORWARD = 3;
-	const BACK = 4;
-	const STOP = 5;
-	const STOPSERVER = 13;
-	const MOVE = 'MV';
+	const SERVER_TURN_LEFT = 1;
+	const SERVER_TURN_RIGHT = 2;
+	const SERVER_FORWARD = 3;
+	const SERVER_BACK = 4;
+	const SERVER_STOP = 5;
+	const SERVER_STOP_SERVER = 13;
+	const SERVER_MOVE = 'MV';
 	
 	/*
 	 * SOCKET du robot
 	 */
 	// TODO voir si ça vaut pas le cout de changer de notation
-	const PACKET_HEADER_SIZE = 5;
-	const PACKET_DATA_SIZE_MAX = 32768; //32*1024
+	const ROBOT_HEADER_SIZE = 5;
+	const ROBOT_DATA_SIZE_MAX = 32768; //32*1024
 	
-	const PACKET_TYPE_AUDIO = 1;
-	const PACKET_TYPE_VIDEO = 2;
-	const PACKET_TYPE_POWER = 3;
-	const PACKET_TYPE_MOVE = 5;
-	const PACKET_TYPE_FILE =  6;
-	const PACKET_TYPE_PLAY = 7;
-	const PACKET_TYPE_STOP = 8;
-	const PACKET_TYPE_AUTH_REQUEST = 10;
-	const PACKET_TYPE_AUTH_REPLY = 11;
-	const PACKET_TYPE_CONFIG  = 13;
-	const PACKET_TYPE_WIRELESS_NETWORKS = 14;
-	const PACKET_TYPE_STREAMCTL = 15;
-	const PACKET_TYPE_ENGINE = 16;
-	const PACKET_TYPE_LOG = 17;
+	const ROBOT_TYPE_AUDIO = 1;
+	const ROBOT_TYPE_VIDEO = 2;
+	const ROBOT_TYPE_POWER = 3;
+	const ROBOT_TYPE_MOVE = 5;
+	const ROBOT_TYPE_FILE =  6;
+	const ROBOT_TYPE_PLAY = 7;
+	const ROBOT_TYPE_STOP = 8;
+	const ROBOT_TYPE_AUTH_REQUEST = 10;
+	const ROBOT_TYPE_AUTH_REPLY = 11;
+	const ROBOT_TYPE_CONFIG  = 13;
+	const ROBOT_TYPE_WIRELESS_NETWORKS = 14;
+	const ROBOT_TYPE_STREAMCTL = 15;
+	const ROBOT_TYPE_ENGINE = 16;
+	const ROBOT_TYPE_LOG = 17;
 	
 
 	/*
 	 * Etats de l'action
 	*/
-	const STATEOK = 0;
-	const STATEERROR = 1;
+	const SERVER_STATE_OK = 0;
+	const SERVER_STATE_ERROR = 1;
 
 	/*
 	 * Configuration
@@ -70,6 +70,7 @@ class SpykeeServer{
 	private $_robotPassword;
 	private $_robotIp;
 	private $_logFile;
+	private $_robotSocket;
 
 	function __construct($robotName, $robotIp, $serverPort='', $robotUsername, $robotPassword){
 		self::$_noRobot++;
@@ -87,10 +88,17 @@ class SpykeeServer{
 
 		$this->listenNetwork();
 	}
+	
+	private function packString($str){
+		return pack('Ca*', count($str), $str);
+	}
 
 	private function connectionToTheRobot(){
 		
-		if(!($sock = socket_create(AF_INET, SOCK_STREAM, 0)))
+		/*
+		 * Debut de la session TCP
+		 */
+		if(!($this->_robotSocket = socket_create(AF_INET, SOCK_STREAM, 0)))
 		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
@@ -99,7 +107,7 @@ class SpykeeServer{
 			die;
 		}
 		
-		if( !socket_bind($sock, $this->_robotIp, self::ROBOTPORT) )
+		if( !socket_bind($this->_robotSocket, $this->_robotIp, self::ROBOTPORT) )
 		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
@@ -107,16 +115,22 @@ class SpykeeServer{
 			$this->writeLog('(Robot) Impossible de lier le socket : ['.$errorcode.'] '.$errormsg."\r\n", 1);
 			die;
 		}
-		/*
-		// TODO A finir d'adapter 
-		if( ! socket_send ($sock, self::PACKET_TYPE_AUTH_REQUEST, strlen($message), 0))
-		{
-			$errorcode = socket_last_error();
-			$errormsg = socket_strerror($errorcode);
-			 
-			die("Could not send data: [$errorcode] $errormsg \n");
-		} */
+		
+		// Demande connexion au robot
+		$this->sendPacketToRobot(self::ROBOT_TYPE_AUTH_REQUEST, $this->packString($this->_robotUsername).$this->packString($this->_robotPassword));
 
+	}
+	
+	private function sendPacketToRobot($type, $data){
+		$msg = pack('a2Cn', 'PK', $type);
+		if( !socket_send($this->_robotSocket, $msg, count($msg), 0)){
+			$errorCode = socket_last_error();
+			$errorMsg = socket_strerror($errorCode);
+			
+			$this->writeLog('(Robot) Impossible d\'envoyer le paquet : "'.$msg.'". ['.$errorCode.'] '.$errorMsg."\r\n", 1);
+		 return FALSE;
+		}
+		return TRUE;
 	}
 
 	private function writeLog($txt, $level=1){
@@ -224,7 +238,7 @@ class SpykeeServer{
 							socket_close($client_socks[$i]);
 						}
 						else{
-							socket_write($client_socks[$i], self::STATEOK);
+							socket_write($client_socks[$i], self::SERVER_STATE_OK);
 							$this->writeLog('(Serveur) Le client '.$clientIp.' s\'est bien connecté '.$client_socks[$i].''."\r\n", 2);
 						}
 
@@ -255,21 +269,21 @@ class SpykeeServer{
 					
 					// Fait l'action demandé
 					switch($input){
-						case self::TURNLEFT:
+						case self::SERVER_TURN_LEFT:
 							$state = $this->turnLeft();
 							break;
-						case self::TURNRIGHT:
+						case self::SERVER_TURN_RIGHT:
 							$state = $this->turnRight();
 							break;
-						case self::STOPSERVER;
+						case self::SERVER_STOP_SERVER;
 						$this->_stopServer=true;
 						break;
-						case (preg_match('/^'.self::MOVE.'([0-9]):([0-9])/', $input, $matches) ? true : false):
+						case (preg_match('/^'.self::SERVER_MOVE.'([0-9]):([0-9])/', $input, $matches) ? true : false):
 							$state = $this->move($matches[1], $matches[2]);
 							break;
 
 						default:
-							$state = self::STATEERROR;
+							$state = self::SERVER_STATE_ERROR;
 					}
 
 					//send response to client
@@ -281,24 +295,22 @@ class SpykeeServer{
 
 	private function turnLeft(){
 
-		$this->move(140, 110);
-		$state = self::STATEOK;
+		return $this->move(140, 110);
 
-		return $state;
 	}
 
 	private function turnRight(){
 		
-		$this->move(110, 140);
-		$state = self::STATEOK;
+		return $this->move(110, 140);
 
-		return $state;
 	}
 
 	private function move($left, $right){
-		$state = $state = self::STATEOK;
-
-		return $state;
+		
+		if ($this->sendPacketToRobot(self::ROBOT_TYPE_MOVE, pack('CC', $left, $right)))
+			return self::SERVER_STATE_OK;
+		else
+			return self::SERVER_STATE_ERROR;
 	}
 
 	function __destruct(){

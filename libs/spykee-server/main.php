@@ -84,8 +84,10 @@ class SpykeeServer{
 		$this->_logFile = realpath(__DIR__).'/../../logs/'.$this->_robotName.'.log';
 		$this->_robotIp = $robotIp;
 		date_default_timezone_set(self::TIMEZONE);
-
-		//$this->connectionToTheRobot();
+		
+		$this->writeLog('(Serveur) Démarrage du serveur'."\r\n", 1);
+		
+		$this->connectionToTheRobot();
 
 		$this->listenNetwork();
 	}
@@ -271,53 +273,56 @@ class SpykeeServer{
 					 * Code exécuté
 					*/
 					$input = socket_read($client_socks[$i], 1024);
-					// Recupère l'ip du client
-					socket_getpeername($client_socks[$i], $clientIp, $clientPort);
-
-					// Suppression de la Session(connexion)
+					
+					// Si le client se déconnecte
 					if ($input == null){
 						//zero length string meaning disconnected, remove and close the socket
 						socket_close($client_socks[$i]);
 						unset($client_socks[$i]);
-						$this->writeLog('(Serveur) Le client '.$clientIp.':'.$clientPort.' s\'est déconnecté'."\r\n", 2);
+						$this->writeLog('(Serveur) Un client s\'est déconnecté'."\r\n", 2);
+						// INFO : il n'est pas posible de connaitre l'ip d'un client qui se déconnecte
 					}
-					else
+					// Si le client à envoyer quelque chose à traiter
+					else{
+						socket_getpeername($client_socks[$i], $clientIp, $clientPort);
 						$this->writeLog('(Serveur) Le client '.$clientIp.':'.$clientPort.' à envoyer au serveur : "'.trim($input).'"'."\r\n", 3);
 					
-					/*
-					 * Envoie au robot l'action demandé par le client
-					 */
-					if(preg_match('#^'.self::SERVER_MOVE.'([0-9]+):([0-9]+)#', $input, $move) == 1)
-						$condMove = TRUE;
-					else
-						$condMove = FALSE;
-					
-					switch($input){
-						case self::SERVER_TURN_LEFT:
-							$state = $this->turnLeft();
-							break;
-						case self::SERVER_TURN_RIGHT:
-							$state = $this->turnRight();
-							break;
-						case self::SERVER_STOP_SERVER:
-							$this->_stopServer=true;
-							foreach($client_socks as $connection){
-								if (isset($connection))
-									socket_close($connection);
-							}
-							$this->writeLog('(Serveur) Le serveur à été éteint'."\r\n", 1);
-							break;
-						case ((preg_match('#^'.self::SERVER_MOVE.'([0-9]+):([0-9]+)#', $input, $move)) ? $input : null) :
-							$state = $this->move($move[1], $move[2]);
-							break;
-
-						default:
-							$state = self::SERVER_STATE_ERROR;
+						/*
+						 * Envoie au robot l'action demandé par le client
+						 */
+						/*if(preg_match('#^'.self::SERVER_MOVE.'([0-9]+):([0-9]+)#', $input, $move) == 1)
+							$condMove = TRUE;
+						else
+							$condMove = FALSE;*/
+						
+						switch($input){
+							case self::SERVER_TURN_LEFT:
+								$state = $this->turnLeft();
+								break;
+							case self::SERVER_TURN_RIGHT:
+								$state = $this->turnRight();
+								break;
+							case self::SERVER_STOP_SERVER:
+								$this->_stopServer=true;
+								foreach($client_socks as $connection){
+									if (isset($connection))
+										socket_close($connection);
+								}
+								socket_close($sock);
+								$this->writeLog('(Serveur) Le serveur à été éteint'."\r\n", 1);
+								break;
+							case ((preg_match('#^'.self::SERVER_MOVE.'([0-9]+):([0-9]+)#', $input, $move)) ? $input : null) :
+								$state = $this->move($move[1], $move[2]);
+								break;
+	
+							default:
+								$state = self::SERVER_STATE_ERROR;
+						}
+	
+						//send response to client
+						if(!$this->_stopServer)
+							socket_write($client_socks[$i], $state);
 					}
-
-					//send response to client
-					if(!$this->_stopServer AND $input!=null)
-						socket_write($client_socks[$i] , $state);
 				}
 			}
 		}

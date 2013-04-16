@@ -2,5 +2,6 @@
 <?php
 require_once '../libs/spykee-server/main.php';
 
-$server1 = new SpykeeServer('Robot1', '192.168.0.253', '2000');
+$server1 = new SpykeeServer('Robot1', '172.17.6.1', '2000', 'admin', 'admin');
+//$server1 = new SpykeeServer('Robot1', '127.0.0.1', '2000', 'admin', 'admin');
 ?>

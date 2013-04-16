@@ -2,15 +2,6 @@
 
 class SpykeeClient
 {
-	function __construct($robotName, $serverIp, $serverPort)
-	{
-		$this->_serverPort =$serverPort;
-		$this->_robotName = $robotName;
-		$this->_serverIp = $serverIp;
-		$this->connectToTheServer();
-	}
-
-
 	/*
 	 * Actions
 	*/
@@ -25,8 +16,8 @@ class SpykeeClient
 	/*
 	 * Etats de l'action
 	*/
-	const STATEOK = 0;
-	const STATEERROR = 1;
+	const STATEOK = 1;
+	const STATEERROR = 0;
 
 
 
@@ -37,12 +28,20 @@ class SpykeeClient
 	private $_robotName;
 	private $_serverIp;
     private $_sock;
+    
+    function __construct($robotName, $serverIp, $serverPort)
+    {
+    	$this->_serverPort = $serverPort;
+    	$this->_robotName = $robotName;
+    	$this->_serverIp = $serverIp;
+    	$this->connectToTheServer();
+    }
 
 
 	private function connectToTheServer()
 	{
 		//Creation of the socket
-		if(!($sock = socket_create(AF_INET, SOCK_STREAM, 0))) //Can't connect
+		if(!($this->_sock = socket_create(AF_INET, SOCK_STREAM, 0))) //Can't connect
 		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
@@ -51,7 +50,7 @@ class SpykeeClient
 
 		echo "Socket created \n";                            //Connected
 
-		if(!socket_connect($sock ,$this->_serverIp,$this->_serverPort))
+		if(!socket_connect($this->_sock, $this->_serverIp, $this->_serverPort))
 		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
@@ -60,14 +59,13 @@ class SpykeeClient
 		}
 
 		echo "Connection established \n";
-		$this->_sock =$sock;
 	}
 
 
 	public function sendAction($message)
 	{
 		
-		if( ! socket_send ($this->_sock ,$message , strlen($message) , 0))
+		if(!socket_send($this->_sock ,$message , strlen($message) , 0))
 		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
@@ -76,18 +74,26 @@ class SpykeeClient
 		}
 
 		echo "Message send successfully \n";
+		
+		if(socket_recv($this->_sock, $response, 1, MSG_WAITALL) === FALSE ){
+			$errorcode = socket_last_error();
+			$errormsg = socket_strerror($errorcode);
+			
+			die("Could not send data: [$errorcode] $errormsg \n");
+		}
+		echo 'Reponse : '.$response;
 
 	}
 
 
 	private function closeSocket()
 	{
-		socket_close($sock);
-		if(!($sock = socket_create(AF_INET, SOCK_STREAM, 0)))
+		socket_close($this->_sock);
+		/*if(!($sock = socket_create(AF_INET, SOCK_STREAM, 0)))
 		{
 
 			die("Socket has been succefully closed \n");
-		}
+		}*/
 
 	}
 
@@ -112,7 +118,9 @@ class SpykeeClient
 		$this->sendAction(self::TURNRIGHT);
 	}
 
-
+	function __destruct(){
+		$this->closeSocket();
+	}
 
 
 }

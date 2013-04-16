@@ -43,8 +43,8 @@ class SpykeeServer{
 	/*
 	 * Etats de l'action
 	*/
-	const SERVER_STATE_OK = 0;
-	const SERVER_STATE_ERROR = 1;
+	const SERVER_STATE_OK = 1;
+	const SERVER_STATE_ERROR = 0;
 
 	/*
 	 * Configuration
@@ -59,6 +59,7 @@ class SpykeeServer{
 	// 3 - Log tout (erreurs, connexion, actions)
 	const LOGLEVEL = 3;
 	const ROBOTPORT = 9000;
+	//const ROBOTPORT = 80;
 
 	/*
 	 * Définition des attributs
@@ -70,7 +71,7 @@ class SpykeeServer{
 	private $_robotPassword;
 	private $_robotIp;
 	private $_logFile;
-	private $_robotSocket;
+	private $_robotSocket=NULL;
 
 	function __construct($robotName, $robotIp, $serverPort='', $robotUsername, $robotPassword){
 		self::$_noRobot++;
@@ -84,7 +85,7 @@ class SpykeeServer{
 		$this->_robotIp = $robotIp;
 		date_default_timezone_set(self::TIMEZONE);
 
-		$this->connectionToTheRobot();
+		//$this->connectionToTheRobot();
 
 		$this->listenNetwork();
 	}
@@ -107,8 +108,9 @@ class SpykeeServer{
 			die;
 		}
 		
-		if( !socket_bind($this->_robotSocket, $this->_robotIp, self::ROBOTPORT) )
+		if( !socket_connect($this->_robotSocket, $this->_robotIp, self::ROBOTPORT) )
 		{
+			echo $this->_robotIp.':'.self::ROBOTPORT;
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 		
@@ -122,15 +124,28 @@ class SpykeeServer{
 	}
 	
 	private function sendPacketToRobot($type, $data){
-		$msg = pack('a2Cn', 'PK', $type);
-		if( !socket_send($this->_robotSocket, $msg, count($msg), 0)){
+		$msg = pack('a2Cn', 'PK', $type, count($data));
+		$msg .= $data;
+		echo $msg;
+		if( !socket_send($this->_robotSocket, $msg, count($msg), MSG_DONTROUTE)){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 			
 			$this->writeLog('(Robot) Impossible d\'envoyer le paquet : "'.$msg.'". ['.$errorCode.'] '.$errorMsg."\r\n", 1);
 		 return FALSE;
 		}
-		return TRUE;
+		$this->writeLog('(Robot) Envoi vers le robot la trame : '.trim($msg)."\r\n", 3);
+		
+		if(socket_recv($this->_robotSocket, $response, self::ROBOT_DATA_SIZE_MAX , MSG_WAITALL ) === FALSE)
+		{
+			/*$errorcode = socket_last_error();
+			$errormsg = socket_strerror($errorcode);
+			 
+			die("Could not receive data: [$errorcode] $errormsg \n");*/
+		}
+		else{
+			echo 'Reponse reçue : '.$response."\n";
+		}
 	}
 
 	private function writeLog($txt, $level=1){
@@ -212,8 +227,9 @@ class SpykeeServer{
 			}
 
 			//now call select - blocking call
-			
-			if(socket_select($read) === false){
+			$write=NULL;
+			$except=NULL;
+			if(socket_select($read, $write, $except, 0) === false){
 				$errorcode = socket_last_error();
 				$errormsg = socket_strerror($errorcode);
 					
@@ -231,15 +247,15 @@ class SpykeeServer{
 						*/
 
 						// Filtrage IP
-						socket_getpeername($client_socks[$i], $clientIp);
+						socket_getpeername($client_socks[$i], $clientIp, $clientPort);
 						if ($clientIp != self::CLIENTIP){
-							$this->writeLog('(Serveur) Le client '.$clientIp.' à tenté de se connecter mais à été rejetté par l\'ACL'."\r\n", 2);
-							unset($client_socks[$i]);
+							$this->writeLog('(Serveur) Le client '.$clientIp.':'.$clientPort.' à tenté de se connecter mais à été rejetté par l\'ACL'."\r\n", 2);
 							socket_close($client_socks[$i]);
+							unset($client_socks[$i]);
 						}
 						else{
 							socket_write($client_socks[$i], self::SERVER_STATE_OK);
-							$this->writeLog('(Serveur) Le client '.$clientIp.' s\'est bien connecté '.$client_socks[$i].''."\r\n", 2);
+							$this->writeLog('(Serveur) Le client '.$clientIp.':'.$clientPort.' s\'est bien connecté '.$client_socks[$i].''."\r\n", 2);
 						}
 
 						// TODO Connexion TCP -> Session crée. On as besoin d'envoyer des données pour confirmer la connexion ?
@@ -254,20 +270,28 @@ class SpykeeServer{
 					/*
 					 * Code exécuté
 					*/
-					$input = socket_read($client_socks[$i] , 1024);
+					$input = socket_read($client_socks[$i], 1024);
 					// Recupère l'ip du client
-					socket_getpeername($client_socks[$i], $clientIp);
+					socket_getpeername($client_socks[$i], $clientIp, $clientPort);
 
 					// Suppression de la Session(connexion)
-					if ($input == 13){
+					if ($input == null){
 						//zero length string meaning disconnected, remove and close the socket
 						socket_close($client_socks[$i]);
-						$this->writeLog('(Serveur) Le client '.$clientIp.' s\'est déconnecté'."\r\n", 2);
+						unset($client_socks[$i]);
+						$this->writeLog('(Serveur) Le client '.$clientIp.':'.$clientPort.' s\'est déconnecté'."\r\n", 2);
 					}
-
-					$this->writeLog('(Serveur) Le client '.$clientIp.' à envoyer au serveur : "'.trim($input).'"'."\r\n", 3);
+					else
+						$this->writeLog('(Serveur) Le client '.$clientIp.':'.$clientPort.' à envoyer au serveur : "'.trim($input).'"'."\r\n", 3);
 					
-					// Fait l'action demandé
+					/*
+					 * Envoie au robot l'action demandé par le client
+					 */
+					if(preg_match('#^'.self::SERVER_MOVE.'([0-9]+):([0-9]+)#', $input, $move) == 1)
+						$condMove = TRUE;
+					else
+						$condMove = FALSE;
+					
 					switch($input){
 						case self::SERVER_TURN_LEFT:
 							$state = $this->turnLeft();
@@ -275,11 +299,16 @@ class SpykeeServer{
 						case self::SERVER_TURN_RIGHT:
 							$state = $this->turnRight();
 							break;
-						case self::SERVER_STOP_SERVER;
-						$this->_stopServer=true;
-						break;
-						case (preg_match('/^'.self::SERVER_MOVE.'([0-9]):([0-9])/', $input, $matches) ? true : false):
-							$state = $this->move($matches[1], $matches[2]);
+						case self::SERVER_STOP_SERVER:
+							$this->_stopServer=true;
+							foreach($client_socks as $connection){
+								if (isset($connection))
+									socket_close($connection);
+							}
+							$this->writeLog('(Serveur) Le serveur à été éteint'."\r\n", 1);
+							break;
+						case ((preg_match('#^'.self::SERVER_MOVE.'([0-9]+):([0-9]+)#', $input, $move)) ? $input : null) :
+							$state = $this->move($move[1], $move[2]);
 							break;
 
 						default:
@@ -287,7 +316,8 @@ class SpykeeServer{
 					}
 
 					//send response to client
-					socket_write($client_socks[$i] , $state);
+					if(!$this->_stopServer AND $input!=null)
+						socket_write($client_socks[$i] , $state);
 				}
 			}
 		}

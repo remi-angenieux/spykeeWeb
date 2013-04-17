@@ -1,7 +1,7 @@
 #!/usr/bin/php5 -q 
 <?php
-require_once '../libs/spykee-server/main.php';
+require_once '../libs/spykee-controller/controllerServer.php';
 
-$server1 = new SpykeeServer('Robot1', '172.17.6.1', '2000', 'admin', 'admin');
-//$server1 = new SpykeeServer('Robot1', '127.0.0.1', '2000', 'admin', 'admin');
+$server1 = new SpykeeControllerServer('Robot1', '172.17.6.1', '2000', 'admin', 'admin');
+//$server1 = new SpykeeControllerServer('Robot1', '127.0.0.1', '2000', 'admin', 'admin');
 ?>

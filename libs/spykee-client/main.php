@@ -75,7 +75,7 @@ class SpykeeClient
 
 		echo "Message send successfully \n";
 		
-		if(socket_recv($this->_sock, $response, 1, MSG_WAITALL) === FALSE ){
+		if(socket_recv($this->_sock, $response, 2, MSG_WAITALL) === FALSE ){
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 			

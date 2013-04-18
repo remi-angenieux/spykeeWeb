@@ -21,6 +21,7 @@ class SpykeeController{
 	const LOG_LEVEL = 3;
 	
 	const ROBOT_PORT = 9000;
+	const LISTEN_TIME = 10000000;
 } 
 
 ?>

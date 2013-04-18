@@ -157,7 +157,6 @@ class SpykeeControllerServer{
 							unset($client_socks[$i]);
 						}
 						else{
-							socket_write($client_socks[$i], SpykeeController::STATE_OK);
 							$this->writeLog('(Serveur) Le client '.$clientIp.':'.$clientPort.' s\'est bien connecté '.$client_socks[$i].''."\r\n", 2);
 						}
 
@@ -230,6 +229,7 @@ class SpykeeControllerServer{
 					}
 				}
 			}
+			time_nanosleep (0, SpykeeController::LISTEN_TIME);
 		}
 	}
 	

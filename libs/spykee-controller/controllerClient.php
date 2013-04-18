@@ -1,6 +1,6 @@
 <?php
 
-class SpykeeClient
+class SpykeeControllerClient
 {
 	/*
 	 * Actions

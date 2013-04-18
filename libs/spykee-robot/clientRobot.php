@@ -1,5 +1,5 @@
 <?php
-require_once('controller.php');
+require_once 'spykee-controller/controller.php';
 
 class SpykeeClientRobot {
 	/*

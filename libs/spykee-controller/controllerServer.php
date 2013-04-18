@@ -1,8 +1,9 @@
 <?php
 // Pour que le script puisse tourner en serveur
 set_time_limit(0);
-require_once('clientRobot.php');
-require_once('controller.php');
+set_include_path(get_include_path().PATH_SEPARATOR.'/home/webServer/spykeeweb/libs');
+require_once('spykee-robot/clientRobot.php');
+require_once('spykee-controller/controller.php');
 
 class SpykeeControllerServer{
 	private static $_noController = 0;

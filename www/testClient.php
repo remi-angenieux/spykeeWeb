@@ -1,7 +1,7 @@
 <?php
-require_once '../libs/spykee-client/main.php';
+require_once 'spykee-controller/controllerClient.php';
 
-$test = new SpykeeClient('Robot1', '127.0.0.1', '2000');
+$test = new SpykeeControllerClient('Robot1', '127.0.0.1', '2000');
 
 $test->turnLeft();
 ?>

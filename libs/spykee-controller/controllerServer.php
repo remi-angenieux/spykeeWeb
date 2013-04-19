@@ -153,12 +153,12 @@ class SpykeeControllerServer{
 						// Filtrage IP
 						socket_getpeername($client_socks[$i], $clientIp, $clientPort);
 						if ($clientIp != SpykeeController::CLIENT_IP){
-							$this->writeLog('(Serveur) Le client '.$clientIp.':'.$clientPort.' à tenté de se connecter mais à été rejetté par l\'ACL'."\r\n", 2);
+							$this->writeLog('Le client '.$clientIp.':'.$clientPort.' à tenté de se connecter mais à été rejetté par l\'ACL'."\r\n", 2);
 							socket_close($client_socks[$i]);
 							unset($client_socks[$i]);
 						}
 						else{
-							$this->writeLog('(Serveur) Le client '.$clientIp.':'.$clientPort.' s\'est bien connecté '.$client_socks[$i].''."\r\n", 2);
+							$this->writeLog('Le client '.$clientIp.':'.$clientPort.' s\'est bien connecté '.$client_socks[$i].''."\r\n", 2);
 						}
 
 						// TODO Connexion TCP -> Session crée. On as besoin d'envoyer des données pour confirmer la connexion ?
@@ -186,7 +186,7 @@ class SpykeeControllerServer{
 					// Si le client à envoyer quelque chose à traiter
 					else{
 						socket_getpeername($client_socks[$i], $clientIp, $clientPort);
-						$this->writeLog('Le client '.$clientIp.':'.$clientPort.' à envoyer au serveur : "'.trim($input).'"'."\r\n", 3);
+						$this->writeLog('Le client '.$clientIp.':'.$clientPort.' à envoyer au serveur : "'.bin2hex($input).'"'."\r\n", 3);
 					
 						/*
 						 * Envoie au robot l'action demandé par le client
@@ -202,6 +202,9 @@ class SpykeeControllerServer{
 								break;
 							case self::TURN_RIGHT:
 								$state = $this->_SpykeeClientRobot->right();
+								break;
+							case self::FORWARD:
+								$state = $this->_SpykeeClientRobot->forward();
 								break;
 							case self::STOP_SERVER:
 								$this->_stopServer=true;

@@ -42,7 +42,7 @@ class SpykeeClientRobot {
 		$this->_robotPassword = $robotPassword;
 		$this->_logFile = realpath(__DIR__).'/../../logs/'.$this->_robotName.'-ClientRobot.log';
 		
-		//$this->connectionToTheRobot();
+		$this->connectionToTheRobot();
 	}
 	
 	protected function writeLog($txt, $level=1){
@@ -96,24 +96,24 @@ class SpykeeClientRobot {
 	}
 	
 	protected function packString($str){
-		return pack('Ca*', count($str), $str);
+		return pack('Ca*', strlen($str), $str);
 	}
+	
 	
 	protected function sendPacketToRobot($type, $data){
 		/*
 		 * Envoie du paquet vers le robot
 		*/
-		$msg = pack('a2Cn', 'PK', $type, count($data));
+		$msg = pack('a2Cn', 'PK', $type, strlen($data));
 		$msg .= $data;
-		echo $msg;
-		if( !socket_send($this->_robotSocket, $msg, count($msg), MSG_DONTROUTE)){
+		if( !socket_send($this->_robotSocket, $msg, strlen($msg), MSG_DONTROUTE)){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 				
 			$this->writeLog('Impossible d\'envoyer le paquet : "'.$msg.'". ['.$errorCode.'] '.$errorMsg."\r\n", 1);
 			return FALSE;
 		}
-		$this->writeLog('Envoi vers le robot la trame : '.trim($msg)."\r\n", 3);
+		$this->writeLog('Envoi vers le robot la trame : '.bin2hex($msg)."\r\n", 3);
 	
 		/*
 		 * Reception de la réponse du Robot
@@ -126,10 +126,10 @@ class SpykeeClientRobot {
 			die("Could not receive data: [$errorcode] $errormsg \n");
 			return FALSE;
 		}
-		$robotResponse = unpack('a2Cn', $response);
-		$header = $robotResponse[1];
-		$type = $robotResponse[2];
-		$length = $robotResponse[3];
+		$response = bin2hex($response);
+		$header = hex2bin($response[0].$response[1].$response[2].$response[3]);
+		$type = base_convert($response[4].$response[5], 16, 10);
+		$length = base_convert($response[6].$response[7].$response[8].$response[9], 16, 10);
 	
 		$this->writeLog('Paquet reçue : header='.$header.', type='.$type.', len='.$length."\r\n", 3);
 		echo ' Paquet reçue : header='.$header.', type='.$type.', len='.$length."\r\n";
@@ -150,6 +150,7 @@ class SpykeeClientRobot {
 		/*
 		 * Gestion de la réponse
 		*/
+		$return = TRUE;
 		switch($type){
 			case self::PAQUET_TYPE_AUDIO:
 	
@@ -178,9 +179,11 @@ class SpykeeClientRobot {
 	
 			default:
 				echo 'Paquet non reconnu'."\r\n";
-				$this->writeLog('(Robot) Paquet inconnu reçu avec comme type : '.$type, 1);
+				$this->writeLog('Paquet inconnu reçu avec comme type : '.$type, 1);
 				break;
 		}
+		
+		return $return;
 	}
 	
 	public function move($left, $right){

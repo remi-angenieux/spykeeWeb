@@ -7,8 +7,11 @@ class SpykeeController{
 	const STATE_ERROR = 0;
 	
 	/*
-	 * Actions
+	 * Protocole Controller
 	 */
+	
+	// Actions
+	const UNDEFINED_ACTION = 0;
 	const TURN_LEFT = 1;
 	const TURN_RIGHT = 2;
 	const FORWARD = 3;
@@ -22,12 +25,20 @@ class SpykeeController{
 	const GET_LOG = 11;
 	const GET_CONFIG = 12;
 	const STOP_SERVER = 13;
+	const GET_POWER_LEVEL = 14;
+	const REFRESH_POWER_LEVEL = 15;
+	const CONNECTION_TO_SERVER = 16;
 	const MOVE = 'MV';
+	
+	// Longueur des paquets
+	const PAQUET_HEADER_SIZE = 7;
 	
 	/*
 	 * Configuration
 	 */
 	const TIME_ZONE = 'Europe/Paris';
+	const DEFAULT_USERNAME = 'admin';
+	const DEFAULT_PASSWORD = 'admin';
 	
 	const MAX_CONNECTIONS = 10;
 	const SERVER_FIRST_PORT = 2000; // Numero de port du premier server

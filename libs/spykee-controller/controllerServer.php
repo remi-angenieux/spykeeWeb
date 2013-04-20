@@ -19,8 +19,9 @@ class SpykeeControllerServer{
 	protected $_serverPort;
 	protected $_robotUsername;
 	protected $_robotPassword;
+	protected $_powerLevel = NULL; // NOTE : Non utilisé pour le moment
 	
-	function __construct($robotName, $robotIp, $serverPort='', $robotUsername, $robotPassword){
+	function __construct($robotName, $robotIp, $serverPort='', $robotUsername=SpykeeController::DEFAULT_USERNAME, $robotPassword=SpykeeController::DEFAULT_PASSWORD){
 		self::$_noController++;
 		date_default_timezone_set(SpykeeController::TIME_ZONE); // Pour les dates des logs
 		// TODO verifier que les ports sont disponibles
@@ -148,6 +149,13 @@ class SpykeeControllerServer{
 						}
 						else{
 							$this->writeLog('Le client '.$clientIp.':'.$clientPort.' s\'est bien connecté '.$client_socks[$i].''."\r\n", 2);
+							$msg = pack('a3CCn', 'CTR', SpykeeController::CONNECTION_TO_SERVER, SpykeeController::STATE_OK, 0);
+							if( !socket_send($client_socks[$i], $msg, strlen($msg), 0)){
+								$errorcode = socket_last_error();
+								$errormsg = socket_strerror($errorcode);
+									
+								die("Could not send data: [$errorcode] $errormsg \n");
+							}
 						}
 
 						// TODO Connexion TCP -> Session crée. On as besoin d'envoyer des données pour confirmer la connexion ?
@@ -185,17 +193,51 @@ class SpykeeControllerServer{
 						else
 							$condMove = FALSE;*/
 						
+						$responseType = $input; // Par défaut le type de réponse est celui qui à été demandé
+						
 						switch($input){
 							case SpykeeController::TURN_LEFT:
-								$state = $this->_SpykeeClientRobot->left();
+								$response = $this->_SpykeeClientRobot->left();
+								// TODO : Mettre à jour le niveau de batterie
 								break;
 							case SpykeeController::TURN_RIGHT:
-								$state = $this->_SpykeeClientRobot->right();
+								$response = $this->_SpykeeClientRobot->right();
+								// TODO : Mettre à jour le niveau de batterie
 								break;
 							case SpykeeController::FORWARD:
-								$state = $this->_SpykeeClientRobot->forward();
+								$response = $this->_SpykeeClientRobot->forward();
+								// TODO : Mettre à jour le niveau de batterie
+								break;
+							case SpykeeController::BACK:
+								$response = $this->_SpykeeClientRobot->back();
+								// TODO : Mettre à jour le niveau de batterie
+								break;
+							case SpykeeController::STOP:
+								$response = $this->_SpykeeClientRobot->stop();
+								break;
+							case SpykeeController::ACTIVATE:
+								$response = $this->_SpykeeClientRobot->activate();
+								break;
+							case SpykeeController::CHARGE_STOP:
+								$response = $this->_SpykeeClientRobot->charge_stop();
+								break;
+							case SpykeeController::DOCK:
+								$response = $this->_SpykeeClientRobot->dock();
+								break;
+							case SpykeeController::DOCK_CANCEL:
+								$response = $this->_SpykeeClientRobot->dock_cancel();
+								break;
+							case SpykeeController::WIRELESS_NETWORKS:
+								$response = $this->_SpykeeClientRobot->wireless_networks();
+								break;
+							case SpykeeController::GET_LOG:
+								$response = $this->_SpykeeClientRobot->get_log();
+								break;
+							case SpykeeController::GET_CONFIG:
+								$response = $this->_SpykeeClientRobot->get_config();
 								break;
 							case SpykeeController::STOP_SERVER:
+								$reponse = NULL;
 								$this->_stopServer=true;
 								foreach($client_socks as $key => $connection){
 									socket_close($client_socks[$key]);
@@ -205,8 +247,13 @@ class SpykeeControllerServer{
 								unset($sock);
 								$this->writeLog('Le serveur à été éteint'."\r\n", 1);
 								break;
-							case SpykeeController::STOP:
-								$stsate = $this->_SpykeeClientRobot->stop();
+							case SpykeeController::GET_POWER_LEVEL:
+								$this->_powerLevel = $this->_SpykeeClientRobot->get_power_level();
+								$response = $this->_powerLevel;
+								break;
+							case SpykeeController::REFRESH_POWER_LEVEL:
+								$this->_powerLevel = $this->_SpykeeClientRobot->refresh_power_level();
+								$response = $this->_powerLevel;
 								break;
 							case ((preg_match('#^'.SpykeeController::MOVE.'([0-9]+):([0-9]+)#', $input, $move)) ? $input : null) :
 								$state = $this->_SpykeeClientRobot->move($move[1], $move[2]);
@@ -214,11 +261,47 @@ class SpykeeControllerServer{
 	
 							default:
 								$state = SpykeeController::STATE_ERROR;
+								$reponse = NULL;
+								$responseType = SpykeeController::UNDEFINED_ACTION;
+								$this->writeLog('Trame inconnu : '.bin2hex($input).'"'."\r\n", 1);
+								break;
 						}
 	
-						//send response to client
-						if(!$this->_stopServer)
-							socket_write($client_socks[$i], $state);
+						/*
+						 * Envoie au client la réponse du robot
+						 */
+						echo 'Reponse du Robot : '.$response."\r\n";
+						if (!empty($response) AND ( $response === SpykeeController::STATE_OK OR $response === SpykeeController::STATE_ERROR )){
+							$state = $response;
+							$data=NULL;
+						}
+						elseif (!empty($response)){
+							$state = SpykeeController::STATE_OK;
+							$data=pack('C', $response);
+						}
+						else{
+							$state = SpykeeController::STATE_ERROR;
+							$data=NULL;
+						}
+						
+						if(!$this->_stopServer){
+							if (!empty($data))
+								$responseLength = strlen($data);
+							else
+								$responseLength = 0;
+							
+							$reply = pack('a3CCn', 'CTR', $responseType, $state, $responseLength);
+							if (!empty($data))
+								$reply .= $data;
+							if( !socket_send($client_socks[$i], $reply, strlen($reply), 0)){
+								$errorcode = socket_last_error();
+								$errormsg = socket_strerror($errorcode);
+								 
+								die("Could not send data: [$errorcode] $errormsg \n");
+							}
+							echo 'Envoie de la trame : '.$reply."\r\n";
+							$this->writeLog('Envoie de la trame : '.bin2hex($reply).'"'."\r\n", 3);
+						}
 					}
 				}
 			}

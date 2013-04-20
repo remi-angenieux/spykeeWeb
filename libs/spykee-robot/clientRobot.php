@@ -32,8 +32,10 @@ class SpykeeClientRobot {
 	protected $_robotIp;
 	protected $_robotSocket=NULL;
 	protected $_logFile;
+	protected $_moveSpeed = 5;
+	protected $_powerLevel = NULL;
 	
-	function __construct($robotName, $robotIp, $robotUsername, $robotPassword){
+	function __construct($robotName, $robotIp, $robotUsername=SpykeeController::DEFAULT_USERNAME, $robotPassword=SpykeeController::DEFAULT_PASSWORD){
 		date_default_timezone_set(SpykeeController::TIME_ZONE); // Pour les dates des logs
 		// TODO vérifier les valeurs entrées avec un geter
 		$this->_robotName = $robotName;
@@ -100,86 +102,96 @@ class SpykeeClientRobot {
 	}
 	
 	
-	protected function sendPacketToRobot($type, $data){
+	protected function sendPacketToRobot($type, $data=NULL){
 		/*
 		 * Envoie du paquet vers le robot
 		*/
-		$msg = pack('a2Cn', 'PK', $type, strlen($data));
-		$msg .= $data;
+		$strlen=(isset($data)) ? strlen($data) : 0;
+		$msg = pack('a2Cn', 'PK', $type, $strlen);
+		if ($strlen>0)
+			$msg .= $data;
 		if( !socket_send($this->_robotSocket, $msg, strlen($msg), MSG_DONTROUTE)){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 				
 			$this->writeLog('Impossible d\'envoyer le paquet : "'.$msg.'". ['.$errorCode.'] '.$errorMsg."\r\n", 1);
-			return FALSE;
+			return SpykeeController::STATE_ERROR;
 		}
 		$this->writeLog('Envoi vers le robot la trame : '.bin2hex($msg)."\r\n", 3);
+		
+		return $this->getResponse($type);
+	}
 	
-		/*
-		 * Reception de la réponse du Robot
-		*/
+	protected function getResponse($requestType){
 		if(socket_recv($this->_robotSocket, $response, self::PAQUET_HEADER_SIZE, MSG_WAITALL ) === FALSE)
 		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
-				
-			die("Could not receive data: [$errorcode] $errormsg \n");
-			return FALSE;
+		
+			$this->writeLog('Aucune trame de réponse retournée ['.$errorCode.'] '.$errorMsg."\r\n", 1);
+			return SpykeeController::STATE_ERROR;
 		}
 		$response = bin2hex($response);
 		$header = hex2bin($response[0].$response[1].$response[2].$response[3]);
 		$type = base_convert($response[4].$response[5], 16, 10);
 		$length = base_convert($response[6].$response[7].$response[8].$response[9], 16, 10);
-	
+		
 		$this->writeLog('Paquet reçue : header='.$header.', type='.$type.', len='.$length."\r\n", 3);
 		echo ' Paquet reçue : header='.$header.', type='.$type.', len='.$length."\r\n";
-	
+		
 		if (!empty($length) AND $length>0){
 			if(socket_recv($this->_robotSocket, $data, $length, MSG_WAITALL ) === FALSE)
 			{
 				$errorcode = socket_last_error();
 				$errormsg = socket_strerror($errorcode);
 					
-				die("Could not receive data: [$errorcode] $errormsg \n");
-				return FALSE;
+				$this->writeLog('Impossible de lire des donnée renvoyée ['.$errorCode.'] '.$errorMsg."\r\n", 1);
+				return SpykeeController::STATE_ERROR;
 			}
 		}
-	
+		$this->writeLog('Donnée transportée : '.bin2hex($data)."\r\n", 3);
+		
 		echo 'Donnée reçue :'.$data."\r\n";
-	
+		
 		/*
 		 * Gestion de la réponse
 		*/
-		$return = TRUE;
+		$return = SpykeeController::STATE_OK; // En attente de tout coder
 		switch($type){
 			case self::PAQUET_TYPE_AUDIO:
-	
+		
 				break;
 			case self::PAQUET_TYPE_VIDEO:
-	
+		
 				break;
 			case self::PAQUET_TYPE_POWER:
-	
+				$this->_powerLevel = $data;
+				$return = $this->_powerLevel;
 				break;
 			case self::PAQUET_TYPE_AUTH_REPLY:
+				if ($requestType == self::PAQUET_TYPE_AUTH_REQUEST)
+					$return = SpykeeController::STATE_OK;
+				else
+					$return = SpykeeController::STATE_ERROR;
 				echo 'Auth Reply reçue'."\r\n";
 				break;
 			case self::PAQUET_TYPE_STOP:
-	
+		
 				break;
 			case self::PAQUET_TYPE_WIRELESS_NETWORKS:
-	
+		
 				break;
 			case self::PAQUET_TYPE_CONFIG:
-	
+		
 				break;
 			case self::PAQUET_TYPE_LOG:
-	
+		
 				break;
-	
+		
 			default:
 				echo 'Paquet non reconnu'."\r\n";
-				$this->writeLog('Paquet inconnu reçu avec comme type : '.$type, 1);
+				$this->writeLog('Paquet inconnu reçu avec comme type : '.$type."\r\n", 1);
+				$return = SpykeeController::STATE_ERROR;
 				break;
 		}
 		
@@ -187,31 +199,23 @@ class SpykeeClientRobot {
 	}
 	
 	public function move($left, $right){
-	
-		if ($this->sendPacketToRobot(self::PAQUET_TYPE_MOVE, pack('CC', $left, $right)))
-			return SpykeeController::STATE_OK;
-		else
-			return SpykeeController::STATE_ERROR;
+		return $this->sendPacketToRobot(self::PAQUET_TYPE_MOVE, pack('CC', $left, $right));
 	}
 	
 	public function left(){
-	
 		return $this->move(140, 110);
-	
 	}
 	
 	public function right(){
-	
 		return $this->move(110, 140);
-	
 	}
 	
 	public function forward(){
-	
+		return $this->move(125 - $this->_moveSpeed, 125 - $this->_moveSpeed);
 	}
 	
 	public function back(){
-	
+		return $this->move(125 + $this->_moveSpeed, 125 + $this->_moveSpeed);
 	}
 	
 	public function stop(){
@@ -266,6 +270,15 @@ class SpykeeClientRobot {
 			return SpykeeController::STATE_OK;
 		else
 			return SpykeeController::STATE_ERROR;
+	}
+	
+	public function get_power_level(){
+		return $this->_powerLevel;
+	}
+	
+	public function refresh_power_level(){
+		$this->_powerLevel = $this->sendPacketToRobot(self::PAQUET_TYPE_POWER);
+		return $this->_powerLevel;
 	}
 }
 

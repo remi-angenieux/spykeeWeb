@@ -1,24 +1,11 @@
 <?php
 
-class SpykeeControllerClient
-{
-	/*
-	 * Actions
-	*/
-	const TURNLEFT = 1;
-	const TURNRIGHT = 2;
-	const FORWARD = 3;
-	const BACK = 4;
-	const STOP = 5;
-	const STOPSERVER = 13;
-	const MOVE = 'MV';
-
+class SpykeeControllerClient{
 	/*
 	 * Etats de l'action
 	*/
 	const STATEOK = 1;
 	const STATEERROR = 0;
-
 
 
 	/*
@@ -29,8 +16,7 @@ class SpykeeControllerClient
 	private $_serverIp;
     private $_sock;
     
-    function __construct($robotName, $serverIp, $serverPort)
-    {
+    function __construct($robotName, $serverIp, $serverPort){
     	$this->_serverPort = $serverPort;
     	$this->_robotName = $robotName;
     	$this->_serverIp = $serverIp;
@@ -38,11 +24,9 @@ class SpykeeControllerClient
     }
 
 
-	private function connectToTheServer()
-	{
+	private function connectToTheServer(){
 		//Creation of the socket
-		if(!($this->_sock = socket_create(AF_INET, SOCK_STREAM, 0))) //Can't connect
-		{
+		if(!($this->_sock = socket_create(AF_INET, SOCK_STREAM, 0))){ //Can't connect
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 			die("Couldn't create socket: [$errorcode] $errormsg \n");
@@ -50,8 +34,7 @@ class SpykeeControllerClient
 
 		echo "Socket created \n";                            //Connected
 
-		if(!socket_connect($this->_sock, $this->_serverIp, $this->_serverPort))
-		{
+		if(!socket_connect($this->_sock, $this->_serverIp, $this->_serverPort)){
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 
@@ -62,11 +45,9 @@ class SpykeeControllerClient
 	}
 
 
-	public function sendAction($message)
-	{
+	public function sendAction($message){
 		
-		if(!socket_send($this->_sock ,$message , strlen($message) , 0))
-		{
+		if(!socket_send($this->_sock ,$message , strlen($message) , 0)){
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 
@@ -86,8 +67,7 @@ class SpykeeControllerClient
 	}
 
 
-	private function closeSocket()
-	{
+	private function closeSocket(){
 		socket_close($this->_sock);
 		/*if(!($sock = socket_create(AF_INET, SOCK_STREAM, 0)))
 		{
@@ -99,23 +79,24 @@ class SpykeeControllerClient
 
 
 
-	public function forward()  //Tout droit
-	{
-		$this->sendAction(self::FORWARD);
+	public function forward(){  //Tout droit
+		$this->sendAction(SpykeeController::FORWARD);
 	}
-	public function backward()  //en Arriere
-	{
-		$this->sendAction(self::BACKWARD);
+	
+	public function back(){  //en Arriere
+		$this->sendAction(SpykeeController::BACK);
 	}
-
-
-	public function turnLeft() //Tourne a gauche
-	{
-		$this->sendAction(self::TURNLEFT);
+	
+	public function turnLeft(){ //Tourne a gauche
+		$this->sendAction(SpykeeController::TURN_LEFT);
 	}
-	public function turnRight() //Tourne a droite
-	{
-		$this->sendAction(self::TURNRIGHT);
+	
+	public function turnRight(){ //Tourne a droite
+		$this->sendAction(SpykeeController::TURN_RIGHT);
+	}
+	
+	public function stopServer(){
+		
 	}
 
 	function __destruct(){

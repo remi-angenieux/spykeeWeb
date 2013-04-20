@@ -7,6 +7,24 @@ class SpykeeController{
 	const STATE_ERROR = 0;
 	
 	/*
+	 * Actions
+	 */
+	const TURN_LEFT = 1;
+	const TURN_RIGHT = 2;
+	const FORWARD = 3;
+	const BACK = 4;
+	const STOP = 5;
+	const ACTIVATE = 6;
+	const CHARGE_STOP = 7;
+	const DOCK = 8;
+	const DOCK_CANCEL = 9;
+	const WIRELESS_NETWORKS = 10;
+	const GET_LOG = 11;
+	const GET_CONFIG = 12;
+	const STOP_SERVER = 13;
+	const MOVE = 'MV';
+	
+	/*
 	 * Configuration
 	 */
 	const TIME_ZONE = 'Europe/Paris';
@@ -21,7 +39,7 @@ class SpykeeController{
 	const LOG_LEVEL = 3;
 	
 	const ROBOT_PORT = 9000;
-	const LISTEN_TIME = 10000000;
+	const LISTEN_TIME = 10000000; // Temps de scrutation des paquets en nanosecondes
 } 
 
 ?>

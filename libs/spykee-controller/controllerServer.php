@@ -9,17 +9,6 @@ class SpykeeControllerServer{
 	private static $_noController = 0;
 
 	/*
-	 * Actions
-	*/
-	const TURN_LEFT = 1;
-	const TURN_RIGHT = 2;
-	const FORWARD = 3;
-	const BACK = 4;
-	const STOP = 5;
-	const STOP_SERVER = 13;
-	const MOVE = 'MV';
-	
-	/*
 	 * Attributs
 	 */
 	protected $_stopServer = false;
@@ -197,16 +186,16 @@ class SpykeeControllerServer{
 							$condMove = FALSE;*/
 						
 						switch($input){
-							case self::TURN_LEFT:
+							case SpykeeController::TURN_LEFT:
 								$state = $this->_SpykeeClientRobot->left();
 								break;
-							case self::TURN_RIGHT:
+							case SpykeeController::TURN_RIGHT:
 								$state = $this->_SpykeeClientRobot->right();
 								break;
-							case self::FORWARD:
+							case SpykeeController::FORWARD:
 								$state = $this->_SpykeeClientRobot->forward();
 								break;
-							case self::STOP_SERVER:
+							case SpykeeController::STOP_SERVER:
 								$this->_stopServer=true;
 								foreach($client_socks as $key => $connection){
 									socket_close($client_socks[$key]);
@@ -216,10 +205,10 @@ class SpykeeControllerServer{
 								unset($sock);
 								$this->writeLog('Le serveur à été éteint'."\r\n", 1);
 								break;
-							case self::STOP:
+							case SpykeeController::STOP:
 								$stsate = $this->_SpykeeClientRobot->stop();
 								break;
-							case ((preg_match('#^'.self::MOVE.'([0-9]+):([0-9]+)#', $input, $move)) ? $input : null) :
+							case ((preg_match('#^'.SpykeeController::MOVE.'([0-9]+):([0-9]+)#', $input, $move)) ? $input : null) :
 								$state = $this->_SpykeeClientRobot->move($move[1], $move[2]);
 								break;
 	

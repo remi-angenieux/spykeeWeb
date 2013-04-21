@@ -12,7 +12,7 @@ class SpykeeClientRobot {
 	const PAQUET_TYPE_VIDEO = 2;
 	const PAQUET_TYPE_POWER = 3;
 	const PAQUET_TYPE_MOVE = 5;
-	const PAQUET_TYPE_FILE =  6;
+	const PAQUET_TYPE_FILE = 6;
 	const PAQUET_TYPE_PLAY = 7;
 	const PAQUET_TYPE_STOP = 8;
 	const PAQUET_TYPE_AUTH_REQUEST = 10;
@@ -22,6 +22,13 @@ class SpykeeClientRobot {
 	const PAQUET_TYPE_STREAMCTL = 15;
 	const PAQUET_TYPE_ENGINE = 16;
 	const PAQUET_TYPE_LOG = 17;
+	
+	const SENDFILE_FLAG_NONE= 0;
+	const SENDFILE_FLAG_BEGIN= 1;
+	const SENDFILE_FLAG_END= 2;
+	
+	const FILE_ID_MUSIC= 64;
+	const FILE_ID_FIRMWARE= 66;
 	
 	/*
 	 * Définition des attributs
@@ -235,7 +242,38 @@ class SpykeeClientRobot {
 	}
 	
 	public function send_mp3($fileName){
+	$this->send_file($fileName, self::FILE_ID_MUSIC);
 	}
+	
+	public function send_file($fileName, $file_id){
+		 
+			$flag =self::SENDFILE_FLAG_BEGIN;
+			print "Sending file $fileName\n";
+			$fh=fopen($fileName,'r');
+			$maxlen = self::PAQUET_DATA_SIZE_MAX - self::PAQUET_HEADER_SIZE;
+			while ($contentlen = fread($fh, $content, $maxlen)) {
+			if ($maxlen !=  $contentlen) {
+			# End of file, set the end flag
+				$flag | self::SENDFILE_FLAG_END;
+			}
+			$this->sendPacketToRobot(self::PAQUET_TYPE_FILE ,pack("CCA*", $file_id, $flag, $content));
+			if ($flag & self::SENDFILE_FLAG_BEGIN) {
+			print "<";
+			} 
+			if ($flag & self::SENDFILE_FLAG_END) {
+			print ">";
+			} 
+			else {
+			print ".";
+			}
+			
+				# Clear begin flag
+				$flag &= ~ self::SENDFILE_FLAG_BEGIN;
+			}
+			fclose($fh);
+				print "\n";
+			}
+	
 	
 	public function audio_play($idFile){
 		if ($this->sendPacketToRobot(self::PAQUET_TYPE_PLAY, pack('C', $idFile)))

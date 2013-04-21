@@ -1,16 +1,17 @@
 <?php
 // Pour que le script puisse tourner en serveur
 set_time_limit(0);
-set_include_path(get_include_path().PATH_SEPARATOR.'/home/webServer/spykeeweb/libs');
-require_once('spykee-robot/clientRobot.php');
-require_once('spykee-controller/controller.php');
+if (!defined('PATH'))
+	define('PATH', realpath('../../').'/');
+require_once(PATH.'libs/spykee-robot/clientRobot.php');
+require_once(PATH.'libs/spykee-controller/controller.php');
 
 class SpykeeControllerServer{
 	private static $_noController = 0;
 
 	/*
 	 * Attributs
-	 */
+	*/
 	protected $_stopServer = false;
 	protected $_logFile;
 	protected $_SpykeeClientRobot;
@@ -20,7 +21,7 @@ class SpykeeControllerServer{
 	protected $_robotUsername;
 	protected $_robotPassword;
 	protected $_powerLevel = NULL; // NOTE : Non utilisé pour le moment
-	
+
 	function __construct($robotName, $robotIp, $serverPort='', $robotUsername=SpykeeController::DEFAULT_USERNAME, $robotPassword=SpykeeController::DEFAULT_PASSWORD){
 		self::$_noController++;
 		date_default_timezone_set(SpykeeController::TIME_ZONE); // Pour les dates des logs
@@ -32,12 +33,12 @@ class SpykeeControllerServer{
 		$this->_robotUsername = $robotUsername;
 		$this->_robotPassword = $robotPassword;
 		$this->_logFile = realpath(__DIR__).'/../../logs/'.$this->_robotName.'-ControllerServer.log';
-		
+
 		$this->writeLog('Démarrage du controleur'."\r\n", 1);
-		
+
 		// Connexion au robot
 		$this->_SpykeeClientRobot = new SpykeeClientRobot($this->_robotName, $this->_robotIp, $this->_robotUsername, $this->_robotPassword);
-		
+
 		// Ecoute des demandes d'actions
 		$this->listenNetwork();
 	}
@@ -47,7 +48,7 @@ class SpykeeControllerServer{
 			$content = date('[d/m/y] à H:i:s ', time());
 			$content .= '@'.$this->_robotName.'('.$this->_robotIp.') : ';
 			$content .= $txt;
-	
+
 			/*
 			 * Création/Mise à jour du fichier de log
 			*/
@@ -171,7 +172,7 @@ class SpykeeControllerServer{
 					 * Code exécuté
 					*/
 					$input = socket_read($client_socks[$i], 1024);
-					
+
 					// Si le client se déconnecte
 					if ($input == null){
 						//zero length string meaning disconnected, remove and close the socket
@@ -184,17 +185,17 @@ class SpykeeControllerServer{
 					else{
 						socket_getpeername($client_socks[$i], $clientIp, $clientPort);
 						$this->writeLog('Le client '.$clientIp.':'.$clientPort.' à envoyer au serveur : "'.bin2hex($input).'"'."\r\n", 3);
-					
+							
 						/*
 						 * Envoie au robot l'action demandé par le client
-						 */
+						*/
 						/*if(preg_match('#^'.self::SERVER_MOVE.'([0-9]+):([0-9]+)#', $input, $move) == 1)
 							$condMove = TRUE;
 						else
 							$condMove = FALSE;*/
-						
+
 						$responseType = $input; // Par défaut le type de réponse est celui qui à été demandé
-						
+
 						switch($input){
 							case SpykeeController::TURN_LEFT:
 								$response = $this->_SpykeeClientRobot->left();
@@ -258,7 +259,7 @@ class SpykeeControllerServer{
 							case ((preg_match('#^'.SpykeeController::MOVE.'([0-9]+):([0-9]+)#', $input, $move)) ? $input : null) :
 								$state = $this->_SpykeeClientRobot->move($move[1], $move[2]);
 								break;
-	
+
 							default:
 								$state = SpykeeController::STATE_ERROR;
 								$reponse = NULL;
@@ -266,10 +267,10 @@ class SpykeeControllerServer{
 								$this->writeLog('Trame inconnu : '.bin2hex($input).'"'."\r\n", 1);
 								break;
 						}
-	
+
 						/*
 						 * Envoie au client la réponse du robot
-						 */
+						*/
 						echo 'Reponse du Robot : '.$response."\r\n";
 						if (!empty($response) AND ( $response === SpykeeController::STATE_OK OR $response === SpykeeController::STATE_ERROR )){
 							$state = $response;
@@ -283,20 +284,20 @@ class SpykeeControllerServer{
 							$state = SpykeeController::STATE_ERROR;
 							$data=NULL;
 						}
-						
+
 						if(!$this->_stopServer){
 							if (!empty($data))
 								$responseLength = strlen($data);
 							else
 								$responseLength = 0;
-							
+
 							$reply = pack('a3CCn', 'CTR', $responseType, $state, $responseLength);
 							if (!empty($data))
 								$reply .= $data;
 							if( !socket_send($client_socks[$i], $reply, strlen($reply), 0)){
 								$errorcode = socket_last_error();
 								$errormsg = socket_strerror($errorcode);
-								 
+									
 								die("Could not send data: [$errorcode] $errormsg \n");
 							}
 							echo 'Envoie de la trame : '.$reply."\r\n";
@@ -308,7 +309,7 @@ class SpykeeControllerServer{
 			time_nanosleep (0, SpykeeController::LISTEN_TIME);
 		}
 	}
-	
+
 	function __destruct(){
 		self::$_noController--;
 	}

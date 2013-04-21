@@ -5,6 +5,7 @@ set_include_path(get_include_path().PATH_SEPARATOR.'/home/webServer/spykeeweb/li
 require_once 'spykee-controller/controllerClient.php';
 $test = new SpykeeControllerClient('Robot1', '127.0.0.1', '2000');
 
-echo $test->turnLeft();
+echo $test->Forward();
+//echo $test->audio_play();
 echo '<br />Fin de la page';
 ?>

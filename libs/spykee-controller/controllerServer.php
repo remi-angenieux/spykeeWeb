@@ -234,8 +234,14 @@ class SpykeeControllerServer{
 							case SpykeeController::GET_LOG:
 								$response = $this->_SpykeeClientRobot->get_log();
 								break;
+							case SpykeeController::SEND_MP3:
+								$response = $this->_SpykeeClientRobot->send_mp3('./../music/music.mp3');
+								break;
 							case SpykeeController::GET_CONFIG:
 								$response = $this->_SpykeeClientRobot->get_config();
+								break;
+							case SpykeeController::AUDIO_PLAY:
+								$response = $this->_SpykeeClientRobot->audio_play('./../music/music.mp3');
 								break;
 							case SpykeeController::STOP_SERVER:
 								$reponse = NULL;

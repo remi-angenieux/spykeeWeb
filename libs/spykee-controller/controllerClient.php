@@ -133,10 +133,18 @@ class SpykeeControllerClient{
 		$this->sendAction(SpykeeController::DOCK_CANCEL);
 	}
 
+	public function send_mp3(){
+		$this->sendAction(SpykeeController::SEND_MP3);
+	}
+	
+	public function audio_play(){
+		$this->sendAction(SpykeeController::AUDIO_PLAY);
+	}
+	
 	public function wireless_networks(){
 		$this->sendAction(SpykeeController::WIRELESS_NETWORKS);
 	}
-
+	
 	public function get_log(){
 		$this->sendAction(SpykeeController::GET_LOG);
 	}

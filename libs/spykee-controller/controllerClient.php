@@ -1,5 +1,5 @@
 <?php
-require_once 'spykee-controller/controller.php';
+require_once(PATH.'libs/spykee-controller/controller.php');
 
 class SpykeeControllerClient{
 
@@ -9,14 +9,14 @@ class SpykeeControllerClient{
 	private $_serverPort;
 	private $_robotName;
 	private $_serverIp;
-    private $_sock;
-    
-    function __construct($robotName, $serverIp, $serverPort){
-    	$this->_serverPort = $serverPort;
-    	$this->_robotName = $robotName;
-    	$this->_serverIp = $serverIp;
-    	$this->connectToTheController();
-    }
+	private $_sock;
+
+	function __construct($robotName, $serverIp, $serverPort){
+		$this->_serverPort = $serverPort;
+		$this->_robotName = $robotName;
+		$this->_serverIp = $serverIp;
+		$this->connectToTheController();
+	}
 
 
 	protected function connectToTheController(){
@@ -43,7 +43,7 @@ class SpykeeControllerClient{
 
 
 	protected function sendAction($message){
-		
+
 		if(!socket_send($this->_sock, $message, strlen($message), 0)){
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
@@ -54,7 +54,7 @@ class SpykeeControllerClient{
 		echo "Message send successfully \n";
 		return $this->getResponse();
 	}
-	
+
 	protected function getResponse(){
 		if(socket_recv($this->_sock, $response, SpykeeController::PAQUET_HEADER_SIZE, MSG_WAITALL) === FALSE ){
 			$errorcode = socket_last_error();
@@ -69,7 +69,7 @@ class SpykeeControllerClient{
 		$state = base_convert($response[8].$response[9], 16, 10);
 		$length = base_convert($response[10].$response[11].$response[12].$response[13], 16, 10);
 		echo ' Paquet reçue : header='.$header.', type='.$type.', len='.$length."\r\n";
-		
+
 		if (!empty($length) AND $length>0){
 			if(socket_recv($this->_sock, $data, $length, MSG_WAITALL ) === FALSE)
 			{
@@ -81,7 +81,7 @@ class SpykeeControllerClient{
 			}
 			echo 'Donnée reçue :'.$data."\r\n";
 		}
-		
+
 		return $response;
 	}
 
@@ -89,9 +89,9 @@ class SpykeeControllerClient{
 	protected function closeSocket(){
 		socket_close($this->_sock);
 		/*if(!($sock = socket_create(AF_INET, SOCK_STREAM, 0)))
-		{
+		 {
 
-			die("Socket has been succefully closed \n");
+		die("Socket has been succefully closed \n");
 		}*/
 
 	}
@@ -100,51 +100,55 @@ class SpykeeControllerClient{
 	public function turnLeft(){ //Tourne a gauche
 		$this->sendAction(SpykeeController::TURN_LEFT);
 	}
-	
+
 	public function turnRight(){ //Tourne a droite
 		$this->sendAction(SpykeeController::TURN_RIGHT);
 	}
-	
+
 	public function forward(){  //Tout droit
 		$this->sendAction(SpykeeController::FORWARD);
 	}
-	
+
 	public function back(){  //en Arriere
 		$this->sendAction(SpykeeController::BACK);
 	}
-	
+
 	public function stop(){
 		$this->sendAction(SpykeeController::STOP);
 	}
-	
+
 	public function activate(){
 		$this->sendAction(SpykeeController::ACTIVATE);
 	}
-	
+
 	public function charge_stop(){
 		$this->sendAction(SpykeeController::CHARGE_STOP);
 	}
-	
+
 	public function dock(){
 		$this->sendAction(SpykeeController::DOCK);
 	}
-	
+
 	public function dock_cancel(){
 		$this->sendAction(SpykeeController::DOCK_CANCEL);
-	}
-	
-	public function wireless_networks(){
-		$this->sendAction(SpykeeController::WIRELESS_NETWORKS);
 	}
 
 	public function send_mp3(){
 		$this->sendAction(SpykeeController::SEND_MP3);
 	}
 	
+	public function audio_play(){
+		$this->sendAction(SpykeeController::AUDIO_PLAY);
+	}
+	
+	public function wireless_networks(){
+		$this->sendAction(SpykeeController::WIRELESS_NETWORKS);
+	}
+	
 	public function get_log(){
 		$this->sendAction(SpykeeController::GET_LOG);
 	}
-	
+
 	public function get_config(){
 		$this->sendAction(SpykeeController::GET_CONFIG);
 	}

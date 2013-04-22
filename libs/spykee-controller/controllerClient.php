@@ -151,10 +151,18 @@ class SpykeeControllerClient{
 	public function audio_play(){
 		$this->sendAction(SpykeeController::AUDIO_PLAY);
 	}
+	public function audio_stop(){
+		$this->sendAction(SpykeeController::AUDIO_STOP);
+	}
 	
 	public function stopServer(){
-		
+		$this->sendAction(SpykeeController::STOP_SERVER);
 	}
+	
+	public function test(){
+		$this->sendAction(SpykeeController::TEST);
+	}
+	
 
 	function __destruct(){
 		$this->closeSocket();

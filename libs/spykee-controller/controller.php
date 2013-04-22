@@ -30,7 +30,9 @@ class SpykeeController{
 	const CONNECTION_TO_SERVER = 16;
 	const SEND_MP3= 17;
 	const AUDIO_PLAY= 18;
+	const AUDIO_STOP= 19;
 	const MOVE = 'MV';
+
 	
 	// Longueur des paquets
 	const PAQUET_HEADER_SIZE = 7;

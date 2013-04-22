@@ -33,10 +33,7 @@ class SpykeeController{
 	const AUDIO_STOP= 19;
 	const MOVE = 'MV';
 
-<<<<<<< HEAD
-	
-=======
->>>>>>> branch 'master' of git@git.assembla.com:spykeeweb.git
+
 	// Longueur des paquets
 	const PAQUET_HEADER_SIZE = 7;
 

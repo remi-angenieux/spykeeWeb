@@ -292,12 +292,12 @@ class SpykeeClientRobot {
 			return SpykeeController::STATE_ERROR;
 	}
 	
-	/*public function audio_stop(){
+	public function audio_stop(){
 		if ($this->sendPacketToRobot(self::PAQUET_TYPE_STOP))
 			return SpykeeController::STATE_OK;
 		else
 			return SpykeeController::STATE_ERROR;
-	}*/
+	}
 	
 	public function wireless_networks(){
 		if ($this->sendPacketToRobot(self::PAQUET_TYPE_WIRELESS_NETWORKS))

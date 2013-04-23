@@ -124,7 +124,7 @@ class SpykeeControllerServer{
 			//now call select - blocking call
 			$write=NULL;
 			$except=NULL;
-			if(socket_select($read, $write, $except, 0) === false){
+			if(socket_select($read, $write, $except, 0, NULL) === false){
 				$errorcode = socket_last_error();
 				$errormsg = socket_strerror($errorcode);
 					

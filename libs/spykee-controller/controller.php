@@ -34,6 +34,9 @@ class SpykeeController{
 
 	// Longueur des paquets
 	const PAQUET_HEADER_SIZE = 7;
+	
+	// Timeout de la Session ControllerClient -> ControllerServer
+	const CLIENT_SERVER_TIMEOUT = 120; // 2minutes
 
 	/*
 	 * Configuration

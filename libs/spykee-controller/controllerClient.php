@@ -21,47 +21,33 @@ class SpykeeControllerClient{
 
 	protected function connectToTheController(){
 		//Creation of the socket
-		if(!($this->_sock = socket_create(AF_INET, SOCK_STREAM, 0))){ //Can't connect
-			$errorcode = socket_last_error();
-			$errormsg = socket_strerror($errorcode);
+		$this->_sock = pfsockopen('tcp://'.$this->_serverIp, $this->_serverPort, $errorCode, $errorMsg, SpykeeController::CLIENT_SERVER_TIMEOUT);
+		if ($this->_sock === FALSE){
 			// TODO : Utiliser le gestionnaire d'erreur du site
 			die("Couldn't create socket: [$errorcode] $errormsg \n");
 		}
-
-		echo "Socket created \n";                            //Connected
-
-		if(!socket_connect($this->_sock, $this->_serverIp, $this->_serverPort)){
-			$errorcode = socket_last_error();
-			$errormsg = socket_strerror($errorcode);
-			// TODO : Utiliser le gestionnaire d'erreur du site
-			die("Could not connect: [$errorcode] $errormsg \n");
-		}
-
 		echo "Connection established \n";
-		$return = $this->getResponse();
 	}
 
 
 	protected function sendAction($message){
-
-		if(!socket_send($this->_sock, $message, strlen($message), 0)){
-			$errorcode = socket_last_error();
-			$errormsg = socket_strerror($errorcode);
+		if (fwrite($this->_sock, $message) === FALSE){
 			// TODO : Utiliser le gestionnaire d'erreur du site
-			die("Could not send data: [$errorcode] $errormsg \n");
+			die('Impossible d\'envoyer des données');
 		}
-
+		
 		echo "Message send successfully \n";
 		return $this->getResponse();
 	}
 
 	protected function getResponse(){
-		if(socket_recv($this->_sock, $response, SpykeeController::PAQUET_HEADER_SIZE, MSG_WAITALL) === FALSE ){
-			$errorcode = socket_last_error();
-			$errormsg = socket_strerror($errorcode);
+		// Récupération des données envoyées
+		$response = fread($this->_sock, SpykeeController::PAQUET_HEADER_SIZE);
+		if ($response === FALSE){
 			// TODO : Utiliser le gestionnaire d'erreur du site
-			die("Could not send data: [$errorcode] $errormsg \n");
+			die('Impossible de lire l\'entête');
 		}
+		
 		$response = bin2hex($response);
 		echo 'Reponse : '.$response;
 		$header = hex2bin($response[0].$response[1].$response[2].$response[3].$response[4].$response[5]);
@@ -71,13 +57,10 @@ class SpykeeControllerClient{
 		echo ' Paquet reçue : header='.$header.', type='.$type.', len='.$length."\r\n";
 
 		if (!empty($length) AND $length>0){
-			if(socket_recv($this->_sock, $data, $length, MSG_WAITALL ) === FALSE)
-			{
-				$errorcode = socket_last_error();
-				$errormsg = socket_strerror($errorcode);
+			$data = fread($this->_sock, $length);
+			if ($data === FALSE){
 				// TODO : Utiliser le gestionnaire d'erreur du site
-				die('Impossible de lire des donnée renvoyée ['.$errorCode.'] '.$errorMsg."\r\n");
-				return SpykeeController::STATE_ERROR;
+				die('Impossible de lire les données');
 			}
 			echo 'Donnée reçue :'.$data."\r\n";
 		}
@@ -87,13 +70,7 @@ class SpykeeControllerClient{
 
 
 	protected function closeSocket(){
-		socket_close($this->_sock);
-		/*if(!($sock = socket_create(AF_INET, SOCK_STREAM, 0)))
-		 {
-
-		die("Socket has been succefully closed \n");
-		}*/
-
+		fclose($this->_sock);
 	}
 
 
@@ -158,7 +135,7 @@ class SpykeeControllerClient{
 	}
 
 	function __destruct(){
-		$this->closeSocket();
+		//$this->closeSocket();
 	}
 
 

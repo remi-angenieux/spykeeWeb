@@ -37,7 +37,7 @@ class SpykeeControllerClient{
 		}
 		
 		echo "Message send successfully \n";
-		return $this->getResponse();
+		//return $this->getResponse();
 	}
 
 	protected function getResponse(){

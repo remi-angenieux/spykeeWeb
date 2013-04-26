@@ -1,17 +1,14 @@
 <?php
-class SpykeeController{
-	/*
-	 * Etats de l'action
-	*/
-	const STATE_OK = 1;
-	const STATE_ERROR = 0;
-
+require_once(PATH.'libs/spykee-robot/robot.php');
+/*
+ * Constantes mise en commun avec le Client du Controller
+ */
+class SpykeeController extends SpykeeRobot{
 	/*
 	 * Protocole Controller
 	*/
 
 	// Actions
-	const UNDEFINED_ACTION = 0;
 	const TURN_LEFT = 1;
 	const TURN_RIGHT = 2;
 	const FORWARD = 3;
@@ -34,28 +31,6 @@ class SpykeeController{
 
 	// Longueur des paquets
 	const PAQUET_HEADER_SIZE = 7;
-	
-	// Timeout de la Session ControllerClient -> ControllerServer
-	const CLIENT_SERVER_TIMEOUT = 120; // 2minutes
-
-	/*
-	 * Configuration
-	*/
-	const TIME_ZONE = 'Europe/Paris';
-	const DEFAULT_USERNAME = 'admin';
-	const DEFAULT_PASSWORD = 'admin';
-
-	const MAX_CONNECTIONS = 10;
-	const SERVER_FIRST_PORT = 2000; // Numero de port du premier server
-	const SERVEUR_IP = '127.0.0.1';
-	const CLIENT_IP = '127.0.0.1'; // Utilisé lors du flitrage des trames
-	// 1 - Log juste les erreurs
-	// 2 - Log les connexions
-	// 3 - Log tout (erreurs, connexion, actions)
-	const LOG_LEVEL = 3;
-
-	const ROBOT_PORT = 9000;
-	const LISTEN_TIME = 10000000; // Temps de scrutation des paquets en nanosecondes
 }
 
 ?>

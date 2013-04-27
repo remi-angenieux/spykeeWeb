@@ -45,12 +45,13 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 	protected $_robotSocket=NULL;
 	protected $_robotStream=NULL;
 	protected $_logFile;
-	protected $_moveSpeed = 5;
+	protected $_moveSpeed = 100;
 	protected $_powerLevel = NULL;
 	protected $_reconnection=0;
 
 	function __construct($robotName, $robotIp, $robotUsername=self::DEFAULT_USERNAME, $robotPassword=self::DEFAULT_PASSWORD){
 		date_default_timezone_set(self::TIME_ZONE); // Pour les dates des logs
+		$this->_reconnection=0;
 		// TODO vérifier les valeurs entrées avec un geter
 		$this->_robotName = $robotName;
 		$this->_robotIp = $robotIp;
@@ -116,8 +117,9 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 		/*
 		 * Envoie du paquet vers le robot
 		*/
-		$strlen=(isset($data)) ? strlen($data) : 0;
+		$strlen=(!empty($data)) ? strlen($data) : 0;
 		$msg = pack('a2Cn', 'PK', $type, $strlen);
+		echo "\r\n".'Entête : '.bin2hex($msg);
 		if ($strlen>0)
 			$msg .= $data;
 		if( !socket_send($this->_robotSocket, $msg, strlen($msg), MSG_DONTROUTE)){
@@ -125,16 +127,15 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 			$errorMsg = socket_strerror($errorCode);
 			
 			if ($errorCode == 32 ){ // Broken pipe. Et relance une connexion
-				echo 'Broken pipe. Reconnexion...';
+				$this->_reconnection++;
+				echo 'Broken pipe. Reconnexion...'."\r\n";
 				// Si le nombre de tentative dépasse le nombre max de tentative
 				if ($this->_reconnection >= self::NB_RECONNECTION){
 					$this->writeLog('Impossible de se reconnecter au robot après '.$this->_reconnection.' tentatives.'."\r\n", 1);
 					return new SpykeeResponse(self::STATE_ERROR, 'Nombre de tentative de reconnexion dépassé');
 				}
-				$this->_reconnection++;
 				$this->initSocket();
-				// TODO vérifier qu'une nouvelle authentification n'est pas requise
-				//$this->authentificationRobot();
+				$this->authentificationRobot();
 				$return = $this->sendPacketToRobot($type, $data);
 				if ($return->getState() == self::STATE_OK) // Reinit du compteur
 					$this->_reconnection=0;
@@ -145,7 +146,8 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 				return new SpykeeResponse(self::STATE_ERROR, 'Impossible d\'envoyer le paquet');
 			}
 		}
-		echo '<br />Envoie de la trame :'.$msg.' ('.bin2hex($msg).')';
+		echo "\r\n".'Data : '.bin2hex($data);
+		echo "\r\n".'Envoie de la trame :'.$msg.' ('.bin2hex($msg).')';
 		$this->writeLog('Envoi vers le robot la trame : '.bin2hex($msg)."\r\n", 3);
 		return new SpykeeResponse(self::STATE_OK, 'Le paquet à bien été envoyé');
 	}
@@ -241,22 +243,23 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 
 	public function move($left, $right){
 		return $this->sendPacketToRobot(self::PAQUET_TYPE_MOVE, pack('CC', $left, $right));
+		//return $this->sendPacketToRobot(self::PAQUET_TYPE_MOVE, $left. $right);
 	}
 
 	public function left(){
-		return $this->move(140, 110);
+		return $this->move(150, 100);
 	}
 
 	public function right(){
-		return $this->move(110, 140);
+		return $this->move(100, 150);
 	}
 
 	public function forward(){
-		return $this->move(125 - $this->_moveSpeed, 125 - $this->_moveSpeed);
+		return $this->move($this->_moveSpeed, $this->_moveSpeed);
 	}
 
 	public function back(){
-		return $this->move(125 + $this->_moveSpeed, 125 + $this->_moveSpeed);
+		return $this->move(128 + $this->_moveSpeed, 128 + $this->_moveSpeed);
 	}
 
 	public function stop(){

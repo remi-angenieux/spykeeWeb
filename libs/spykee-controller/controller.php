@@ -27,6 +27,17 @@ class SpykeeController extends SpykeeRobot{
 	const CONNECTION_TO_SERVER = 16;
 	const SEND_MP3= 17;
 	const AUDIO_PLAY= 18;
+	
+	const HOLDING_LEFT = 20;
+	const HOLDING_RIGHT = 21;
+	const HOLDING_FORWARD = 22;
+	const HOLDING_BACK = 23;
+	const STOP_HOLDING_LEFT = 24;
+	const STOP_HOLDING_RIGHT = 25;
+	const STOP_HOLDING_FORWARD = 26;
+	const STOP_HOLDING_BACK = 27;
+	
+	// FIXME Changer la programmation de l'action Move via un nouveau protocole
 	const MOVE = 'MV';
 
 	// Longueur des paquets

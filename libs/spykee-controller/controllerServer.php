@@ -36,7 +36,11 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	// Attributs pour la partie réception des requêtes client (Serveur)
 	protected $_socketServer = NULL;
 	protected $_socketsClient = array();
-	//protected $_socketsClientToRead = array();
+	// Attributs pour la partie envoie de paquet périodisé
+	protected $_holdingQueue = array('left' => FALSE,
+									'right' => FALSE,
+									'forward' => FALSE,
+									'back' => FALSE);
 	
 
 	function __construct($robotName, $robotIp, $serverPort, $robotUsername='', $robotPassword=''){
@@ -83,20 +87,17 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	}
 	
 	protected function mainLoop(){
-		$timeClient=microtime(true);
-		$timeRobot=microtime(true);
-		$timePeriodic=microtime(true);
-		
+		$timeClient=$timeRobot=$timePeriodic=microtime(true);
 		while (!$this->_stopServer){
-			if ( (microtime(true) - $timeClient) >= self::INTERVAL_LISTEN_CLIENT ){
+			if ( (microtime(true) - $timeClient) >= self::INTERVAL_LISTEN_CLIENT/100 ){
 				$this->listenClientsRequests();
 				$timeClient=microtime(true);
 			}
-			if ( (microtime(true) - $timeRobot) >= self::INTERVAL_LISTEN_ROBOT ){
+			if ( (microtime(true) - $timeRobot) >= self::INTERVAL_LISTEN_ROBOT/100 ){
 				$this->listenRobotResponses();
 				$timeRobot=microtime(true);
 			}
-			if ( (microtime(true) - $timePeriodic) >= self::INTERVAL_SEND_HOLDING ){
+			if ( (microtime(true) - $timePeriodic) >= self::INTERVAL_SEND_HOLDING/100 ){
 				$this->sendPeriodicPaquets();
 				$timePeriodic=microtime(true);
 			}
@@ -137,7 +138,6 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 		}
 		
 		$this->_socketsClient = array();
-		//$this->_socketsClientToRead = array();
 	}
 
 	protected function listenClientsRequests(){
@@ -311,6 +311,38 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 					else
 						$response = $request;
 					break;
+				case self::HOLDING_LEFT:
+					$this->holdingLeft();
+					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
+					break;
+				case self::HOLDING_RIGHT:
+					$this->holdingRight();
+					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
+					break;
+				case self::HOLDING_FORWARD:
+					$this->holdingForward();
+					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
+					break;
+				case self::HOLDING_BACK:
+					$this->holdingBack();
+					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
+					break;
+				case self::STOP_HOLDING_LEFT:
+					$this->stopHoldingLeft();
+					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
+					break;
+				case self::STOP_HOLDING_RIGHT:
+					$this->stopHoldingRight();
+					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
+					break;
+				case self::STOP_HOLDING_FORWARD:
+					$this->stopHoldingForward();
+					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
+					break;
+				case self::STOP_HOLDING_BACK:
+					$this->stopHoldingBack();
+					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
+					break;
 				// FIXME Changer la programmation de l'action Move via un nouveau protocole
 				case ((preg_match('#^'.self::MOVE.'([0-9]+):([0-9]+)#', $input, $move)) ? $input : null) :
 					$state = $this->_SpykeeClientRobot->move($move[1], $move[2]);
@@ -358,7 +390,58 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	 * Envoie les paquets qui doivent êtres envoyés à intervals réguliers
 	 */
 	protected function sendPeriodicPaquets(){
-		
+		if ($this->_holdingQueue['left'])
+			$this->_SpykeeClientRobot->left();
+		if ($this->_holdingQueue['right'])
+			$this->_SpykeeClientRobot->right();
+		if ($this->_holdingQueue['forward'])
+			$this->_SpykeeClientRobot->forward();
+		if ($this->_holdingQueue['back'])
+			$this->_SpykeeClientRobot->back();
+	}
+	
+	protected function holdingLeft(){
+		if ($this->_holdingQueue['right'])
+			$this->_holdingQueue['right'] = false;
+		$this->_holdingQueue['left'] = true;
+	}
+	
+	protected function holdingRight(){
+		if ($this->_holdingQueue['left'])
+			$this->_holdingQueue['left'] = false;
+		$this->_holdingQueue['right'] = true;
+	}
+	
+	protected function holdingForward(){
+		if ($this->_holdingQueue['back'])
+			$this->_holdingQueue['back'] = false;
+		$this->_holdingQueue['forward'] = true;
+	}
+	
+	protected function holdingBack(){
+		if ($this->_holdingQueue['forward'])
+			$this->_holdingQueue['forward'] = false;
+		$this->_holdingQueue['back'] = true;
+	}
+	
+	protected function stopHoldingLeft(){
+		$this->_holdingQueue['left'] = false;
+		$this->_SpykeeClientRobot->stop();
+	}
+	
+	protected function stopHoldingRight(){
+		$this->_holdingQueue['right'] = false;
+		$this->_SpykeeClientRobot->stop();
+	}
+	
+	protected function stopHoldingForward(){
+		$this->_holdingQueue['forward'] = false;
+		$this->_SpykeeClientRobot->stop();
+	}
+	
+	protected function stopHoldingBack(){
+		$this->_holdingQueue['back'] = false;
+		$this->_SpykeeClientRobot->stop();
 	}
 }
 

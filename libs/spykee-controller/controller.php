@@ -9,8 +9,9 @@ class SpykeeController extends SpykeeRobot{
 	*/
 
 	// Actions
-	const TURN_LEFT = 1;
-	const TURN_RIGHT = 2;
+	const MOVE = 0;
+	const LEFT = 1;
+	const RIGHT = 2;
 	const FORWARD = 3;
 	const BACK = 4;
 	const STOP = 5;
@@ -24,7 +25,7 @@ class SpykeeController extends SpykeeRobot{
 	const STOP_SERVER = 13;
 	const GET_POWER_LEVEL = 14;
 	const REFRESH_POWER_LEVEL = 15;
-	const CONNECTION_TO_SERVER = 16;
+	const CONNECTION_TO_CONTROLLER = 16;
 	const SEND_MP3= 17;
 	const AUDIO_PLAY= 18;
 	
@@ -36,12 +37,9 @@ class SpykeeController extends SpykeeRobot{
 	const STOP_HOLDING_RIGHT = 25;
 	const STOP_HOLDING_FORWARD = 26;
 	const STOP_HOLDING_BACK = 27;
-	
-	// FIXME Changer la programmation de l'action Move via un nouveau protocole
-	const MOVE = 'MV';
 
-	// Longueur des paquets
-	const PAQUET_HEADER_SIZE = 7;
+	// Longeur de l'entête du protocole de controller (ControllerClient <-> ControllerServer)
+	const CTR_PAQUET_HEADER_SIZE = 8;
 }
 
 ?>

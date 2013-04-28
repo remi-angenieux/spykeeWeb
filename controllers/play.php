@@ -22,5 +22,8 @@ class PlayController extends BaseController
 			$this->model->right();
 		if (!empty($_POST['down']))
 			$this->model->down();
+		
+		if (!empty($_POST['move']))
+			$this->model->move();
 	}
 }

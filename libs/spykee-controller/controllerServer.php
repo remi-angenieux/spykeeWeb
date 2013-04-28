@@ -9,18 +9,8 @@ require_once(PATH.'configs/spykeeControllerServer.php');
 require_once(PATH.'libs/spykee-robot/clientRobot.php');
 // Inclue l'objet utilisé lors des retours des différentes actions
 require_once(PATH.'libs/spykee-robot/robotResponse.php');
+
 class SpykeeControllerServer extends SpykeeConfigControllerServer{
-	
-	// Temps entre l'envoie de chaque paquet "périodisé"
-	const INTERVAL_SEND_HOLDING = 20; // 20 ms
-	// Temps de scrutation des requêtes du client en ms
-	const INTERVAL_LISTEN_CLIENT = 1;
-	// Temps de scrutation des responses du robot en ms
-	const INTERVAL_LISTEN_ROBOT = 1;
-	// Interval de temps entre chaque vérification des timers exprimé en nanoseconde
-	// Ce temps doit être strictement inférieur aux intervals des différents "Serveurs"
-	const INTERVAL_WORK = 950000; // 0.95ms
-	
 	/*
 	 * Attributs
 	*/
@@ -149,8 +139,8 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 		$socketsClientToRead[0] = $this->_socketServer;
 		//now add the existing client sockets
 		for ($i = 0; $i < self::MAX_CONNECTIONS; $i++){
-			if(!empty($this->_socketsClient[$i])){
-				$socketsClientToRead[$i+1] = $this->_socketsClient[$i];
+			if(!empty($this->_socketsClient[$i]['socket'])){
+				$socketsClientToRead[$i+1] = $this->_socketsClient[$i]['socket'];
 			}
 		}
 		//now call select - blocking call
@@ -168,22 +158,24 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 		if (in_array($this->_socketServer, $socketsClientToRead)){
 			// Cherche un "slot" de connexion libre
 			for ($i = 0; $i < self::MAX_CONNECTIONS; $i++){
-				if (empty($this->_socketsClient[$i])){
-					$this->_socketsClient[$i] = socket_accept($this->_socketServer);
+				if (empty($this->_socketsClient[$i]['socket'])){
+					$this->_socketsClient[$i]['socket'] = socket_accept($this->_socketServer);
 					/*
 					 * Code exécuté lors de la connexion entre le client et le serveur
 					*/
 					// Filtrage IP
-					socket_getpeername($this->_socketsClient[$i], $clientIp, $clientPort);
+					socket_getpeername($this->_socketsClient[$i]['socket'], $clientIp, $clientPort);
 					if ($clientIp != self::CLIENT_IP){
 						$this->writeLog('Le client '.$clientIp.':'.$clientPort.' à tenté de se connecter mais à été rejetté par l\'ACL'."\r\n", 2);
-						socket_close($this->_socketsClient[$i]);
+						socket_close($this->_socketsClient[$i]['socket']);
 						unset($this->_socketsClient[$i]);
 					}
 					else{
 						$this->writeLog('Le client '.$clientIp.':'.$clientPort.' s\'est bien connecté'."\r\n", 2);
-						$msg = pack('a3CCn', 'CTR', self::CONNECTION_TO_SERVER, self::STATE_OK, 0);
-						if( !socket_send($this->_socketsClient[$i], $msg, strlen($msg), 0)){
+						$this->_socketsClient[$i]['ip'] = $clientIp;
+						$this->_socketsClient[$i]['port'] = $clientPort;
+						$msg = pack('a3CCn', 'CTR', self::CONNECTION_TO_CONTROLLER, self::STATE_OK, 0);
+						if( !socket_send($this->_socketsClient[$i]['socket'], $msg, strlen($msg), 0)){
 							$errorCode = socket_last_error();
 							$errorMsg = socket_strerror($errorCode);
 								
@@ -192,7 +184,6 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 					}
 					// On supprime le socket de la liste des socket à traiter
 					unset($socketsClientToRead[array_search($this->_socketServer, $socketsClientToRead)]);
-					// TODO Connexion TCP -> Session crée. On as besoin d'envoyer des données pour confirmer la connexion ?
 					break;
 				}
 				// Si tout les "slot" de connexion sont utilisés
@@ -200,8 +191,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 				if ($i >= self::MAX_CONNECTIONS){
 					$this->writeLog('Nombre maximum de connexion au controller atteint'."\r\n", 1);
 					$TempSocket = socket_accept($this->_socketServer);
-					// TODO donner plus de précision dans l'erreur
-					$msg = pack('a3CCn', 'CTR', self::CONNECTION_TO_SERVER, self::STATE_ERROR, 0);
+					$msg = pack('a3CCC', 'CTR', self::CONNECTION_TO_CONTROLLER, self::STATE_ERROR, SpykeeResponse::TOO_MANY_CONNECTION);
 					if( !socket_send($TempSocket, $msg, strlen($msg), 0)){
 						$errorCode = socket_last_error();
 						$errorMsg = socket_strerror($errorCode);
@@ -216,165 +206,199 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 			}
 		}
 		//check each client if they send any data
-		foreach($socketsClientToRead as $idSocket => $socket ){
-			echo 'Nouvelle requête'."\r\n";
-			/*
-			 * Code exécuté
-			*/
-			$input = socket_read($socket, 1024);
-			// Si le client se déconnecte
-			if ($input === false){
-				//zero length string meaning disconnected, remove and close the socket
-				socket_close($socket);
-				unset($this->_socketsClient[$idSocket]);
-				$this->writeLog('Un client s\'est déconnecté'."\r\n", 2);
-				// INFO : il n'est pas posible de connaitre l'ip d'un client qui se déconnecte
-			}
-			// Si le client à envoyer quelque chose à traiter
-			else{
-				socket_getpeername($socket, $clientIp, $clientPort);
-				$this->writeLog('Le client '.$clientIp.':'.$clientPort.' à envoyer au serveur : "'.bin2hex($input).'"'."\r\n", 3);
-				echo 'Data reçue : '.$input."\r\n";	
+		for ($i = 0; $i < self::MAX_CONNECTIONS; $i++)
+		{
+			if (!empty($this->_socketsClient[$i]) AND in_array($this->_socketsClient[$i]['socket'], $socketsClientToRead))
+			{
+				echo 'Nouvelle requête'."\r\n";
 				/*
-				 * Envoie au robot l'action demandé par le client
+				 * Code exécuté
 				*/
-				$responseType = $input; // Par défaut le type de réponse est celui qui à été demandé
-				switch($input){
-				case self::TURN_LEFT:
-					$response = $this->_SpykeeClientRobot->left();
-					break;
-				case self::TURN_RIGHT:
-					$response = $this->_SpykeeClientRobot->right();
-					break;
-				case self::FORWARD:
-					$response = $this->_SpykeeClientRobot->forward();
-					break;
-				case self::BACK:
-					$response = $this->_SpykeeClientRobot->back();
-					break;
-				case self::STOP:
-					$response = $this->_SpykeeClientRobot->stop();
-					break;
-				case self::ACTIVATE:
-					$response = $this->_SpykeeClientRobot->activate();
-					break;
-				case self::CHARGE_STOP:
-					$response = $this->_SpykeeClientRobot->charge_stop();
-					break;
-				case self::DOCK:
-					$response = $this->_SpykeeClientRobot->dock();
-					break;
-				case self::DOCK_CANCEL:
-					$response = $this->_SpykeeClientRobot->dock_cancel();
-					break;
-				case self::WIRELESS_NETWORKS:
-					$response = $this->_SpykeeClientRobot->wireless_networks();
-					break;
-				case self::GET_LOG:
-					$response = $this->_SpykeeClientRobot->get_log();
-					break;
-				case self::SEND_MP3:
-					$response = $this->_SpykeeClientRobot->send_mp3('./../music/music.mp3');
-					break;
-				case self::GET_CONFIG:
-					$response = $this->_SpykeeClientRobot->get_config();
-					break;
-				case self::AUDIO_PLAY:
-					$response = $this->_SpykeeClientRobot->audio_play('./../music/music.mp3');
-					break;
-				case self::STOP_SERVER:
-					$reponse = NULL;
-					$this->_stopServer=true;
-					// Ferme toutes les connexions
-					foreach($this->_socketsClient as $key => $connection){
-						socket_close($connection);
-						unset($this->_socketsClient[$key]);
+				$request = @socket_read($this->_socketsClient[$i]['socket'], self::CTR_PAQUET_HEADER_SIZE); // On lit la requête du client
+				// Si le client se déconnecte
+				if ($request == '' OR $request === false AND !is_resource($request)){
+					//zero length string meaning disconnected, remove and close the socket
+					socket_close($this->_socketsClient[$i]['socket']);
+					$this->writeLog('Le client '.$this->_socketsClient[$i]['ip'].':'.$this->_socketsClient[$i]['port'].' s\'est déconnecté'."\r\n", 2);
+					// On supprime le socket de la liste des sockets
+					foreach($this->_socketsClient as $id => $value){
+						if ($value['socket'] === $this->_socketsClient[$i]['socket']){
+							unset($this->_socketsClient[$id]);
+							break;
+						}
 					}
-					socket_close($this->_socketServer);
-					unset($this->_socketServer);
-					$this->writeLog('Le serveur à été éteint'."\r\n", 1);
-					return TRUE; // On arrète complètement le script
-					break;
-				case self::GET_POWER_LEVEL:
-					if ($this->_powerLevel != NULL)
-						$response = new SpykeeResponse(self::STATE_OK, 'Niveau de batterie bien récupéré', $this->_powerLevel);
-					else{
-						$response = $this->_SpykeeClientRobot->get_power_level();
-					}
-					break;
-				case self::REFRESH_POWER_LEVEL:
-					$request = $this->_SpykeeClientRobot->refresh_power_level();
-					if ($request->getState() == self::STATE_OK){
-						$response = $request;
-						$this->_powerLevel = $request->getData();
-					}
-					else
-						$response = $request;
-					break;
-				case self::HOLDING_LEFT:
-					$this->holdingLeft();
-					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
-					break;
-				case self::HOLDING_RIGHT:
-					$this->holdingRight();
-					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
-					break;
-				case self::HOLDING_FORWARD:
-					$this->holdingForward();
-					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
-					break;
-				case self::HOLDING_BACK:
-					$this->holdingBack();
-					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
-					break;
-				case self::STOP_HOLDING_LEFT:
-					$this->stopHoldingLeft();
-					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
-					break;
-				case self::STOP_HOLDING_RIGHT:
-					$this->stopHoldingRight();
-					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
-					break;
-				case self::STOP_HOLDING_FORWARD:
-					$this->stopHoldingForward();
-					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
-					break;
-				case self::STOP_HOLDING_BACK:
-					$this->stopHoldingBack();
-					$response = new SpykeeResponse(self::STATE_OK, 'La commande à bien été prise en compte par le Controller');
-					break;
-				// FIXME Changer la programmation de l'action Move via un nouveau protocole
-				case ((preg_match('#^'.self::MOVE.'([0-9]+):([0-9]+)#', $input, $move)) ? $input : null) :
-					$state = $this->_SpykeeClientRobot->move($move[1], $move[2]);
-					break;
-					
-				default:
-					$reponse = new SpykeeResponse(self::STATE_ERROR, 'Requête iconnue');
-					$this->writeLog('Trame inconnu : '.bin2hex($input).'"'."\r\n", 1);
-					break;
+					return TRUE;
+					// INFO : il n'est pas posible de connaitre l'ip d'un client qui se déconnecte
 				}
-				/*
-				 * Envoie au client la réponse du robot
-				*/
-				echo 'Reponse du Robot : '.var_dump($response)."\r\n";
-				if(!$response->getData()){
-					$data=pack('C', $response->getData());
-					$dataLength = strlen($data);
-				}
-				else
-					$dataLength = 0;
-				// TODO adapter parfaitement le transfert de l'objet. Avec un Id de message
-				$reply = pack('a3CCn', 'CTR', $responseType, $response->getState(), $dataLength);
-				if (!empty($data))
-					$reply .= $data;
-				if( !socket_send($socket, $reply, strlen($reply), 0)){
-					$errorCode = socket_last_error();
-					$errorMsg = socket_strerror($errorCode);
+				// Si le client à envoyer quelque chose à traiter
+				else{
+					$request = bin2hex($request);
+					$header = hex2bin($request[0].$request[1].$request[2].$request[3].$request[4].$request[5]);
+					$type = base_convert($request[6].$request[7], 16, 10);
+					$state = base_convert($request[8].$request[9], 16, 10);
+					$idDescription = base_convert($request[10].$request[11], 16, 10);
+					$length = base_convert($request[12].$request[13].$request[14].$request[15], 16, 10);
+					// Récupère les données enventuellement envoyés
+					$input = (!empty($length) AND $length>0) ? socket_read($this->_socketsClient[$i]['socket'], $length) : null;
+					$this->writeLog('Le client '.$this->_socketsClient[$i]['ip'].':'.$this->_socketsClient[$i]['port'].' à envoyer au serveur : "'.$request.bin2hex($input).'"'."\r\n", 3);
+					echo 'Paquet reçue : header='.$header.', type='.$type.', state ='.$state.', idDesc ='.$idDescription.', len='.$length."\r\n";
+					echo 'Data reçue : '.bin2hex($input)."\r\n";	
+					/*
+					 * Envoie au robot l'action demandé par le client
+					*/
+					echo "\r\n\r\n$type\r\n\r\n";
+					$responseType = $type; // Par défaut le type de réponse est celui qui à été demandé
+					switch($type){
+					case self::MOVE:
+						//list($left, $right) = unpack('Cleft/Cright', $input);
+						$inputFormated = unpack('Cleft/Cright', $input);
+						$state = $this->_SpykeeClientRobot->move($inputFormated['left'], $inputFormated['right']);
+						$response = NULL;
+						break;
+					case self::LEFT:
+						$this->_SpykeeClientRobot->left();
+						$response = NULL;
+						break;
+					case self::RIGHT:
+						$this->_SpykeeClientRobot->right();
+						$response = NULL;
+						break;
+					case self::FORWARD:
+						$this->_SpykeeClientRobot->forward();
+						$response = NULL;
+						break;
+					case self::BACK:
+						$this->_SpykeeClientRobot->back();
+						$response = NULL;
+						break;
+					case self::STOP:
+						// On stop toutes les actions en holding
+						$this->_holdingQueue['left'] = false;
+						$this->_holdingQueue['right'] = false;
+						$this->_holdingQueue['forward'] = false;
+						$this->_holdingQueue['back'] = false;
+						$this->_SpykeeClientRobot->stop();
+						$response = NULL;
+						break;
+					case self::ACTIVATE:
+						$response = $this->_SpykeeClientRobot->activate();
+						break;
+					case self::CHARGE_STOP:
+						$response = $this->_SpykeeClientRobot->chargeCtop();
+						break;
+					case self::DOCK:
+						$response = $this->_SpykeeClientRobot->dock();
+						break;
+					case self::DOCK_CANCEL:
+						$response = $this->_SpykeeClientRobot->dockCancel();
+						break;
+					case self::WIRELESS_NETWORKS:
+						$response = $this->_SpykeeClientRobot->wirelessNetworks();
+						break;
+					case self::GET_LOG:
+						$response = $this->_SpykeeClientRobot->getLog();
+						break;
+					case self::SEND_MP3:
+						// TODO finir send MP3
+						$response = $this->_SpykeeClientRobot->sendMp3('./../music/music.mp3');
+						break;
+					case self::GET_CONFIG:
+						$response = $this->_SpykeeClientRobot->getConfig();
+						break;
+					case self::AUDIO_PLAY:
+						// TODO Finir audio play
+						$response = $this->_SpykeeClientRobot->audioPlay('./../music/music.mp3');
+						break;
+					case self::STOP_SERVER:
+						$reponse = NULL;
+						$this->_stopServer=true;
+						// Ferme toutes les connexions
+						foreach($this->_socketsClient as $key => $connection){
+							socket_close($connection['socket']);
+							unset($this->_socketsClient[$key]);
+						}
+						socket_close($this->_socketServer);
+						unset($this->_socketServer);
+						$this->writeLog('Le serveur à été éteint'."\r\n", 1);
+						return TRUE; // On arrète complètement le script
+						break;
+					case self::GET_POWER_LEVEL:
+						if ($this->_powerLevel != NULL)
+							$response = new SpykeeResponse(self::STATE_OK, SpykeeResponse::LEVEL_BATTERY_RETRIVED, $this->_powerLevel);
+						else{
+							$response = $this->_SpykeeClientRobot->getPpowerLlevel();
+						}
+						break;
+					case self::REFRESH_POWER_LEVEL:
+						$request = $this->_SpykeeClientRobot->refreshPpowerLlevel();
+						if ($request->getState() == self::STATE_OK){
+							$response = $request;
+							$this->_powerLevel = $request->getData();
+						}
+						else
+							$response = $request;
+						break;
+					case self::HOLDING_LEFT:
+						$this->holdingLeft();
+						$response = NULL;
+						break;
+					case self::HOLDING_RIGHT:
+						$this->holdingRight();
+						$response = NULL;
+						break;
+					case self::HOLDING_FORWARD:
+						$this->holdingForward();
+						$response = NULL;
+						break;
+					case self::HOLDING_BACK:
+						$this->holdingBack();
+						$response = NULL;
+						break;
+					case self::STOP_HOLDING_LEFT:
+						$this->stopHoldingLeft();
+						$response = NULL;
+						break;
+					case self::STOP_HOLDING_RIGHT:
+						$this->stopHoldingRight();
+						$response = NULL;
+						break;
+					case self::STOP_HOLDING_FORWARD:
+						$this->stopHoldingForward();
+						$response = NULL;
+						break;
+					case self::STOP_HOLDING_BACK:
+						$this->stopHoldingBack();
+						$response = NULL;
+						break;
 						
-					die("Could not send data: [$errorCode] $errorMsg \n");
+					default:
+						$response = new SpykeeResponse(self::STATE_ERROR, 'Requête iconnue');
+						$this->writeLog('Trame inconnu : '.$request.bin2hex($input).'"'."\r\n", 1);
+						break;
+					}
+					/*
+					 * Envoie au client la réponse du robot
+					*/
+					if ($response != NULL){ // Si il faut envoyer un paquet au client
+						if(!$response->getData()){
+							$data=pack('C', $response->getData());
+							$dataLength = strlen($data);
+						}
+						else
+							$dataLength = 0;
+						$reply = pack('a3CCCn', 'CTR', $responseType, $response->getState(), $response->getIdDescription(), $dataLength);
+						if (!$response->getData())
+							$reply .= $data;
+						if( !socket_send($this->_socketsClient[$i]['socket'], $reply, strlen($reply), 0)){
+							$errorCode = socket_last_error();
+							$errorMsg = socket_strerror($errorCode);
+								
+							$this->writeLog('Impossible d\'envoyer une trame au client : ['.$errorCode.'] '.$errorMsg."\r\n", 1);
+						}
+						echo 'Envoie de la trame : '.$reply."\r\n";
+						$this->writeLog('Envoie de la trame : '.bin2hex($reply).'"'."\r\n", 3);
+					}
 				}
-				echo 'Envoie de la trame : '.$reply."\r\n";
-				$this->writeLog('Envoie de la trame : '.bin2hex($reply).'"'."\r\n", 3);
 			}
 		}
 	}

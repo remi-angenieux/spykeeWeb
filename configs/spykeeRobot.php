@@ -15,7 +15,7 @@ Class SpykeeConfigRobot extends SpykeeRobot{
 	// 2 - Log les connexions
 	// 3 - Log tout (erreurs, connexion, actions)
 	const LOG_LEVEL = 3;
-	// Temps d'attente pour la connexion au robot
+	// Temps d'attente maximum pour la connexion au robot
 	const CONNECTION_ROBOT_TIMEOUT = 8;
 	// Nombre maxmimum de reconnexion sucessive
 	const NB_RECONNECTION = 5;

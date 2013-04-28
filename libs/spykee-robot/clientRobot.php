@@ -132,7 +132,7 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 				// Si le nombre de tentative dépasse le nombre max de tentative
 				if ($this->_reconnection >= self::NB_RECONNECTION){
 					$this->writeLog('Impossible de se reconnecter au robot après '.$this->_reconnection.' tentatives.'."\r\n", 1);
-					return new SpykeeResponse(self::STATE_ERROR, 'Nombre de tentative de reconnexion dépassé');
+					return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::NUMBER_RECONNEXION_EXCEEDED);
 				}
 				$this->initSocket();
 				$this->authentificationRobot();
@@ -143,13 +143,13 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 			}
 			else{
 				$this->writeLog('Impossible d\'envoyer le paquet : "'.$msg.'". ['.$errorCode.'] '.$errorMsg."\r\n", 1);
-				return new SpykeeResponse(self::STATE_ERROR, 'Impossible d\'envoyer le paquet');
+				return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_SEND_PAQUET);
 			}
 		}
 		echo "\r\n".'Data : '.bin2hex($data);
 		echo "\r\n".'Envoie de la trame :'.$msg.' ('.bin2hex($msg).')';
 		$this->writeLog('Envoi vers le robot la trame : '.bin2hex($msg)."\r\n", 3);
-		return new SpykeeResponse(self::STATE_OK, 'Le paquet à bien été envoyé');
+		return new SpykeeResponse(self::STATE_OK, SpykeeResponse::PAQUET_SENT);
 	}
 
 	protected function getResponse(){
@@ -159,15 +159,14 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 			$errormsg = socket_strerror($errorcode);
 		
 			$this->writeLog('Aucune trame de réponse retournée ['.$errorCode.'] '.$errorMsg."\r\n", 1);
-			return new SpykeeResponse(self::STATE_ERROR, 'Problème de réception de la trame');
-			$state = self::STATE_ERROR;
+			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_RECEIVE_PAQUET);
 		}
 		if (empty($response)){ // Reset de la connexion
 			echo 'Reset connection. Reconnexion...';
 			$this->initSocket();
 			// TODO vérifier qu'une nouvelle authentification n'est pas requise
 			//$this->authentificationRobot();
-			return new SpykeeResponse(self::STATE_ERROR, 'Connexion réinitialisée');
+			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::CONNECTION_REINIT);
 		}
 		else{
 			$response = bin2hex($response);
@@ -186,7 +185,7 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 					$errormsg = socket_strerror($errorcode);
 						
 					$this->writeLog('Impossible de lire des donnée renvoyée ['.$errorCode.'] '.$errorMsg."\r\n", 1);
-					return new SpykeeResponse(self::STATE_ERROR, 'Impossible de lire les données du paquet');
+					return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::UNABLE_READ_DATA);
 				}
 			}
 			$this->writeLog('Donnée transportée : '.bin2hex($data)."\r\n", 3);
@@ -200,40 +199,40 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 			$state = self::STATE_OK; // Etat par défaut
 			switch($type){
 				case self::PAQUET_TYPE_AUDIO:
-					$description = 'Paquet reçu de type audio';
+					$description = SpykeeResponse::RECEIVE_PAQUET_TYPE_AUDIO;
 					break;
 				case self::PAQUET_TYPE_VIDEO:
-					$description = 'Paquet reçu de type vidéo';
+					$description = SpykeeResponse::RECEIVE_PAQUET_TYPE_VIDEO;
 					break;
 				case self::PAQUET_TYPE_POWER:
-					$description = 'Paquet reçu de type niveau de batterie';
+					$description = SpykeeResponse::RECEIVE_PAQUET_TYPE_POWER;
 					$this->_powerLevel = $data;
 					break;
 				case self::PAQUET_TYPE_AUTH_REPLY:
 					// $data
 					// 0001 = Connexion requise
 					// 0003 = Deja connecté
-					$description = 'Paquet reçu de type authentification';
+					$description = SpykeeResponse::RECEIVE_PAQUET_TYPE_AUTH_REPLY;
 					echo 'Auth Reply reçue'."\r\n";
 					break;
 				case self::PAQUET_TYPE_STOP:
-					$description = 'Paquet reçu de type stop';
+					$description = SpykeeResponse::RECEIVE_PAQUET_TYPE_STOP;
 					break;
 				case self::PAQUET_TYPE_WIRELESS_NETWORKS:
-					$description = 'Paquet reçu de type connexion sans fil';
+					$description = SpykeeResponse::RECEIVE_PAQUET_TYPE_WIRELESS_NETWORKS;
 					break;
 				case self::PAQUET_TYPE_CONFIG:
-					$description = 'Paquet reçu de type configuration';
+					$description = SpykeeResponse::RECEIVE_PAQUET_TYPE_CONFIG;
 					break;
 				case self::PAQUET_TYPE_LOG:
-					$description = 'Paquet reçu de type log';
+					$description = SpykeeResponse::RECEIVE_PAQUET_TYPE_LOG;
 					break;
 	
 				default:
 					echo 'Paquet non reconnu'."\r\n";
 					$this->writeLog('Paquet inconnu reçu avec comme type : '.$type."\r\n", 1);
 					$state = self::STATE_ERROR;
-					$description = 'Paquet reçu non reconnu';
+					$description = SpykeeResponse::RECEIVE_PAQUET_UNKNOW;
 					break;
 			}
 		}
@@ -242,8 +241,11 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 	}
 
 	public function move($left, $right){
+		$left = ($left < 256) ? $left : 255;
+		$left = ($left >= 0) ? $left : 0;
+		$right = ($right < 256) ? $right : 255;
+		$right = ($right >= 0) ? $right : 0;
 		return $this->sendPacketToRobot(self::PAQUET_TYPE_MOVE, pack('CC', $left, $right));
-		//return $this->sendPacketToRobot(self::PAQUET_TYPE_MOVE, $left. $right);
 	}
 
 	public function left(){
@@ -269,20 +271,20 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 	public function activate(){
 	}
 
-	public function charge_stop(){
+	public function chargeStop(){
 	}
 
 	public function dock(){
 	}
 
-	public function dock_cancel(){
+	public function dockCancel(){
 	}
 
-	public function send_mp3($fileName){
+	public function sendMp3($fileName){
 		$this->send_file($fileName, self::FILE_ID_MUSIC);
 	}
 	
-	public function send_file($fileName, $file_id){
+	public function sendFile($fileName, $file_id){
 		$flag =self::SENDFILE_FLAG_BEGIN;
 		print "Sending file $fileName\n";
 		$fh=fopen($fileName,'r');
@@ -309,16 +311,16 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 			print "\n";
 	}
 		
-	public function audio_play($idFile){
+	public function audioPlay($idFile){
 		return $this->sendPacketToRobot(self::PAQUET_TYPE_PLAY, pack('C', $idFile));
 
 	}
 
-	public function audio_stop(){
+	public function audioStop(){
 		return $this->sendPacketToRobot(self::PAQUET_TYPE_STOP);
 	}
 
-	public function wireless_networks(){
+	public function wirelessNetworks(){
 		$request = $this->sendPacketToRobot(self::PAQUET_TYPE_WIRELESS_NETWORKS);
 		if ($request->getState() == self::STATE_OK) // Si le paquet à bien été envoyé
 			return $this->getResponse();
@@ -326,7 +328,7 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 			return $request;
 	}
 
-	public function get_log(){
+	public function getLog(){
 		$request = $this->sendPacketToRobot(self::PAQUET_TYPE_LOG);
 		if ($request->getState() == self::STATE_OK) // Si le paquet à bien été envoyé
 			return $this->getResponse();
@@ -334,7 +336,7 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 			return $request;
 	}
 
-	public function get_config(){
+	public function getConfig(){
 		$request = $this->sendPacketToRobot(self::PAQUET_TYPE_CONFIG);
 		if ($request->getState() == self::STATE_OK) // Si le paquet à bien été envoyé
 			return $this->getResponse();
@@ -342,14 +344,14 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 			return $request;
 	}
 
-	public function get_power_level(){
+	public function getPowerLevel(){
 		if ($this->_powerLevel != NULL) // Si le niveau de batterie à été récupérée au moins une fois
-			return new SpykeeResponse(self::STATE_OK, 'Niveau de batterie bien recupéré', $this->_powerLevel);
+			return new SpykeeResponse(self::STATE_OK, SpykeeResponse::LEVEL_BATTERY_RETRIVED, $this->_powerLevel);
 		else
 			return $this->refresh_power_level();
 	}
 
-	public function refresh_power_level(){
+	public function refreshPowerLevel(){
 		$request = $this->sendPacketToRobot(self::PAQUET_TYPE_POWER);
 		if ($request->getState() == self::STATE_OK){ // Si le paquet à bien été envoyé
 			$response = $this->getResponse();

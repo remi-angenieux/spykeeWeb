@@ -16,15 +16,19 @@ class PlayModel extends BaseModel
 	}
 	
 	public function left(){
-		$this->_spykee->turnLeft();
+		$this->_spykee->left();
 	}
 	
 	public function right(){
-		$this->_spykee->turnRight();
+		$this->_spykee->right();
 	}
 	
 	public function down(){
 		$this->_spykee->back();
+	}
+	
+	public function move(){
+		$this->_spykee->move(10,10);
 	}
 }
 

@@ -26,9 +26,11 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 	const PAQUET_TYPE_ENGINE = 16;
 	const PAQUET_TYPE_LOG = 17;
 	
-	const SENDFILE_FLAG_NONE= 0;
-	const SENDFILE_FLAG_BEGIN= 1;
-	const SENDFILE_FLAG_END= 2;
+	const STREAM_ID_VIDEO = 1;
+	
+	const SENDFILE_FLAG_NONE = 0;
+	const SENDFILE_FLAG_BEGIN = 1;
+	const SENDFILE_FLAG_END = 2;
 	
 	const FILE_ID_MUSIC= 64;
 	const FILE_ID_FIRMWARE= 66;
@@ -155,8 +157,8 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 	protected function getResponse(){
 		if(socket_recv($this->_robotSocket, $response, self::PAQUET_HEADER_SIZE, MSG_WAITALL ) === FALSE)
 		{
-			$errorcode = socket_last_error();
-			$errormsg = socket_strerror($errorcode);
+			$errorCode = socket_last_error();
+			$errorMsg = socket_strerror($errorCode);
 		
 			$this->writeLog('Aucune trame de réponse retournée ['.$errorCode.'] '.$errorMsg."\r\n", 1);
 			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_RECEIVE_PAQUET);
@@ -239,6 +241,7 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 
 		return new SpykeeResponse($state, $description, $data);
 	}
+	
 
 	public function move($left, $right){
 		$left = ($left < 256) ? $left : 255;
@@ -281,7 +284,7 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 	}
 
 	public function sendMp3($fileName){
-		$this->send_file($fileName, self::FILE_ID_MUSIC);
+		return $this->send_file($fileName, self::FILE_ID_MUSIC);
 	}
 	
 	public function sendFile($fileName, $file_id){
@@ -360,6 +363,35 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 		}
 		else
 			return $request;
+	}
+	
+	public function setVideo($bool){
+		$status = ($bool == true) ? 1 : 0;
+		return $this->sendPacketToRobot(self::PAQUET_TYPE_STREAMCTL, pack('CC', self::STREAM_ID_VIDEO, $status));
+	}
+	
+	/*
+	 * Fonction utile pour récupérer des paquets envoyés par le robot indépendament d'une requête
+	 * Utilisé donc pour récupérer le flux vidéo, audio du robot ainsi que l'état de batterie
+	 */
+	public function socketHook(){
+		$write=NULL;
+		$except=NULL;
+		$read = array();
+		$read[0]=$this->_robotStream;
+		if(($test = stream_select($read, $write, $except, 0, NULL)) === false){
+			$errorCode = socket_last_error();
+			$errorMsg = socket_strerror($errorCode);
+		
+			$this->writeLog('Impossible d\'écouter le socket : ['.$errorCode.'] '.$errorMsg."\r\n", 1);
+			die;
+		}
+		foreach($read as $streamInput){
+			if (is_resource($streamInput) AND $streamInput != '' AND $streamInput == $this->_robotStream){
+				if (is_resource($streamInput) AND $streamInput != '')
+					return $this->getResponse();
+			}
+		}
 	}
 	
 	public function __destruct(){

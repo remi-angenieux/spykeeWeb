@@ -121,6 +121,16 @@ class SpykeeResponse{
 	public function getData(){
 		return $this->_data;
 	}
+	
+	public function jsonFormat(){
+		$return = '{';
+		$return .= '"state": '.$this->getState().', ';
+		$return .= '"data": "'.$this->getData().'", ';
+		$return .= '"description": "'.$this->getDescription().'", ';
+		$return .= '"idDescription": '.$this->getIdDescription();
+		$return .= '}';
+		return $return;
+	}
 }
 
 

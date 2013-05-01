@@ -30,7 +30,6 @@ class SpykeeControllerClient extends SpykeeConfigRobot{
 			// TODO : Utiliser le gestionnaire d'erreur du site
 			die("Couldn't create socket: [$errorCode] $errorMsg \n");
 		}
-		echo "Connection established \n";
 		$this->_socket = socket_import_stream($this->_stream);
 	}
 
@@ -48,7 +47,6 @@ class SpykeeControllerClient extends SpykeeConfigRobot{
 			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_SEND_PAQUET);
 		}
 		
-		echo "Message send successfully \n";
 		return new SpykeeResponse(self::STATE_OK, SpykeeResponse::PAQUET_SENT);
 	}
 
@@ -198,6 +196,12 @@ class SpykeeControllerClient extends SpykeeConfigRobot{
 			return $this->getResponse();
 		else
 			return $request;
+	}
+	
+	public function setVideo($bool){
+		$status = ($bool == true) ? 1 : 0;
+		//return $this->setVideo($status);
+		return $this->sendPacketToController(self::VIDEO, pack('C', $status));
 	}
 
 	public function stopServer(){

@@ -232,6 +232,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 				}
 				// Si le client à envoyer quelque chose à traiter
 				else{
+					// TODO utiliser la fonction unpack
 					$request = bin2hex($request);
 					$header = hex2bin($request[0].$request[1].$request[2].$request[3].$request[4].$request[5]);
 					$type = base_convert($request[6].$request[7], 16, 10);
@@ -250,7 +251,6 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 					$responseType = $type; // Par défaut le type de réponse est celui qui à été demandé
 					switch($type){
 					case self::MOVE:
-						//list($left, $right) = unpack('Cleft/Cright', $input);
 						$inputFormated = unpack('Cleft/Cright', $input);
 						$state = $this->_SpykeeClientRobot->move($inputFormated['left'], $inputFormated['right']);
 						$response = NULL;
@@ -308,6 +308,11 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 					case self::AUDIO_PLAY:
 						// TODO Finir audio play
 						$response = $this->_SpykeeClientRobot->audioPlay('./../music/music.mp3');
+						break;
+					case self::VIDEO:
+						$inputFormated = unpack('Cstate', $input);
+						$this->_SpykeeClientRobot->setVideo($inputFormated['state']);
+						$response = NULL;
 						break;
 					case self::STOP_SERVER:
 						$reponse = NULL;
@@ -407,7 +412,23 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	 * Récupère les réponses du robot comme l'état de batterie ou le stream audio/video
 	 */
 	protected function listenRobotResponses(){
-		
+		$result = $this->_SpykeeClientRobot->socketHook();
+		// Si aucune trame n'a été capturée
+		if(!is_object($result))
+			return FALSE;
+			
+		// Si la fonction à retourner une image du stream vidéo
+		if ($result->getIdDescription() == SpykeeResponse::RECEIVE_PAQUET_TYPE_VIDEO){
+			$file = PATH.'www/videoStream/video.jpeg';
+			if (file_put_contents($file, $result->getData()) === false){
+				echo 'Problème dans l\'enregistrement de l\'image'."\r\n";
+				$this->writeLog('Impossible d\'enregistrer une image du stream vidéo. ('.$file.')'."\r\n", 1);
+			}
+		}
+		// Si la fonction à retourner le niveau de batterie
+		elseif ($result->getIdDescription() == SpykeeResponse::RECEIVE_PAQUET_TYPE_POWER){
+			$this->_powerLevel = $result->getData(); 
+		}
 	}
 	
 	/*

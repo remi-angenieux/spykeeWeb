@@ -25,9 +25,9 @@ class View extends Smarty{
 		// Pour la phase de développement
 		$this->force_compile = TRUE;
 
-		$this->assign(array('tpl_header' => 'extras/header',
+		$this->assign(array('tpl_header' => 'extras/html_header',
 				'tpl_body' => $this->_viewFile,
-				'tpl_footer' => 'extras/footer',
+				'tpl_footer' => 'extras/html_footer'
 		));
 	}
 	
@@ -37,6 +37,14 @@ class View extends Smarty{
 	
 	public function addAdditionalJs($file){
 		array_push($this->_additionalJs, $file);
+	}
+	
+	// TODO inclure des fichiers vide est pas la meilleur des solutions
+	public function setTextPage(){
+		$this->assign(array('tpl_header' => 'extras/text_header',
+				'tpl_body' => $this->_viewFile,
+				'tpl_footer' => 'extras/text_footer'
+		));
 	}
 	
 

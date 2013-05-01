@@ -7,6 +7,7 @@
 {foreach $additionalCss as $cssFile}
 <link href="{$cssFile}" rel="stylesheet" type="text/css" />
 {/foreach}
+<script src="http://code.jquery.com/jquery-1.9.1.min.js" type="text/javascript" charset="utf-8"></script>
 {foreach $additionalJs as $jsFile}
 <script src="{$jsFile}" type="text/javascript" charset="utf-8"></script>
 {/foreach}

@@ -8,4 +8,5 @@ Class SpykeeRobot{
 	*/
 	const STATE_OK = 1;
 	const STATE_ERROR = 0;
+	
 }

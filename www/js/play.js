@@ -17,6 +17,14 @@ $("#holdingLeft").css('background-color', 'red');
 /*
  * Gestion des actions du robot
  */
+var holding = {
+	'up': false,
+	'down': false,
+	'left': false,
+	'right': false
+};
+
+
 function sendAction(action, callback){
 	$.post('/?controller=play&action=ajax', { action: action }, function(data) {
 			var result = jQuery.parseJSON(data);
@@ -25,7 +33,7 @@ function sendAction(action, callback){
 			text += 'Description : ' + result.description + '<br />';
 			text += 'Id de description : ' + result.idDescription + '<br />';
 			$('.result').html(text);
-			if(typeof callback === 'function' && callback())
+			if(typeof callback === 'function')
 				callback(result);
 		});
 }
@@ -49,9 +57,14 @@ function down(){
 function holdingUp(){
 	sendAction('holdingUp', function(result){
 		// Si l'action à bien été envoyée
-		if(typeof result != 'undefined' && result.state == 1){
+		if(typeof result != 'undefined' && result.state == 1 && holding.up == false){
+			holding.up = true;
 			$('#holdingUp').css('background-color', 'red');
 			$('#holdingDown').css('background-color', 'green');
+		} // Si le bouton avancé est déjà "enfoncé"
+		else if(typeof result != 'undefined' && result.state == 1 && holding.up == true){
+			holding.up = false;
+			$('#holdingUp').css('background-color', 'green');
 		}
 		else{
 			// TODO implémenté un gestionnaire d'erreur
@@ -62,31 +75,42 @@ function holdingUp(){
 
 function holdingDown(){
 	sendAction('holdingDown', function(result){
-		if(typeof result != 'undefined' && result.state == 1){
+		if(typeof result != 'undefined' && result.state == 1 && holding.down == false){
+			holding.down = true;
 			$('#holdingDown').css('background-color', 'red');
 			$('#holdingUp').css('background-color', 'green');
 		}
+		else if(typeof result != 'undefined' && result.state == 1 && holding.down == true){
+			holding.down = false;
+			$('#holdingDown').css('background-color', 'green');
+		}
 	});
-	/*if(sendAction('holdingDown').state == 1){
-		$('#holdingDown').css('background-color', 'red');
-		$('#holdingUp').css('background-color', 'green');
-	}*/
 }
 
 function holdingLeft(){
 	sendAction('holdingLeft', function(result){
-		if(typeof result != 'undefined' && result.state == 1){
+		if(typeof result != 'undefined' && result.state == 1 && holding.left == false){
+			holding.left = true;
 			$('#holdingLeft').css('background-color', 'red');
 			$('#holdingRight').css('background-color', 'green');
+		}
+		else if(typeof result != 'undefined' && result.state == 1 && holding.left == true){
+			holding.left = false;
+			$('#holdingLeft').css('background-color', 'green');
 		}
 	});
 }
 
 function holdingRight(){
 	sendAction('holdingRight', function(result){
-		if(typeof result != 'undefined' && result.state == 1){
+		if(typeof result != 'undefined' && result.state == 1 && holding.right == false){
+			holding.right = true;
 			$('#holdingRight').css('background-color', 'red');
 			$('#holdingLeft').css('background-color', 'green');
+		}
+		else if(typeof result != 'undefined' && result.state == 1 && holding.right == true){
+			holding.right = false;
+			$('#holdingRight').css('background-color', 'green');
 		}
 	});
 }

@@ -21,6 +21,7 @@ class BaseModel {
 	protected function commonViewData() {
 
 	}
+	
 }
 
 ?>

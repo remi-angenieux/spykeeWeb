@@ -1,4 +1,8 @@
 <?php
+/*
+ * Objet gérant la connexion à la base de donnée
+ * /!\ Il doit être OBLIGATOIREMENT appelé APRES l'objet Config /!\
+ */
 class Db{
 	private static $_singleton;
 	protected $_db;
@@ -7,7 +11,7 @@ class Db{
 		$this->connection($array);
 	}
 	
-	static function getInstance($array) {
+	static function getInstance($array='') {
 		if(is_null (self::$_singleton) ) {
 			self::$_singleton = new self($array);
 		}

@@ -61,6 +61,15 @@ class PlayModel extends BaseModel
 	public function enableVideo(){
 		$this->view->assign('content', $this->_spykee->setVideo(TRUE)->jsonFormat());
 	}
+	
+	public function canPlay(){
+		$sql = 'SELECT robots.id FROM robots WHERE robots.loked = false
+					EXCEPT
+					SELECT games.refRobot FROM games WHERE games.lastInput <= '.$this->config->game->timeout;
+		$query = $this->db->query($sql);
+		$response = $query->fetch(PDO::FETCH_ASSOC);
+		// Retourne le premier robot dispponible
+	}
 }
 
 ?>

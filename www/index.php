@@ -8,6 +8,7 @@ require(PATH.'libs/webFramework/view.php');
 //require(PATH.'libs/webFramework/viewmodel.php'); Pas besoin on utilise Smarty
 require(PATH.'libs/webFramework/config.php');
 require(PATH.'libs/webFramework/dbConnection.php');
+require(PATH.'libs/webFramework/user.php');
 require(PATH.'libs/webFramework/loader.php');
 
 $loader = new Loader(); //create the loader object

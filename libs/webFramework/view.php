@@ -8,13 +8,17 @@ class View extends Smarty{
 	protected $_viewFile;
 	protected $_additionalCss=array();
 	protected $_additionalJs=array();
+	protected $_controllerName;
+	protected $_action;
+	protected $_headerFile;
+	protected $_footerFile;
 
 	public function __construct($controllerClass, $action)
 	{
 		parent::__construct();
 
-		$controllerName = str_replace('Controller', '', $controllerClass);
-		$this->_viewFile = strtolower($controllerName) . '/' . $action;
+		$this->_controllerName = strtolower(str_replace('Controller', '', $controllerClass));
+		$this->_action = $action;
 
 		$this->setTemplateDir(PATH.'views/');
 		$this->setCompileDir(PATH.'views_c/');
@@ -24,11 +28,11 @@ class View extends Smarty{
 		$this->caching = Smarty::CACHING_LIFETIME_CURRENT;
 		// Pour la phase de développement
 		$this->force_compile = TRUE;
+		
+		// Header et footer par défaut
+		$this->_headerFile='extras/html_header';
+		$this->_footerFile='extras/html_footer';
 
-		$this->assign(array('tpl_header' => 'extras/html_header',
-				'tpl_body' => $this->_viewFile,
-				'tpl_footer' => 'extras/html_footer'
-		));
 	}
 	
 	public function addAdditionalCss($file){
@@ -39,19 +43,38 @@ class View extends Smarty{
 		array_push($this->_additionalJs, $file);
 	}
 	
-	// TODO inclure des fichiers vide est pas la meilleur des solutions
 	public function setTextPage(){
-		$this->assign(array('tpl_header' => 'extras/text_header',
-				'tpl_body' => $this->_viewFile,
-				'tpl_footer' => 'extras/text_footer'
+		$this->_headerFile='';
+		$this->_footerFile='';
+	}
+	
+	public function setTemplate($file='', $controller=''){
+		$file = (!empty($file)) ? $file : $this->_action;
+		$controller = (!empty($controller)) ? $controller : $this->_controllerName;
+		
+		$this->_viewFile = $controller.'/'.$file;
+	}
+	
+	public function message($title, $message, $url=''){
+		$this->_viewFile = 'extras/message';
+		$this->assign('pageTitle', 'Message');
+		$this->assign(array('title' => $title,
+				'message' => $message,
+				'url' => $url
 		));
 	}
 	
-
 	public function __destruct(){
 		
 		$this->assign('additionalCss', $this->_additionalCss);
 		$this->assign('additionalJs', $this->_additionalJs);
+		
+		if (empty($this->_viewFile))
+			$this->setTemplate();
+		$this->assign(array('tpl_header' => $this->_headerFile,
+				'tpl_body' => $this->_viewFile,
+				'tpl_footer' => $this->_footerFile
+		));
 		// Affiche la page web
 		$this->display('mainTemplate.tpl');
 

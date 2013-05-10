@@ -40,6 +40,7 @@ class PlayController extends BaseController
 			$this->model->enableVideo();*/
 	}
 	
+	
 	protected function ajax(){
 		$this->model->ajax();
 		$this->view->setTextPage();

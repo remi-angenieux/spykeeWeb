@@ -15,6 +15,7 @@ class Loader {
 
 	//store the URL request values on object creation
 	public function __construct() {
+		session_start(); // Lance le système de session
 		$this->urlValues = $_GET;
 
 		if (empty($this->urlValues['controller'])) {

@@ -11,7 +11,8 @@ class HomeModel extends BaseModel
 	//data passed to the home index view
 	public function index()
 	{
-		$this->view->assign('pageTitle', 'Accueil');
+		$this->view->assign(array('pageTitle' => 'Accueil',
+								'username' => $this->user->pseudo));
 	}
 }
 

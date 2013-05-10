@@ -1,4 +1,8 @@
 <?php
+/*
+ * Objet gérant les différentes configurations
+ * /!\ Il doit OBLIGATOIREMENT être appelé AVANT l'objet Db /!\
+ */
 class Config {
 	private static $_singleton=null;
 	private $_data=array();
@@ -12,13 +16,25 @@ class Config {
 
 	private function loadIniFile(){
 		$array = parse_ini_file(PATH.'configs/website.ini', true);
-		$this->_tempArray = array_merge($this->_tempArray, $array);
+		$this->_tempArray = array_merge_recursive($this->_tempArray, $array);
 	}
 	
 	private function loadDb(){
 		$query = Db::getInstance($this->_tempArray['database'])->db()->query('SELECT section, name, data FROM configs');
 		$response = $query->fetchAll(PDO::FETCH_ASSOC|PDO::FETCH_GROUP);
-		$this->_tempArray = array_merge($this->_tempArray, $response);
+		
+		// Réorganisation du tableau multidimensionnel
+		$arrayContent=array();
+		$arraySections=array();
+		// Navigue dans les sections
+		foreach($response as $sectionName => $section){
+			foreach($section as $content){
+				$arrayContent[$content['name']] = $content['data'];
+			}
+			$arraySections[$sectionName] = $arrayContent;
+			$arrayContent=array();
+		}
+		$this->_tempArray = array_merge_recursive($this->_tempArray, $arraySections);
 	}
 	
 	private function parseConfig(){

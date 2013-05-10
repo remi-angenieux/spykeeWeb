@@ -250,19 +250,35 @@ class SpykeeClientRobot {
 	public function dock_cancel(){
 		$this->sendPacketToRobot(self::PAQUET_TYPE_ENGINE , pack("C", self::MESSAGE_TYPE_BASE_FIND_CANCEL));
 	}
+<<<<<<< HEAD
 	
 	public function send_mp3(){
 	$this->send_file("music.mp3", self::FILE_ID_MUSIC);
+=======
+
+	public function send_mp3($fileName){
+	$this->send_file($fileName, self::FILE_ID_MUSIC);
+>>>>>>> parent of 52353da... Premier pas de Spykee via le web
 	}
+<<<<<<< HEAD
+
+=======
 	
 	public function send_file($fileName, $file_id){
 		 
 			$flag =self::SENDFILE_FLAG_BEGIN;
 			print "Sending file $fileName\n";
+<<<<<<< HEAD
 			$fh=fopen($fileName,'r',1);
 			$maxlen = self::PAQUET_DATA_SIZE_MAX - self::PAQUET_HEADER_SIZE;
 			while ($contentlen= strlen($content=fread($fh, $maxlen))) {
 			/*if ($maxlen !=  $contentlen) {
+=======
+			$fh=fopen($fileName,'r');
+			$maxlen = self::PAQUET_DATA_SIZE_MAX - self::PAQUET_HEADER_SIZE;
+			while ($contentlen = fread($fh, $content, $maxlen)) {
+			if ($maxlen !=  $contentlen) {
+>>>>>>> parent of 52353da... Premier pas de Spykee via le web
 			# End of file, set the end flag
 				$flag | self::SENDFILE_FLAG_END;
 			}*/
@@ -285,6 +301,10 @@ class SpykeeClientRobot {
 			}
 	
 	
+<<<<<<< HEAD
+=======
+>>>>>>> 02fd242890bdba5e36c723800d95d72be34a34e0
+>>>>>>> parent of 52353da... Premier pas de Spykee via le web
 	public function audio_play($idFile){
 		if ($this->sendPacketToRobot(self::PAQUET_TYPE_PLAY, pack('C',$idFile)))
 			return SpykeeController::STATE_OK;

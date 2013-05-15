@@ -39,6 +39,8 @@ class SpykeeController extends SpykeeRobot{
 	const STOP_HOLDING_BACK = 27;
 	
 	const VIDEO = 28;
+	const SET_SPEED = 29;
+	const GET_SPEED = 30;
 
 	// Longeur de l'entête du protocole de controller (ControllerClient <-> ControllerServer)
 	const CTR_PAQUET_HEADER_SIZE = 8;

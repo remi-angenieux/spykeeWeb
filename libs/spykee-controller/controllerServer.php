@@ -23,6 +23,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	protected $_robotUsername;
 	protected $_robotPassword;
 	protected $_powerLevel = NULL; // NOTE : Non utilisé pour le moment
+	protected $_moveSpeed = self::MOVE_SPEED;
 	// Attributs pour la partie réception des requêtes client (Serveur)
 	protected $_socketServer = NULL;
 	protected $_socketsClient = array();
@@ -50,6 +51,9 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 		$this->_SpykeeClientRobot = new SpykeeClientRobot($this->_robotName, $this->_robotIp, $this->_robotUsername, $this->_robotPassword);
 
 		$this->initSocketServer();
+		
+		// Définit la vitesse du robot avec celle par défaut
+		$this->_SpykeeClientRobot->setSpeed($this->_moveSpeed);
 		
 		// Lance a proprement dit le serveur
 		$this->mainLoop();
@@ -343,6 +347,13 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 						else
 							$response = $request;
 						break;
+					case self::GET_SPEED:
+						$response = new SpykeeResponse(self::STATE_OK, MOVE_SPEED_RETRIVED, $this->_moveSpeed);
+						break;
+					case self::SET_SPEED:
+						$inputFormated = unpack('Cspeed', $input);
+						$response = $this->setSpeed($inputFormated['speed']);
+						break;
 					case self::HOLDING_LEFT:
 						$this->holdingLeft();
 						$response = NULL;
@@ -377,7 +388,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 						break;
 						
 					default:
-						$response = new SpykeeResponse(self::STATE_ERROR, 'Requête iconnue');
+						$response = new SpykeeResponse(self::STATE_ERROR, self::RECEIVE_PAQUET_UNKNOW);
 						$this->writeLog('Trame inconnu : '.$request.bin2hex($input).'"'."\r\n", 1);
 						break;
 					}
@@ -435,38 +446,69 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	 * Envoie les paquets qui doivent êtres envoyés à intervals réguliers
 	 */
 	protected function sendPeriodicPaquets(){
-		if ($this->_holdingQueue['left'])
+		// Aller uniquement à gauche
+		if ($this->_holdingQueue['left'] AND !$this->_holdingQueue['back'] AND !$this->_holdingQueue['forward'])
 			$this->_SpykeeClientRobot->left();
-		if ($this->_holdingQueue['right'])
+		// Aller uniquement à droite
+		else if ($this->_holdingQueue['right'] AND !$this->_holdingQueue['back'] AND !$this->_holdingQueue['forward'])
 			$this->_SpykeeClientRobot->right();
-		if ($this->_holdingQueue['forward'])
+		
+		// Avance tout droit
+		else if ($this->_holdingQueue['forward'] AND !$this->_holdingQueue['left'] AND !$this->_holdingQueue['right'])
 			$this->_SpykeeClientRobot->forward();
-		if ($this->_holdingQueue['back'])
+		// Recule en ligne droite
+		else if ($this->_holdingQueue['back'] AND !$this->_holdingQueue['left'] AND !$this->_holdingQueue['right'])
 			$this->_SpykeeClientRobot->back();
+		
+		// Diagonal haut gauche
+		else if ($this->_holdingQueue['forward'] AND $this->_holdingQueue['left'])
+			$this->_SpykeeClientRobot->move((int) ($this->_moveSpeed/5), $this->_moveSpeed);
+		// Diagonal haut droite
+		else if ($this->_holdingQueue['forward'] AND $this->_holdingQueue['right'])
+			$this->_SpykeeClientRobot->move($this->_moveSpeed, (int) ($this->_moveSpeed/8));
+			//$this->_SpykeeClientRobot->move($this->_moveSpeed, 0);
+		// Diagonal bas gauche
+		else if ($this->_holdingQueue['back'] AND $this->_holdingQueue['left'])
+			$this->_SpykeeClientRobot->move((int) ((128+$this->_moveSpeed)/5), 128 + $this->_moveSpeed);
+		// Diagonal bas droite
+		else if ($this->_holdingQueue['back'] AND $this->_holdingQueue['right'])
+			$this->_SpykeeClientRobot->move(128 + $this->_moveSpeed, (int) ((128+$this->_moveSpeed)/5));
 	}
 	
 	protected function holdingLeft(){
 		if ($this->_holdingQueue['right'])
 			$this->_holdingQueue['right'] = false;
-		$this->_holdingQueue['left'] = true;
+		if ($this->_holdingQueue['left'])
+			$this->stopHoldingLeft();
+		else
+			$this->_holdingQueue['left'] = true;
 	}
 	
 	protected function holdingRight(){
 		if ($this->_holdingQueue['left'])
 			$this->_holdingQueue['left'] = false;
-		$this->_holdingQueue['right'] = true;
+		if ($this->_holdingQueue['right'])
+			$this->stopHoldingRight();
+		else
+			$this->_holdingQueue['right'] = true;
 	}
 	
 	protected function holdingForward(){
 		if ($this->_holdingQueue['back'])
 			$this->_holdingQueue['back'] = false;
-		$this->_holdingQueue['forward'] = true;
+		if ($this->_holdingQueue['forward'])
+			$this->stopHoldingForward();
+		else
+			$this->_holdingQueue['forward'] = true;
 	}
 	
 	protected function holdingBack(){
 		if ($this->_holdingQueue['forward'])
 			$this->_holdingQueue['forward'] = false;
-		$this->_holdingQueue['back'] = true;
+		if ($this->_holdingQueue['back'])
+			$this->stopHoldingBack();
+		else
+			$this->_holdingQueue['back'] = true;
 	}
 	
 	protected function stopHoldingLeft(){
@@ -487,6 +529,12 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	protected function stopHoldingBack(){
 		$this->_holdingQueue['back'] = false;
 		$this->_SpykeeClientRobot->stop();
+	}
+	
+	protected function setSpeed($value){
+		$value = ($value > 0 AND $value <= 128) ? $value : self::MOVE_SPEED;
+		$this->_moveSpeed = $value;
+		return $this->_SpykeeClientRobot->setSpeed($value);
 	}
 }
 

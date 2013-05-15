@@ -19,5 +19,7 @@ Class SpykeeConfigRobot extends SpykeeRobot{
 	const CONNECTION_ROBOT_TIMEOUT = 8;
 	// Nombre maxmimum de reconnexion sucessive
 	const NB_RECONNECTION = 5;
+	// Vitesse du robot par défaut
+	const MOVE_SPEED = 100;
 }
 ?>

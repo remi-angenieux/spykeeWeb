@@ -47,7 +47,7 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 	protected $_robotSocket=NULL;
 	protected $_robotStream=NULL;
 	protected $_logFile;
-	protected $_moveSpeed = 100;
+	protected $_moveSpeed = self::MOVE_SPEED;
 	protected $_powerLevel = NULL;
 	protected $_reconnection=0;
 
@@ -368,6 +368,16 @@ class SpykeeClientRobot extends SpykeeConfigRobot {
 	public function setVideo($bool){
 		$status = ($bool == true) ? 1 : 0;
 		return $this->sendPacketToRobot(self::PAQUET_TYPE_STREAMCTL, pack('CC', self::STREAM_ID_VIDEO, $status));
+	}
+	
+	public function getMoveSpeed(){
+		return new SpykeeResponse(self::STATE_OK, SpykeeResponse::MOVE_SPEED_RETRIVED, $this->_moveSpeed);
+	}
+	
+	public function setSpeed($value){
+		$value = ($value > 0 AND $value <= 128) ? $value : self::MOVE_SPEED;
+		$this->_moveSpeed = $value;
+		return new SpykeeResponse(self::STATE_OK, SpykeeResponse::MOVE_SPEED_CHANGED);
 	}
 	
 	/*

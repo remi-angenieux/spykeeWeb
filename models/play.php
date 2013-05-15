@@ -11,6 +11,8 @@ class PlayModel extends BaseModel
 		$this->view->assign('pageTitle', 'Play');
 		// TODO mettre en place d'une configuration pour le site
 		$this->view->addAdditionalJs('http://spykee.lan/js/play.js');
+		$this->view->addAdditionalJs('http://spykee.lan/js/jquery-ui-1.10.3.custom.min.js');
+		$this->view->addAdditionalCss('http://spykee.lan/css/ui-darkness/jquery-ui-1.10.3.custom.min.css');
 	}
 	
 	public function ajax(){
@@ -60,6 +62,10 @@ class PlayModel extends BaseModel
 	
 	public function enableVideo(){
 		$this->view->assign('content', $this->_spykee->setVideo(TRUE)->jsonFormat());
+	}
+	
+	public function setSpeed($value){
+		$this->view->assign('content', $this->_spykee->setSpeed($value)->jsonFormat());
 	}
 	
 	public function canPlay(){

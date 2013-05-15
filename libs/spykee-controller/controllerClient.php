@@ -25,8 +25,8 @@ class SpykeeControllerClient extends SpykeeConfigRobot{
 
 
 	protected function connectToTheController(){
-		$this->_stream = fsockopen('tcp://'.$this->_serverIp, $this->_serverPort, $errorCode, $errorMsg, self::CONNECTION_CONTROLLER_TIMEOUT);
-		if ($this->_stream === FALSE){
+		$this->_stream = @fsockopen('tcp://'.$this->_serverIp, $this->_serverPort, $errorCode, $errorMsg, self::CONNECTION_CONTROLLER_TIMEOUT);
+		if ($this->_stream === false){
 			// TODO : Utiliser le gestionnaire d'erreur du site
 			die("Couldn't create socket: [$errorCode] $errorMsg \n");
 		}
@@ -40,7 +40,7 @@ class SpykeeControllerClient extends SpykeeConfigRobot{
 		$msg = pack('a3CCCn', 'CTR', $type, self::STATE_OK, SpykeeResponse::NO_DESCRIPTION, $length);
 		if (!empty($data))
 			$msg .= $data;
-		if (!socket_send($this->_socket, $msg, strlen($msg), MSG_DONTROUTE)){
+		if (!@socket_send($this->_socket, $msg, strlen($msg), MSG_DONTROUTE)){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 			
@@ -202,6 +202,10 @@ class SpykeeControllerClient extends SpykeeConfigRobot{
 		$status = ($bool == true) ? 1 : 0;
 		//return $this->setVideo($status);
 		return $this->sendPacketToController(self::VIDEO, pack('C', $status));
+	}
+	
+	public function setSpeed($value){
+		return $this->sendPacketToController(self::SET_SPEED, pack('C', $value));
 	}
 
 	public function stopServer(){

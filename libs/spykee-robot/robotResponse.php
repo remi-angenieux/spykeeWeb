@@ -22,6 +22,8 @@ class SpykeeResponse{
 	
 	const LEVEL_BATTERY_RETRIVED = 16;
 	const TOO_MANY_CONNECTION = 17;
+	const MOVE_SPEED_RETRIVED = 18;
+	const MOVE_SPEED_CHANGED = 19;
 	
 	protected $_state=NULL;
 	protected $_data=NULL;
@@ -96,12 +98,18 @@ class SpykeeResponse{
 			case self::RECEIVE_PAQUET_TYPE_LOG:
 				$this->_description = 'Paquet reçu de type log';
 			break;
-			case self::RECEIVE_PAQUET_UNKNOW:
+			case self::RECEIVE_PAQUET_UNKNOW: // TODO Changer en Receive_Unknow_paquet
 				$this->_description = 'Paquet reçu de type inconnu';
 				break;
 				
 			case self::LEVEL_BATTERY_RETRIVED:
 				$this->_description = 'Niveau de batterie récupéré';
+				break;
+			case self::MOVE_SPEED_RETRIVED:
+				$this->_description = 'Vitesse récupérée';
+				break;
+			case self::MOVE_SPEED_CHANGED:
+				$this->_description = 'Vitesse changée avec succès';
 				break;
 			case self::TOO_MANY_CONNECTION:
 				$this->_description = 'Le nombre maximum de connexion simultannées à été atteint';

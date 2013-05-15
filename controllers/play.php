@@ -81,6 +81,9 @@ class PlayController extends BaseController
 				case 'enableVideo':
 					$this->model->enableVideo();
 					break;
+				case 'setSpeed':
+					$this->model->setSpeed($_POST['data']);
+					break;
 					
 			}
 		}

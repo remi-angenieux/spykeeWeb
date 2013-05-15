@@ -35,5 +35,7 @@ Class SpykeeConfigControllerServer extends SpykeeController{
 	const CONTROLLER_IP = '127.0.0.1';
 	// Addresse IP autorisé à entrer en contact avec le controller
 	const CLIENT_IP = '127.0.0.1';
+	// Vitesse du robot par défaut
+	const MOVE_SPEED = 100;
 }
 ?>

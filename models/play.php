@@ -6,7 +6,7 @@ class PlayModel extends BaseModel
 	
 	//data passed to the home index view
 	public function index(){
-		require_once(PATH.'libs/spykee-controller/controllerClient.php');
+		require_once(PATH.'libs/spykee/spykee-controller/controllerClient.php');
 		$this->_spykee = new SpykeeControllerClient('Robot1', '127.0.0.1', '2000');
 		$this->view->assign('pageTitle', 'Play');
 		// TODO mettre en place d'une configuration pour le site
@@ -16,7 +16,7 @@ class PlayModel extends BaseModel
 	}
 	
 	public function ajax(){
-		require_once(PATH.'libs/spykee-controller/controllerClient.php');
+		require_once(PATH.'libs/spykee/spykee-controller/controllerClient.php');
 		$this->_spykee = new SpykeeControllerClient('Robot1', '127.0.0.1', '2000');
 	}
 	

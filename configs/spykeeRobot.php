@@ -1,7 +1,7 @@
 <?php
-require_once(PATH.'libs/spykee-robot/robot.php');
+require_once(PATH.'libs/spykee/spykee-robot/robot.php');
 /*
- * Configuration de l'objet SpykeeClientRobot
+ * Configuration de l'objet SpykeeRobotClient
  */
 Class SpykeeConfigRobot extends SpykeeRobot{
 	

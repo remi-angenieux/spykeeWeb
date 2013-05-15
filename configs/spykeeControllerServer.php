@@ -1,5 +1,5 @@
 <?php
-require_once(PATH.'libs/spykee-controller/controller.php');
+require_once(PATH.'libs/spykee/spykee-controller/controller.php');
 /*
  * Configuration de l'objet SpykeeControllerServer
 */

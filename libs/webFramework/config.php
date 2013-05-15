@@ -16,6 +16,12 @@ class Config {
 
 	private function loadIniFile(){
 		$array = parse_ini_file(PATH.'configs/website.ini', true);
+		foreach($array as $sectionName => $section){ // If the setting isn't in a section. Then put in global section
+			if (!is_array($section)){
+				$array['global'][$sectionName] = $section;
+				unset($array[$sectionName]);
+			}
+		}
 		$this->_tempArray = array_merge_recursive($this->_tempArray, $array);
 	}
 	

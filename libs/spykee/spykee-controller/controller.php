@@ -1,5 +1,5 @@
 <?php
-require_once(PATH.'libs/spykee-robot/robot.php');
+require_once(PATH.'libs/spykee/spykee-robot/robot.php');
 /*
  * Constantes mise en commun avec le Client du Controller
  */

@@ -2,9 +2,9 @@
 // Inclue la configuration du robot. Et ses constantes partagées
 require_once(PATH.'configs/spykeeRobot.php');
 // Inclue l'objet utilisé lors des retours des différentes actions
-require_once(PATH.'libs/spykee-robot/robotResponse.php');
+require_once(PATH.'libs/spykee/response.php');
 
-class SpykeeClientRobot extends SpykeeConfigRobot {
+class SpykeeRobotClient extends SpykeeConfigRobot {
 	/*
 	 * Types des Socket
 	*/

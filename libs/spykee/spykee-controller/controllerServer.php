@@ -6,9 +6,9 @@ if (!defined('PATH'))
 // Inclue la configuration du ControllerServer. Et ses constantes partagées
 require_once(PATH.'configs/spykeeControllerServer.php');
 // Inclue l'objet permettant de communiquer avec le robot
-require_once(PATH.'libs/spykee-robot/clientRobot.php');
+require_once(PATH.'libs/spykee/spykee-robot/robotClient.php');
 // Inclue l'objet utilisé lors des retours des différentes actions
-require_once(PATH.'libs/spykee-robot/robotResponse.php');
+require_once(PATH.'libs/spykee/response.php');
 
 class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	/*
@@ -16,7 +16,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	*/
 	protected $_stopServer = false;
 	protected $_logFile;
-	protected $_SpykeeClientRobot;
+	protected $_SpykeeRobotClient;
 	protected $_robotName;
 	protected $_robotIp;
 	protected $_controllerPort;
@@ -48,12 +48,12 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 		$this->writeLog('Démarrage du controleur'."\r\n", 1);
 
 		// Connexion au robot
-		$this->_SpykeeClientRobot = new SpykeeClientRobot($this->_robotName, $this->_robotIp, $this->_robotUsername, $this->_robotPassword);
+		$this->_SpykeeRobotClient = new SpykeeRobotClient($this->_robotName, $this->_robotIp, $this->_robotUsername, $this->_robotPassword);
 
 		$this->initSocketServer();
 		
 		// Définit la vitesse du robot avec celle par défaut
-		$this->_SpykeeClientRobot->setSpeed($this->_moveSpeed);
+		$this->_SpykeeRobotClient->setSpeed($this->_moveSpeed);
 		
 		// Lance a proprement dit le serveur
 		$this->mainLoop();
@@ -256,23 +256,23 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 					switch($type){
 					case self::MOVE:
 						$inputFormated = unpack('Cleft/Cright', $input);
-						$state = $this->_SpykeeClientRobot->move($inputFormated['left'], $inputFormated['right']);
+						$state = $this->_SpykeeRobotClient->move($inputFormated['left'], $inputFormated['right']);
 						$response = NULL;
 						break;
 					case self::LEFT:
-						$this->_SpykeeClientRobot->left();
+						$this->_SpykeeRobotClient->left();
 						$response = NULL;
 						break;
 					case self::RIGHT:
-						$this->_SpykeeClientRobot->right();
+						$this->_SpykeeRobotClient->right();
 						$response = NULL;
 						break;
 					case self::FORWARD:
-						$this->_SpykeeClientRobot->forward();
+						$this->_SpykeeRobotClient->forward();
 						$response = NULL;
 						break;
 					case self::BACK:
-						$this->_SpykeeClientRobot->back();
+						$this->_SpykeeRobotClient->back();
 						$response = NULL;
 						break;
 					case self::STOP:
@@ -281,41 +281,41 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 						$this->_holdingQueue['right'] = false;
 						$this->_holdingQueue['forward'] = false;
 						$this->_holdingQueue['back'] = false;
-						$this->_SpykeeClientRobot->stop();
+						$this->_SpykeeRobotClient->stop();
 						$response = NULL;
 						break;
 					case self::ACTIVATE:
-						$response = $this->_SpykeeClientRobot->activate();
+						$response = $this->_SpykeeRobotClient->activate();
 						break;
 					case self::CHARGE_STOP:
-						$response = $this->_SpykeeClientRobot->chargeCtop();
+						$response = $this->_SpykeeRobotClient->chargeCtop();
 						break;
 					case self::DOCK:
-						$response = $this->_SpykeeClientRobot->dock();
+						$response = $this->_SpykeeRobotClient->dock();
 						break;
 					case self::DOCK_CANCEL:
-						$response = $this->_SpykeeClientRobot->dockCancel();
+						$response = $this->_SpykeeRobotClient->dockCancel();
 						break;
 					case self::WIRELESS_NETWORKS:
-						$response = $this->_SpykeeClientRobot->wirelessNetworks();
+						$response = $this->_SpykeeRobotClient->wirelessNetworks();
 						break;
 					case self::GET_LOG:
-						$response = $this->_SpykeeClientRobot->getLog();
+						$response = $this->_SpykeeRobotClient->getLog();
 						break;
 					case self::SEND_MP3:
 						// TODO finir send MP3
-						$response = $this->_SpykeeClientRobot->sendMp3('./../music/music.mp3');
+						$response = $this->_SpykeeRobotClient->sendMp3('./../music/music.mp3');
 						break;
 					case self::GET_CONFIG:
-						$response = $this->_SpykeeClientRobot->getConfig();
+						$response = $this->_SpykeeRobotClient->getConfig();
 						break;
 					case self::AUDIO_PLAY:
 						// TODO Finir audio play
-						$response = $this->_SpykeeClientRobot->audioPlay('./../music/music.mp3');
+						$response = $this->_SpykeeRobotClient->audioPlay('./../music/music.mp3');
 						break;
 					case self::VIDEO:
 						$inputFormated = unpack('Cstate', $input);
-						$this->_SpykeeClientRobot->setVideo($inputFormated['state']);
+						$this->_SpykeeRobotClient->setVideo($inputFormated['state']);
 						$response = NULL;
 						break;
 					case self::STOP_SERVER:
@@ -335,11 +335,11 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 						if ($this->_powerLevel != NULL)
 							$response = new SpykeeResponse(self::STATE_OK, SpykeeResponse::LEVEL_BATTERY_RETRIVED, $this->_powerLevel);
 						else{
-							$response = $this->_SpykeeClientRobot->getPpowerLlevel();
+							$response = $this->_SpykeeRobotClient->getPpowerLlevel();
 						}
 						break;
 					case self::REFRESH_POWER_LEVEL:
-						$request = $this->_SpykeeClientRobot->refreshPpowerLlevel();
+						$request = $this->_SpykeeRobotClient->refreshPpowerLlevel();
 						if ($request->getState() == self::STATE_OK){
 							$response = $request;
 							$this->_powerLevel = $request->getData();
@@ -423,7 +423,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	 * Récupère les réponses du robot comme l'état de batterie ou le stream audio/video
 	 */
 	protected function listenRobotResponses(){
-		$result = $this->_SpykeeClientRobot->socketHook();
+		$result = $this->_SpykeeRobotClient->socketHook();
 		// Si aucune trame n'a été capturée
 		if(!is_object($result))
 			return FALSE;
@@ -448,31 +448,31 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	protected function sendPeriodicPaquets(){
 		// Aller uniquement à gauche
 		if ($this->_holdingQueue['left'] AND !$this->_holdingQueue['back'] AND !$this->_holdingQueue['forward'])
-			$this->_SpykeeClientRobot->left();
+			$this->_SpykeeRobotClient->left();
 		// Aller uniquement à droite
 		else if ($this->_holdingQueue['right'] AND !$this->_holdingQueue['back'] AND !$this->_holdingQueue['forward'])
-			$this->_SpykeeClientRobot->right();
+			$this->_SpykeeRobotClient->right();
 		
 		// Avance tout droit
 		else if ($this->_holdingQueue['forward'] AND !$this->_holdingQueue['left'] AND !$this->_holdingQueue['right'])
-			$this->_SpykeeClientRobot->forward();
+			$this->_SpykeeRobotClient->forward();
 		// Recule en ligne droite
 		else if ($this->_holdingQueue['back'] AND !$this->_holdingQueue['left'] AND !$this->_holdingQueue['right'])
-			$this->_SpykeeClientRobot->back();
+			$this->_SpykeeRobotClient->back();
 		
 		// Diagonal haut gauche
 		else if ($this->_holdingQueue['forward'] AND $this->_holdingQueue['left'])
-			$this->_SpykeeClientRobot->move((int) ($this->_moveSpeed/5), $this->_moveSpeed);
+			$this->_SpykeeRobotClient->move((int) ($this->_moveSpeed/5), $this->_moveSpeed);
 		// Diagonal haut droite
 		else if ($this->_holdingQueue['forward'] AND $this->_holdingQueue['right'])
-			$this->_SpykeeClientRobot->move($this->_moveSpeed, (int) ($this->_moveSpeed/8));
-			//$this->_SpykeeClientRobot->move($this->_moveSpeed, 0);
+			$this->_SpykeeRobotClient->move($this->_moveSpeed, (int) ($this->_moveSpeed/8));
+			//$this->_SpykeeRobotClient->move($this->_moveSpeed, 0);
 		// Diagonal bas gauche
 		else if ($this->_holdingQueue['back'] AND $this->_holdingQueue['left'])
-			$this->_SpykeeClientRobot->move((int) ((128+$this->_moveSpeed)/5), 128 + $this->_moveSpeed);
+			$this->_SpykeeRobotClient->move((int) ((128+$this->_moveSpeed)/5), 128 + $this->_moveSpeed);
 		// Diagonal bas droite
 		else if ($this->_holdingQueue['back'] AND $this->_holdingQueue['right'])
-			$this->_SpykeeClientRobot->move(128 + $this->_moveSpeed, (int) ((128+$this->_moveSpeed)/5));
+			$this->_SpykeeRobotClient->move(128 + $this->_moveSpeed, (int) ((128+$this->_moveSpeed)/5));
 	}
 	
 	protected function holdingLeft(){
@@ -513,28 +513,28 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 	
 	protected function stopHoldingLeft(){
 		$this->_holdingQueue['left'] = false;
-		$this->_SpykeeClientRobot->stop();
+		$this->_SpykeeRobotClient->stop();
 	}
 	
 	protected function stopHoldingRight(){
 		$this->_holdingQueue['right'] = false;
-		$this->_SpykeeClientRobot->stop();
+		$this->_SpykeeRobotClient->stop();
 	}
 	
 	protected function stopHoldingForward(){
 		$this->_holdingQueue['forward'] = false;
-		$this->_SpykeeClientRobot->stop();
+		$this->_SpykeeRobotClient->stop();
 	}
 	
 	protected function stopHoldingBack(){
 		$this->_holdingQueue['back'] = false;
-		$this->_SpykeeClientRobot->stop();
+		$this->_SpykeeRobotClient->stop();
 	}
 	
 	protected function setSpeed($value){
 		$value = ($value > 0 AND $value <= 128) ? $value : self::MOVE_SPEED;
 		$this->_moveSpeed = $value;
-		return $this->_SpykeeClientRobot->setSpeed($value);
+		return $this->_SpykeeRobotClient->setSpeed($value);
 	}
 }
 

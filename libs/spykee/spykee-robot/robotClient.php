@@ -1,10 +1,10 @@
 <?php
 // Inclue la configuration du robot. Et ses constantes partagées
-require_once(PATH.'configs/spykeeRobot.php');
+//require_once(PATH.'configs/spykeeRobot.php');
 // Inclue l'objet utilisé lors des retours des différentes actions
 require_once(PATH.'libs/spykee/response.php');
 
-class SpykeeRobotClient extends SpykeeConfigRobot {
+class SpykeeRobotClient extends SpykeeRobot {
 	/*
 	 * Types des Socket
 	*/
@@ -40,52 +40,46 @@ class SpykeeRobotClient extends SpykeeConfigRobot {
 	/*
 	 * Définition des attributs
 	*/
+	protected $_config;
 	protected $_robotName;
 	protected $_robotUsername;
 	protected $_robotPassword;
 	protected $_robotIp;
+	protected $_errorManager;
 	protected $_robotSocket=NULL;
 	protected $_robotStream=NULL;
-	protected $_logFile;
-	protected $_moveSpeed = self::MOVE_SPEED;
+	protected $_moveSpeed;
 	protected $_powerLevel = NULL;
 	protected $_reconnection=0;
 
-	function __construct($robotName, $robotIp, $robotUsername=self::DEFAULT_USERNAME, $robotPassword=self::DEFAULT_PASSWORD){
-		date_default_timezone_set(self::TIME_ZONE); // Pour les dates des logs
-		$this->_reconnection=0;
-		// TODO vérifier les valeurs entrées avec un geter
+	function __construct($robotName, $robotIp, $robotUsername=null, $robotPassword=null){
 		$this->_robotName = $robotName;
-		$this->_robotIp = $robotIp;
-		$this->_robotUsername = $robotUsername;
-		$this->_robotPassword = $robotPassword;
-		$this->_logFile = realpath(__DIR__).'/../../logs/'.$this->_robotName.'-ClientRobot.log';
+		$this->_setRobotIp($robotIp);
+		$this->_config = new SpykeeConfig('spykeeRobot.ini', array('name' => $this->_robotName, 'ip' => $this->_robotIp));
+		$this->_errorManager = new SpykeeError($this->_robotName, $this->_robotIp, $this->_config);
+		$this->_reconnection=0;
+		$this->_robotUsername = (!empty($robotUsername)) ? $robotUsername : $this->_config->robot->defaultUsername;
+		$this->_robotPassword = (!empty($robotPassword)) ? $robotPassword : $this->_config->robot->defaultPassword;
+		$this->_moveSpeed = $this->_config->robot->speed;
 		
 		$this->initSocket();
 		$this->authentificationRobot();
 	}
-
-	protected function writeLog($txt, $level=1){
-		if (self::LOG_LEVEL >= $level){
-			$content = date('[d/m/y] à H:i:s ', time());
-			$content .= '@'.$this->_robotName.'('.$this->_robotIp.') : ';
-			$content .= $txt;
-
-			/*
-			 * Création/Mise à jour du fichier de log
-			*/
-			if (!$file = fopen($this->_logFile, 'a')){
-				echo 'Impossible d\'ouvrir le fichier : '.$this->_logFile;
-			}
-			else {
-				if (fwrite($file, $content) === FALSE ){
-					echo 'Impossible d\'écrire dans le fichier : '.$this->_logFile;
-				}
-				fclose($file);
-			}
+	
+	protected function _setRobotIp($ip){
+		if (filter_var($ip, FILTER_VALIDATE_IP)) // If the use enter a valid IP adresse
+			$this->_robotIp = $ip;
+		else{
+			// Send error with 2 methodes because it's critical programming error
+			// And kill the script
+			$trace = debug_backtrace();
+			$errorMessage = 'Argument 2 for SpykeeRobotClient::__construct() have to be an valid IP adresse, called in'
+					.$trace[0]['file'].' on line '.$trace[0]['line'];
+			SpykeeError::standaloneError($errorMessage);
+			trigger_error($errorMessage, E_USER_ERROR);
 		}
 	}
-	
+
 	protected function initSocket(){
 		$this->_robotStream = fsockopen('tcp://'.$this->_robotIp, self::ROBOT_PORT, $errorCode, $errorMsg, self::CONNECTION_ROBOT_TIMEOUT);
 		

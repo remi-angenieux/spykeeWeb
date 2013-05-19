@@ -466,13 +466,12 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 		// Diagonal haut droite
 		else if ($this->_holdingQueue['forward'] AND $this->_holdingQueue['right'])
 			$this->_SpykeeRobotClient->move($this->_moveSpeed, (int) ($this->_moveSpeed/8));
-			//$this->_SpykeeRobotClient->move($this->_moveSpeed, 0);
 		// Diagonal bas gauche
 		else if ($this->_holdingQueue['back'] AND $this->_holdingQueue['left'])
-			$this->_SpykeeRobotClient->move((int) ((128+$this->_moveSpeed)/5), 128 + $this->_moveSpeed);
+			$this->_SpykeeRobotClient->move(128 + (int) ($this->_moveSpeed/5), 128 + $this->_moveSpeed);
 		// Diagonal bas droite
 		else if ($this->_holdingQueue['back'] AND $this->_holdingQueue['right'])
-			$this->_SpykeeRobotClient->move(128 + $this->_moveSpeed, (int) ((128+$this->_moveSpeed)/5));
+			$this->_SpykeeRobotClient->move(128 + $this->_moveSpeed, 128 + (int) ($this->_moveSpeed/5));
 	}
 	
 	protected function holdingLeft(){
@@ -531,7 +530,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 		$this->_SpykeeRobotClient->stop();
 	}
 	
-	protected function setSpeed($value){
+	protected function setSpeed(int $value){
 		$value = ($value > 0 AND $value <= 128) ? $value : self::MOVE_SPEED;
 		$this->_moveSpeed = $value;
 		return $this->_SpykeeRobotClient->setSpeed($value);

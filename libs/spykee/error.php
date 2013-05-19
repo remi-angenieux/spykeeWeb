@@ -31,15 +31,15 @@ class SpykeeError {
 	 */
 	public function error($message, $level=1){
 		$this->_writeLog($message, $level);
-		// You can add custom methodes
+		// You can add custom methodes here
 	}
 	
 	/**
-	 * Send the error in a log file
+	 * Send the error/informations in a log file
 	 * @param string $message Error message
 	 * @param integer $level Erro level
 	 */
-	protected function _writeLog($message, $level){
+	public function writeLog($message, $level){
 		if ($this->_configs->errors->logLevel >= $level){
 			$content = date($this->_config->errors->timeFormat, time());
 			$content .= '@'.$this->_robotName.'('.$this->_robotIp.') : ';
@@ -81,7 +81,7 @@ class SpykeeError {
 		}
 		else {
 			if (fwrite($file, $content) === FALSE ){
-				echo 'Unable to write ine the file log : '.$logFile."\r\n";
+				echo 'Unable to write in the file log : '.$logFile."\r\n";
 				trigger_error('Unable to write ine the file log : '.$logFile, E_USER_ERROR); // Send the error through PHP
 			}
 			fclose($file);
@@ -103,6 +103,14 @@ class ExceptionSpykee extends Exception{
 		$this->_userMessage = $userMessage;
 		
 		parent::__construct($AdminMessage, $code, $previous);
+	}
+	
+	/**
+	 * To get the user message
+	 * @return string
+	 */
+	public function getUserMessage(){
+		return $this->_userMessage;
 	}
 }
 

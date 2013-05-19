@@ -19,7 +19,7 @@ class SpykeeConfig {
 	public function __construct($file, $robotInfo){
 		$this->_setRobotInfo($robotInfo);
 		// Load default configuration
-		$default = $this->_loadIniFile(PATH.'configs/default/'.$file, true);
+		$default = $this->_loadIniFile(PATH.'configs/default/'.$file);
 		// Load user configuration
 		$user = $this->_loadIniFile(PATH.'configs/'.$file);
 		// Overwrite default config with the user config. Doesn't add user config not set in the default config
@@ -41,8 +41,7 @@ class SpykeeConfig {
 			$trace = debug_backtrace();
 			$errorMessage = 'Argument 2 for SpykeeConfig::__construct() have to be an array, called in'
 					.$trace[0]['file'].' on line '.$trace[0]['line'];
-			SpykeeError::standaloneError($errorMessage);
-			trigger_error($errorMessage, E_USER_WARNING);
+			throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
 		}
 		else{
 			if (empty($array['name'])){
@@ -50,16 +49,14 @@ class SpykeeConfig {
 				// Send error with 2 methodes because it's critical programming error
 				$errorMessage = 'Argument 2 for SpykeeConfig::__construct() must have an index name, called in'
 						.$trace[0]['file'].' on line '.$trace[0]['line'];
-				SpykeeError::standaloneError($errorMessage);
-				trigger_error($errorMessage, E_USER_WARNING);
+				throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
 			}
 			if (empty($array['ip'])){
 				$this->_robotInfo['ip'] = self::DEFAULT_ROBOT_IP;
 				// Send error with 2 methodes because it's critical programming error
 				$errorMessage = 'Argument 2 for SpykeeConfig::__construct() must have an index ip, called in'
 						.$trace[0]['file'].' on line '.$trace[0]['line'];
-				SpykeeError::standaloneError($errorMessage);
-				trigger_error($errorMessage, E_USER_WARNING);
+				throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
 			}
 		}
 	}
@@ -67,14 +64,10 @@ class SpykeeConfig {
 	/**
 	 * Return an associative array of the ini file
 	 * @param string $file File name of the fil with is path
-	 * @param bool $fatal This file is require to run the script ?
 	 */
-	protected function _loadIniFile($file, $fatal=false){
+	protected function _loadIniFile($file){
 		if (!is_file($file)){
-			if ($fatal)
-				trigger_error('Default config file doesn\'t exist ('.$file.')', E_USER_ERROR);
-			else
-				SpykeeError::standaloneError('User config file doesn\'t exist ('.$file.')');
+			throw new ExceptionSpykee('Unable to launch Spykee Script', 'User config file doesn\'t exist ('.$file.')');
 			return false;
 		}
 		else

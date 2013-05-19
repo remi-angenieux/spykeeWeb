@@ -7,6 +7,7 @@ class SpykeeResponse{
 	const ERROR_SEND_PAQUET = 2;
 	const PAQUET_SENT = 3;
 	const ERROR_RECEIVE_PAQUET = 4;
+	const ERROR_INCORRECT_HEADER = 20;
 	const CONNECTION_REINIT = 5;
 	const UNABLE_READ_DATA = 6;
 	
@@ -67,6 +68,9 @@ class SpykeeResponse{
 			case self::ERROR_RECEIVE_PAQUET:
 				$this->_description = 'Problème de réception du paquet';
 				break;
+			case self::ERROR_INCORRECT_HEADER:
+				$this->_description = 'Mauvais header reçue';
+			break;
 			case self::CONNECTION_REINIT:
 				$this->_description = 'Connexion réinitialisée';
 				break;

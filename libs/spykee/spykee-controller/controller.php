@@ -43,7 +43,7 @@ class SpykeeController extends SpykeeRobot{
 	const GET_SPEED = 30;
 
 	// Longeur de l'entête du protocole de controller (ControllerClient <-> ControllerServer)
-	const CTR_PAQUET_HEADER_SIZE = 8;
+	const CTR_PACKET_HEADER_SIZE = 8;
 }
 
 ?>

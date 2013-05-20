@@ -218,7 +218,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 				/*
 				 * Code exécuté
 				*/
-				$request = @socket_read($this->_socketsClient[$i]['socket'], self::CTR_PAQUET_HEADER_SIZE); // On lit la requête du client
+				$request = @socket_read($this->_socketsClient[$i]['socket'], self::CTR_PACKET_HEADER_SIZE); // On lit la requête du client
 				// Si le client se déconnecte
 				if ($request == '' OR $request === false AND !is_resource($request)){
 					//zero length string meaning disconnected, remove and close the socket
@@ -388,7 +388,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 						break;
 						
 					default:
-						$response = new SpykeeResponse(self::STATE_ERROR, self::RECEIVE_PAQUET_UNKNOW);
+						$response = new SpykeeResponse(self::STATE_ERROR, self::RECEIVE_UNKNOW_PACKET);
 						$this->writeLog('Trame inconnu : '.$request.bin2hex($input).'"'."\r\n", 1);
 						break;
 					}
@@ -429,7 +429,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 			return FALSE;
 			
 		// Si la fonction à retourner une image du stream vidéo
-		if ($result->getIdDescription() == SpykeeResponse::RECEIVE_PAQUET_TYPE_VIDEO){
+		if ($result->getIdDescription() == SpykeeResponse::RECEIVE_PACKET_TYPE_VIDEO){
 			$file = PATH.'www/videoStream/video.jpeg';
 			if (file_put_contents($file, $result->getData()) === false){
 				echo 'Problème dans l\'enregistrement de l\'image'."\r\n";
@@ -437,7 +437,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 			}
 		}
 		// Si la fonction à retourner le niveau de batterie
-		elseif ($result->getIdDescription() == SpykeeResponse::RECEIVE_PAQUET_TYPE_POWER){
+		elseif ($result->getIdDescription() == SpykeeResponse::RECEIVE_PACKET_TYPE_POWER){
 			$this->_powerLevel = $result->getData(); 
 		}
 	}

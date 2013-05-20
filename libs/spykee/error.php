@@ -6,10 +6,10 @@
 class SpykeeError {
 	protected $_robotName;
 	protected $_robotIp;
-	protected $_configs;
+	protected $_config;
 	protected $_class;
 	
-	const DEFAULT_DATE_FORMAT = 'Y-m-d \a\t hA';
+	const DEFAULT_DATE_FORMAT = 'Y-m-d \a\t h A';
 	
 	/**
 	 * Prepare the error manager
@@ -17,11 +17,11 @@ class SpykeeError {
 	 * @param string $robotIp IP Adresse of the robot
 	 * @param SpykeeConfig $configs Config of the Object (Controller or Robot)
 	 */
-	public function __construct($robotName, $robotIp, $configs){
+	public function __construct($robotName, $robotIp, $config){
 		$this->_robotName = $robotName;
 		$this->_robotIp = $robotIp;
-		$this->_configs = $configs;
-		date_default_timezone_set($configs->errors->timeZone); // Used for log
+		$this->_config = $config;
+		date_default_timezone_set($config->errors->timeZone); // Used for log
 	}
 	
 	/**
@@ -30,7 +30,7 @@ class SpykeeError {
 	 * @param integer $level Error level
 	 */
 	public function error($message, $level=1){
-		$this->_writeLog($message, $level);
+		$this->writeLog($message, $level);
 		// You can add custom methodes here
 	}
 	
@@ -40,25 +40,21 @@ class SpykeeError {
 	 * @param integer $level Erro level
 	 */
 	public function writeLog($message, $level){
-		if ($this->_configs->errors->logLevel >= $level){
+		if ($this->_config->errors->logLevel >= $level){
 			$content = date($this->_config->errors->timeFormat, time());
-			$content .= '@'.$this->_robotName.'('.$this->_robotIp.') : ';
+			$content .= '@'.$this->_robotName.'('.$this->_robotIp.'): ';
 			$content .= $message;
 			$content .= "\r\n";
 	
 			/*
 			 * Create/Append file log
 			*/
-			$logFile=PATH.$this->_configs->pathLogFile.$this->_robotName.'-'.$this->_configs->logFile.'.log';
-			if (!$file = fopen($logFile, 'a')){
-				echo 'Unable to open the file log : '.$logFile."\r\n";
-				trigger_error('Unable to open the file log : '.$logFile, E_USER_ERROR); // Send the error through PHP
-			}
+			$logFile=PATH.$this->_config->errors->pathLogFile.$this->_robotName.'-'.$this->_config->errors->logFileName.'.log';
+			if (!$file = fopen($logFile, 'a'))
+				trigger_error('Unable to open the file log: '.$logFile, E_USER_ERROR); // Send the error through PHP
 			else {
-				if (fwrite($file, $content) === FALSE ){
-					echo 'Unable to write ine the file log : '.$logFile."\r\n";
-					trigger_error('Unable to write ine the file log : '.$logFile, E_USER_ERROR); // Send the error through PHP
-				}
+				if (fwrite($file, $content) === FALSE )
+					trigger_error('Unable to write in the file log: '.$logFile, E_USER_ERROR); // Send the error through PHP
 				fclose($file);
 			}
 		}
@@ -72,18 +68,15 @@ class SpykeeError {
 	static function standaloneError($message){
 		$logFile = PATH.'logs/spykeeScriptError.log';
 		$content = date(self::DEFAULT_DATE_FORMAT, time());
+		$content .= ': ';
 		$content .= $message;
 		$content .= "\r\n";
 		
-		if (!$file = fopen($logFile, 'a')){
-			echo 'Unable to open the file log : '.$logFile."\r\n";
-			trigger_error('Unable to open the file log : '.$logFile, E_USER_ERROR); // Send the error through PHP
-		}
+		if (!$file = fopen($logFile, 'a'))
+			trigger_error('Unable to open the file log: '.$logFile, E_USER_ERROR); // Send the error through PHP
 		else {
-			if (fwrite($file, $content) === FALSE ){
-				echo 'Unable to write in the file log : '.$logFile."\r\n";
-				trigger_error('Unable to write ine the file log : '.$logFile, E_USER_ERROR); // Send the error through PHP
-			}
+			if (fwrite($file, $content) === FALSE )
+				trigger_error('Unable to write in the file log: '.$logFile, E_USER_ERROR); // Send the error through PHP
 			fclose($file);
 		}
 	}

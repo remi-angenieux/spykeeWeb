@@ -6,7 +6,6 @@
 class SpykeeConfig {
 	protected $_data=array();
 	protected $_robotInfo=array();
-	protected $_errorManager;
 	
 	const DEFAULT_ROBOT_NAME = 'Unknow Robot';
 	const DEFAULT_ROBOT_IP = '0.0.0.0';
@@ -14,10 +13,8 @@ class SpykeeConfig {
 	/**
 	 * Load and parse an ini file
 	 * @param string $file File name of ini file
-	 * @param array $robotInfo Array wich content "ip" and "name" of the robot
 	 */
-	public function __construct($file, $robotInfo){
-		$this->_setRobotInfo($robotInfo);
+	public function __construct($file){
 		// Load default configuration
 		$default = $this->_loadIniFile(PATH.'configs/default/'.$file);
 		// Load user configuration
@@ -25,49 +22,16 @@ class SpykeeConfig {
 		// Overwrite default config with the user config. Doesn't add user config not set in the default config
 		$config = ($user !== false) ? array_intersect_key($user + $default, $default) : $default ;
 		$this->_parseConfig($config);
-		
-		$this->_errorManager = new SpykeeError($this->_robotInfo['name'], $this->_robotInfo['ip'], $this);
-	}
-	
-	/**
-	 * Tests if the object has the informations required
-	 * @param array $array Array wich content ip and name of the robot
-	 */
-	protected function _setRobotInfo($array){
-		if(!is_array($array)){
-			$this->_robotInfo['name'] = self::DEFAULT_ROBOT_NAME;
-			$this->_robotInfo['ip'] = self::DEFAULT_ROBOT_IP;
-			// Send error with 2 methodes because it's critical programming error
-			$trace = debug_backtrace();
-			$errorMessage = 'Argument 2 for SpykeeConfig::__construct() have to be an array, called in'
-					.$trace[0]['file'].' on line '.$trace[0]['line'];
-			throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
-		}
-		else{
-			if (empty($array['name'])){
-				$this->_robotInfo['name'] = self::DEFAULT_ROBOT_NAME;
-				// Send error with 2 methodes because it's critical programming error
-				$errorMessage = 'Argument 2 for SpykeeConfig::__construct() must have an index name, called in'
-						.$trace[0]['file'].' on line '.$trace[0]['line'];
-				throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
-			}
-			if (empty($array['ip'])){
-				$this->_robotInfo['ip'] = self::DEFAULT_ROBOT_IP;
-				// Send error with 2 methodes because it's critical programming error
-				$errorMessage = 'Argument 2 for SpykeeConfig::__construct() must have an index ip, called in'
-						.$trace[0]['file'].' on line '.$trace[0]['line'];
-				throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
-			}
-		}
 	}
 	
 	/**
 	 * Return an associative array of the ini file
 	 * @param string $file File name of the fil with is path
+	 * @return bool|array
 	 */
 	protected function _loadIniFile($file){
 		if (!is_file($file)){
-			throw new ExceptionSpykee('Unable to launch Spykee Script', 'User config file doesn\'t exist ('.$file.')');
+			throw new ExceptionSpykee('Unable to launch Spykee Script', 'Config file doesn\'t exist ('.$file.')');
 			return false;
 		}
 		else
@@ -80,7 +44,7 @@ class SpykeeConfig {
 	 */
 	protected function _parseConfig($config){
 		foreach ($config as $sectionName => $section)
-			$this->_data[$sectionName] = new SpykeeConfigSection($section, $this->_robotInfo);
+			$this->_data[$sectionName] = new SpykeeConfigSection($section, $this->_robotInfo, $this);
 	}
 	
 	/**
@@ -93,8 +57,12 @@ class SpykeeConfig {
 			return $this->_data[$name];
 		else{
 			$trace = debug_backtrace();
-			$this->_errorManager->error('Config : Section named '.$name.' undefined in '
-					.$trace[0]['file'].' at the line '.$trace[0]['line']);
+			echo $name;
+			echo $trace[0]['file'].' at the line '.$trace[0]['line'];
+			$errorMessage = 'Config: Section named '.$name.' undefined in '
+					.$trace[0]['file'].' at the line '.$trace[0]['line'];
+			SpykeeError::standaloneError($errorMessage);
+			trigger_error($errorMessage, E_USER_ERROR);
 			return null;
 		}
 	}
@@ -102,17 +70,13 @@ class SpykeeConfig {
 
 class SpykeeConfigSection {
 	private $_data=array();
-	protected $_errorManager;
-	protected $_robotInfo;
 
 	/**
 	 * Convert the array to an object
 	 * @param array $section Array content all config
 	 * @param array $robotInfo Array wich content ip and name of the robot
 	 */
-	public function __construct($section, $robotInfo){
-		$this->_robotInfo = $robotInfo;
-		$this->_errorManager = new SpykeeError($this->_robotInfo['name'], $this->_robotInfo['ip'], $this);
+	public function __construct($section, $robotInfo, $test){
 		$this->_data = $section;
 	}
 	
@@ -126,8 +90,10 @@ class SpykeeConfigSection {
 			return $this->_data[$name];
 		else{
 			$trace = debug_backtrace();
-			$this->_errorManager->error('Config : Config named '.$name.' undefined in '
-					.$trace[0]['file'].' at the line '.$trace[0]['line']);
+			$errorMessage = 'Config: Config named '.$name.' undefined in '
+					.$trace[0]['file'].' at the line '.$trace[0]['line']; 
+			SpykeeError::standaloneError($errorMessage);
+			trigger_error($errorMessage, E_USER_ERROR);
 			return null;
 		}
 	}

@@ -44,20 +44,20 @@ class SpykeeControllerClient extends SpykeeConfigRobot{
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 			
-			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_SEND_PAQUET);
+			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_SEND_PACKET);
 		}
 		
-		return new SpykeeResponse(self::STATE_OK, SpykeeResponse::PAQUET_SENT);
+		return new SpykeeResponse(self::STATE_OK, SpykeeResponse::PACKET_SENT);
 	}
 
 	protected function getResponse(){
 		// Récupération des données envoyées
-		if(socket_recv($this->_socket, $response, self::CTR_PAQUET_HEADER_SIZE, MSG_WAITALL ) === FALSE)
+		if(socket_recv($this->_socket, $response, self::CTR_PACKET_HEADER_SIZE, MSG_WAITALL ) === FALSE)
 		{
 			$errorcode = socket_last_error();
 			$errormsg = socket_strerror($errorcode);
 			
-			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_RECEIVE_PAQUET);
+			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_RECEIVE_PACKET);
 		}
 		
 		$response = bin2hex($response);

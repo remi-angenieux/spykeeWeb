@@ -4,22 +4,22 @@ class SpykeeResponse{
 	const NO_DESCRIPTION = 0;
 	
 	const NUMBER_RECONNEXION_EXCEEDED = 1;
-	const ERROR_SEND_PAQUET = 2;
-	const PAQUET_SENT = 3;
-	const ERROR_RECEIVE_PAQUET = 4;
+	const ERROR_SEND_PACKET = 2;
+	const PACKET_SENT = 3;
+	const ERROR_RECEIVE_PACKET = 4;
 	const ERROR_INCORRECT_HEADER = 20;
 	const CONNECTION_REINIT = 5;
 	const UNABLE_READ_DATA = 6;
 	
-	const RECEIVE_PAQUET_TYPE_AUDIO = 7;
-	const RECEIVE_PAQUET_TYPE_VIDEO = 8;
-	const RECEIVE_PAQUET_TYPE_POWER = 9;
-	const RECEIVE_PAQUET_TYPE_AUTH_REPLY = 10;
-	const RECEIVE_PAQUET_TYPE_STOP = 11;
-	const RECEIVE_PAQUET_TYPE_WIRELESS_NETWORKS = 12;
-	const RECEIVE_PAQUET_TYPE_CONFIG = 13;
-	const RECEIVE_PAQUET_TYPE_LOG = 14;
-	const RECEIVE_PAQUET_UNKNOW = 15;
+	const RECEIVE_PACKET_TYPE_AUDIO = 7;
+	const RECEIVE_PACKET_TYPE_VIDEO = 8;
+	const RECEIVE_PACKET_TYPE_POWER = 9;
+	const RECEIVE_PACKET_TYPE_AUTH_REPLY = 10;
+	const RECEIVE_PACKET_TYPE_STOP = 11;
+	const RECEIVE_PACKET_TYPE_WIRELESS_NETWORKS = 12;
+	const RECEIVE_PACKET_TYPE_CONFIG = 13;
+	const RECEIVE_PACKET_TYPE_LOG = 14;
+	const RECEIVE_UNKNOW_PACKET = 15;
 	
 	const LEVEL_BATTERY_RETRIVED = 16;
 	const TOO_MANY_CONNECTION = 17;
@@ -59,13 +59,13 @@ class SpykeeResponse{
 			case self::NUMBER_RECONNEXION_EXCEEDED:
 				$this->_description = 'Nombre de tentative de reconnexion dépassé';
 				break;
-			case self::ERROR_SEND_PAQUET:
+			case self::ERROR_SEND_PACKET:
 				$this->_description = 'Impossible d\'envoyer le paquet';
 				break;
-			case self::PAQUET_SENT:
+			case self::PACKET_SENT:
 				$this->_description = 'Le paquet à bien été envoyé';
 				break;
-			case self::ERROR_RECEIVE_PAQUET:
+			case self::ERROR_RECEIVE_PACKET:
 				$this->_description = 'Problème de réception du paquet';
 				break;
 			case self::ERROR_INCORRECT_HEADER:
@@ -78,31 +78,30 @@ class SpykeeResponse{
 				$this->_description = 'Impossible de lire les données véhiculé dans le paquet';
 				break;
 				
-			case self::RECEIVE_PAQUET_TYPE_AUDIO:
+			case self::RECEIVE_PACKET_TYPE_AUDIO:
 				$this->_description = 'Paquet reçu de type audio';
 				break;
-			case self::RECEIVE_PAQUET_TYPE_VIDEO:
+			case self::RECEIVE_PACKET_TYPE_VIDEO:
 				$this->_description = 'Paquet reçu de type vidéo';
 				break;
-			case self::RECEIVE_PAQUET_TYPE_POWER:
+			case self::RECEIVE_PACKET_TYPE_POWER:
 				$this->_description = 'Paquet reçu de type niveau de batterie';
 				break;
-			case self::RECEIVE_PAQUET_TYPE_AUTH_REPLY:
+			case self::RECEIVE_PACKET_TYPE_AUTH_REPLY:
 				$this->_description = 'Paquet reçu de type réponse d\'authentification';
 				break;
-			case self::RECEIVE_PAQUET_TYPE_STOP:
+			case self::RECEIVE_PACKET_TYPE_STOP:
 				$this->_description = 'Paquet reçu de type stop';
 				break;
-			case self::RECEIVE_PAQUET_TYPE_WIRELESS_NETWORKS:
+			case self::RECEIVE_PACKET_TYPE_WIRELESS_NETWORKS:
 				$this->_description = 'Paquet reçu de type connexion sans fil';
 				break;
-			case self::RECEIVE_PAQUET_TYPE_CONFIG:
+			case self::RECEIVE_PACKET_TYPE_CONFIG:
 				$this->_description = 'Paquet reçu de type configuration';
 			break;
-			case self::RECEIVE_PAQUET_TYPE_LOG:
+			case self::RECEIVE_PACKET_TYPE_LOG:
 				$this->_description = 'Paquet reçu de type log';
 			break;
-			case self::RECEIVE_PAQUET_UNKNOW: // TODO Changer en Receive_Unknow_paquet
 				$this->_description = 'Paquet reçu de type inconnu';
 				break;
 				

@@ -1,8 +1,9 @@
 <?php
-require_once(PATH.'libs/spykee/spykee-robot/robot.php');
-/*
- * Constantes mise en commun avec le Client du Controller
+/**
+ * Constant sharing with ControllerClient
+ * @author Remi ANGENIEUX
  */
+require_once(PATH.'libs/spykee/spykee-robot/robot.php');
 class SpykeeController extends SpykeeRobot{
 	/*
 	 * Protocole Controller
@@ -42,7 +43,7 @@ class SpykeeController extends SpykeeRobot{
 	const SET_SPEED = 29;
 	const GET_SPEED = 30;
 
-	// Longeur de l'entête du protocole de controller (ControllerClient <-> ControllerServer)
+	// Length of the controller protocol header (ControllerClient <-> ControllerServer)
 	const CTR_PACKET_HEADER_SIZE = 8;
 }
 

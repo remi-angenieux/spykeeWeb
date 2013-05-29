@@ -1,12 +1,21 @@
 <?php
-/*
- * Constantes mise en commun avec le Controller
+/**
+ * Constant sharing with Controller
+ * @author Remi ANGENIEUX
  */
 Class SpykeeRobot{
 	/*
-	 * Etats de l'action
+	 * States action
 	*/
+	/**
+	 * No problems
+	 * @var integer
+	 */
 	const STATE_OK = 1;
+	/**
+	 * An error has occurred
+	 * @var unknown
+	 */
 	const STATE_ERROR = 0;
 	
 }

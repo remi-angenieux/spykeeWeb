@@ -3,6 +3,8 @@
  * Content all methodes used to control easily the robot
  * @author Remi ANGENIEUX
  */
+if (!defined('PATH'))
+	define('PATH', realpath('../../').'/');
 // Includes shared constants
 require_once(PATH.'/libs/spykee/spykee-robot/robot.php');
 // Include the response object
@@ -17,7 +19,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 */
 	const PACKET_HEADER_SIZE = 5;
 	const PACKET_DATA_SIZE_MAX = 32768; //32*1024
-	// Type of paquets
+	// Type of packets
 	const PACKET_TYPE_AUDIO = 1;
 	const PACKET_TYPE_VIDEO = 2;
 	const PACKET_TYPE_POWER = 3;
@@ -56,7 +58,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	protected $_robotIp;
 	protected $_errorManager;
 	protected $_robotSocket=NULL;
-	protected $_robotStream=NULL;
+	//protected $_robotStream=NULL;
 	protected $_moveSpeed;
 	protected $_powerLevel = NULL;
 	protected $_reconnection=0;
@@ -76,13 +78,13 @@ class SpykeeRobotClient extends SpykeeRobot {
 		}
 		catch (ExceptionSpykee $e){ // If an error ocurred at the init of the config object
 			SpykeeError::standaloneError($e->getMessage());
-			throw new ExceptionSpykee($e->getUserMessage(), $e->getMessage());
+			throw $e; // Resend to user
 		}
 		$this->_errorManager = new SpykeeError($this->_robotName, $this->_robotIp, $this->_config);
 		$this->_reconnection=0;
 		$this->_robotUsername = (!empty($robotUsername)) ? $robotUsername : $this->_config->robot->defaultUsername;
 		$this->_robotPassword = (!empty($robotPassword)) ? $robotPassword : $this->_config->robot->defaultPassword;
-		$this->_moveSpeed = $this->_config->robot->speed;
+		$this->_moveSpeed = $this->_config->robot->defaultSpeed;
 		
 		$this->_initSocket();
 		$this->_authentificationRobot();
@@ -110,13 +112,32 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 * Create the socket used for the connection
 	 */
 	protected function _initSocket(){
-		$this->_robotStream = @fsockopen('tcp://'.$this->_robotIp, self::ROBOT_PORT, $errorCode, $errorMsg, $this->_config->robot->connectionTimeout);
+		/*$this->_robotStream = @fsockopen('tcp://'.$this->_robotIp, self::ROBOT_PORT, $errorCode, $errorMsg, $this->_config->robot->connectionTimeout);
 		
 		if ($this->_robotStream === FALSE){
 			$this->_errorManager->error('Unable to connect to the robot: ['.$errorCode.'] '.$errorMsg, 1);
 			throw new ExceptionSpykee('Connection error', 'Unable to connect to the robot');
 		}
-		$this->_robotSocket = socket_import_stream($this->_robotStream);
+		$this->_robotSocket = socket_import_stream($this->_robotStream);*/
+		
+		if(!($this->_robotSocket = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP))){
+			$errorCode = socket_last_error();
+			$errorMsg = socket_strerror($errorCode);
+			 
+			throw new ExceptionSpykee('Connection error', 'Could not create socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
+		}
+		// Put a connection timeout
+		socket_set_option($this->_robotSocket, SOL_SOCKET, SO_RCVTIMEO, array('sec' => $this->_config->robot->connectionTimeout, 'usec' => 0));
+		
+		if(!@socket_connect($this->_robotSocket , $this->_robotIp , self::ROBOT_PORT)){
+			$errorCode = socket_last_error();
+			$errorMsg = socket_strerror($errorCode);
+			 
+			throw new ExceptionSpykee('Connection error', 'Could not connect to the robot: ['.$errorCode.'] '.$errorMsg, $errorCode);
+		}
+		
+		// reset connection timeout (beacause we want a timeout just for the connection)
+		socket_set_option($this->_robotSocket, SOL_SOCKET, SO_RCVTIMEO, array('sec' => 0, 'usec' => 0));
 	}
 	
 	/**
@@ -124,7 +145,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 */
 	protected function _closeSocket(){
 		@socket_close($this->_robotSocket);
-		@fclose($this->_robotStream);
+		//@fclose($this->_robotStream);
 	}
 
 	/**
@@ -159,7 +180,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 */
 	protected function _sendPacketToRobot($type, $data=NULL){
 		$strLen=(!empty($data)) ? strlen($data) : 0;
-		$msg = pack('a2Cn', 'PK', $type, $strLen); // Paquet header
+		$msg = pack('a2Cn', 'PK', $type, $strLen); // packet header
 		if ($strLen>0)
 			$msg .= $data; // If there is data to send is added to the header
 		if(!socket_send($this->_robotSocket, $msg, strlen($msg), MSG_DONTROUTE)){
@@ -183,12 +204,12 @@ class SpykeeRobotClient extends SpykeeRobot {
 				return $return;
 			}
 			else{
-				$this->_errorManager->error('Unable to send a paquet: "'.$this->_paquetToString($msg).'". ['.$errorCode.'] '.$errorMsg, 1);
+				$this->_errorManager->error('Unable to send a packet: "'.$this->_packetToString($msg).'". ['.$errorCode.'] '.$errorMsg, 1);
 				return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_SEND_PACKET);
 			}
 		}
 		$this->_reconnection=0; // Reinit the counter
-		$this->_errorManager->error('Paquet sent sucefully to the robot: '.$this->_paquetToString($msg), 3);
+		$this->_errorManager->error('packet sent sucefully to the robot: '.$this->_packetToString($msg), 3);
 		return new SpykeeResponse(self::STATE_OK, SpykeeResponse::PACKET_SENT);
 	}
 
@@ -200,8 +221,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 		if(socket_recv($this->_robotSocket, $response, self::PACKET_HEADER_SIZE, MSG_WAITALL ) === FALSE){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-		
-			$this->_errorManager->error('Unable to receive paquet ['.$errorCode.'] '.$errorMsg, 1);
+			$this->_errorManager->error('Unable to receive packet ['.$errorCode.'] '.$errorMsg, 1);
 			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_RECEIVE_PACKET);
 		}
 		
@@ -216,10 +236,10 @@ class SpykeeRobotClient extends SpykeeRobot {
 		
 		// Read the header
 		$header = unpack('a2header/Ctype/nlength', $response);
-		$this->_errorManager->writeLog('Paquet received : '.$this->_paquetToString($response), 3);
-		// If header isn't PK, the paquet isn't send by the robot
+		$this->_errorManager->writeLog('packet received: '.$this->_packetToString($response), 3);
+		// If header isn't PK, the packet isn't send by the robot
 		if ($header['header']!='PK'){
-			$this->_errorManager->error('Paquet receive without the correct header: '.$header['header'], 1);
+			$this->_errorManager->error('packet receive without the correct header: '.$header['header'], 1);
 			$this->_closeSocket();
 			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_INCORRECT_HEADER);
 		}
@@ -273,7 +293,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 				break;
 				
 			default:
-				$this->_errorManager->error('Unknow paquet with type: '.$header['type'], 1);
+				$this->_errorManager->error('Unknow packet with type: '.$header['type'], 1);
 				$state = self::STATE_ERROR;
 				$description = SpykeeResponse::RECEIVE_UNKNOW_PACKET;
 				break;
@@ -284,11 +304,11 @@ class SpykeeRobotClient extends SpykeeRobot {
 	
 	/**
 	 * Formats the display of packets
-	 * @param string $paquet
+	 * @param string $packet
 	 * @return string
 	 */
-	protected function _paquetToString($paquet){
-		$header = unpack('a2header/Ctype/nlength', $paquet);
+	protected function _packetToString($packet){
+		$header = unpack('a2header/Ctype/nlength', $packet);
 		
 		switch($header['type']){
 			case self::PACKET_TYPE_AUDIO:
@@ -370,7 +390,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 		if ($right > 255) $right = 255;
 		if ($right < 0) $right = 0;
 		return $this->_sendPacketToRobot(self::PACKET_TYPE_MOVE, pack('CC', $left, $right));
-		// The robot do not response to these paquet, so we don't receive anything
+		// The robot do not response to these packet, so we don't receive anything
 	}
 
 	/**
@@ -498,7 +518,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 */
 	public function wirelessNetworks(){
 		$request = $this->_sendPacketToRobot(self::PACKET_TYPE_WIRELESS_NETWORKS);
-		if ($request->getState() == self::STATE_OK) // If the paquet is send sucefully
+		if ($request->getState() == self::STATE_OK) // If the packet is send sucefully
 			return $this->_getResponse(); // TODO mettre en forme la sortie
 		else
 			return $request;
@@ -510,7 +530,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 */
 	public function getLog(){
 		$request = $this->_sendPacketToRobot(self::PACKET_TYPE_LOG);
-		if ($request->getState() == self::STATE_OK) // If the paquet is send sucefully
+		if ($request->getState() == self::STATE_OK) // If the packet is send sucefully
 			return $this->_getResponse(); // TODO mettre en forme la sortie
 		else
 			return $request;
@@ -522,7 +542,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 */
 	public function getConfig(){
 		$request = $this->_sendPacketToRobot(self::PACKET_TYPE_CONFIG);
-		if ($request->getState() == self::STATE_OK) // If the paquet is send sucefully
+		if ($request->getState() == self::STATE_OK) // If the packet is send sucefully
 			return $this->_getResponse(); // TODO mettre en forme la sortie
 		else
 			return $request;
@@ -546,7 +566,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 */
 	public function refreshPowerLevel(){
 		$request = $this->_sendPacketToRobot(self::PACKET_TYPE_POWER);
-		if ($request->getState() == self::STATE_OK){ // If the paquet is send sucefully
+		if ($request->getState() == self::STATE_OK){ // If the packet is send sucefully
 			$response = $this->_getResponse();
 			$this->_powerLevel = $response->getData();
 			return $response;
@@ -587,26 +607,29 @@ class SpykeeRobotClient extends SpykeeRobot {
 	/**
 	 * Useful method to retrieve packets sent by the robot independently of a request
 	 * Used to retrieve the video stream, audio stream and battery status
-	 * @return SpykeeResponse
+	 * @return array
 	 */
 	public function socketHook(){
 		$write=NULL;
 		$except=NULL;
 		$read = array();
-		$read[0]=$this->_robotStream;
-		if(($test = stream_select($read, $write, $except, 0, NULL)) === false){
+		//$read[0]=$this->_robotStream;
+		$read[0]=$this->_robotSocket;
+		//if(stream_select($read, $write, $except, 0, NULL) === false){
+		if (socket_select($read, $write, $except, 0, NULL) === false){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 		
-			$this->_errorManager->error('Unable to listen robot socket : ['.$errorCode.'] '.$errorMsg, 1);
+			$this->_errorManager->error('Unable to listen robot socket: ['.$errorCode.'] '.$errorMsg, 1);
 			die;
 		}
+		$return=array();
 		foreach($read as $streamInput){
 			if (is_resource($streamInput) AND $streamInput != '' AND $streamInput == $this->_robotStream){
-				if (is_resource($streamInput) AND $streamInput != '')
-					return $this->_getResponse();
+				$return[] = $this->_getResponse();
 			}
 		}
+		return $return;
 	}
 	
 	public function __destruct(){

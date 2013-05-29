@@ -1,258 +1,294 @@
 <?php
-// Pour que le script puisse tourner en serveur
-set_time_limit(0);
+/**
+ * Content all methodes used by the controller
+ * @author Rémi ANGENIEUX
+ */
+set_time_limit(0); // to run PHP as server
 if (!defined('PATH'))
 	define('PATH', realpath('../../').'/');
-// Inclue la configuration du ControllerServer. Et ses constantes partagées
-require_once(PATH.'configs/spykeeControllerServer.php');
-// Inclue l'objet permettant de communiquer avec le robot
+// Includes shared constants
+require_once(PATH.'libs/spykee/spykee-controller/controller.php');
+// Includes the object used to communicate with the robot
 require_once(PATH.'libs/spykee/spykee-robot/robotClient.php');
-// Inclue l'objet utilisé lors des retours des différentes actions
+// Includes the object used in the returns of the different robot actions
 require_once(PATH.'libs/spykee/response.php');
 
-class SpykeeControllerServer extends SpykeeConfigControllerServer{
-	/*
-	 * Attributs
-	*/
+class SpykeeControllerServer extends SpykeeController{
 	protected $_stopServer = false;
-	protected $_logFile;
 	protected $_SpykeeRobotClient;
 	protected $_robotName;
 	protected $_robotIp;
 	protected $_controllerPort;
 	protected $_robotUsername;
 	protected $_robotPassword;
-	protected $_powerLevel = NULL; // NOTE : Non utilisé pour le moment
-	protected $_moveSpeed = self::MOVE_SPEED;
-	// Attributs pour la partie réception des requêtes client (Serveur)
+	protected $_powerLevel = NULL;
+	protected $_moveSpeed;
+	protected $_config;
+	protected $_errorManager;
+	// Sockets
 	protected $_socketServer = NULL;
 	protected $_socketsClient = array();
-	// Attributs pour la partie envoie de paquet périodisé
+	// Attributes used to send packets periodically
 	protected $_holdingQueue = array('left' => FALSE,
 									'right' => FALSE,
 									'forward' => FALSE,
 									'back' => FALSE);
 	
 
+	/**
+	 * Create a new controller server connected to the robot
+	 * @param string $robotName
+	 * @param string $robotIp
+	 * @param string $robotUsername
+	 * @param string $robotPassword
+	 */
 	function __construct($robotName, $robotIp, $serverPort, $robotUsername='', $robotPassword=''){
-		date_default_timezone_set(self::TIME_ZONE); // Pour les dates des logs
-		// TODO verifier que les ports sont disponibles
-		$this->_controllerPort = $serverPort;
-		// TODO vérifier les valeurs entrées avec un geter
 		$this->_robotName = $robotName;
-		$this->_robotIp = $robotIp;
+		$this->_setRobotIp($robotIp); // Control the input
+		$this->_setControllerPort($serverPort);
+		try{
+			$this->_config = new SpykeeConfig('spykeeControllerServer.ini'); // Load config
+		}
+		catch (ExceptionSpykee $e){ // If an error ocurred at the init of the config object
+			SpykeeError::standaloneError($e->getMessage());
+			throw $e; // re throw
+		}
+		$this->_errorManager = new SpykeeError($this->_robotName, $this->_robotIp, $this->_config);
 		$this->_robotUsername = $robotUsername;
 		$this->_robotPassword = $robotPassword;
-		$this->_logFile = realpath(__DIR__).'/../../logs/'.$this->_robotName.'-ControllerServer.log';
-
-		$this->writeLog('Démarrage du controleur'."\r\n", 1);
-
-		// Connexion au robot
-		$this->_SpykeeRobotClient = new SpykeeRobotClient($this->_robotName, $this->_robotIp, $this->_robotUsername, $this->_robotPassword);
-
-		$this->initSocketServer();
+		$this->_moveSpeed = $this->_config->robot->defaultSpeed;
+		$this->_errorManager->writeLog('Starting Controller', 1);
+		// Connect to the robot
+		try{
+			$this->_SpykeeRobotClient = new SpykeeRobotClient($this->_robotName, $this->_robotIp, $this->_robotUsername, $this->_robotPassword);
+		}
+		catch (ExceptionSpykee $e){
+			throw $e; // Resend to user
+		}
+		$this->_initSocketServer();
 		
-		// Définit la vitesse du robot avec celle par défaut
+		// Set the default speed
 		$this->_SpykeeRobotClient->setSpeed($this->_moveSpeed);
 		
-		// Lance a proprement dit le serveur
-		$this->mainLoop();
+		// Launch the server
+		$this->_mainLoop();
 	}
-
-	protected function writeLog($txt, $level=1){
-		if (self::LOG_LEVEL >= $level){
-			$content = date('[d/m/y] à H:i:s ', time());
-			$content .= '@'.$this->_robotName.'('.$this->_robotIp.') : ';
-			$content .= $txt;
-
-			/*
-			 * Création/Mise à jour du fichier de log
-			*/
-			if (!$file = fopen($this->_logFile, 'a')){
-				echo 'Impossible d\'ouvrir le fichier : '.$this->_logFile;
-			}
-			else {
-				if (fwrite($file, $content) === FALSE ){
-					echo 'Impossible d\'écrire dans le fichier : '.$this->_logFile;
-				}
-				fclose($file);
-			}
+	
+	/**
+	 * Verify if the input value is an IP adresse otherwise generate an error
+	 * @param string $ip
+	 */
+	protected function _setRobotIp($ip){
+		if (filter_var($ip, FILTER_VALIDATE_IP)) // If the use enter a valid IP adresse
+			$this->_robotIp = $ip;
+		else{
+			// Send error with 2 methodes because it's critical programming error
+			// And kill the script
+			$trace = debug_backtrace();
+			$errorMessage = 'Argument 2 for SpykeeRobotClient::__construct() have to be an valid IP adresse, called in'
+					.$trace[0]['file'].' on line '.$trace[0]['line'];
+			SpykeeError::standaloneError($errorMessage);
+			throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
 		}
 	}
 	
-	protected function mainLoop(){
+	/**
+	 * Detect if the input value is port adresse otherwise generate an error
+	 * @param mixed $port
+	 * @throws ExceptionSpykee
+	 */
+	protected function _setControllerPort($port){
+		if (is_numeric($port) AND $port > 0 AND $port <= 49151)
+			$this->_controllerPort = $port;
+		else{
+			// Send error with 2 methodes because it's critical programming error
+			// And kill the script
+			$trace = debug_backtrace();
+			$errorMessage = 'Argument 3 for SpykeeRobotClient::__construct() have to be an valid port adresse (between 1 and 49151 included), called in'
+					.$trace[0]['file'].' on line '.$trace[0]['line'];
+			SpykeeError::standaloneError($errorMessage);
+			throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
+		}
+	}
+	
+	protected function _mainLoop(){
 		$timeClient=$timeRobot=$timePeriodic=microtime(true);
 		while (!$this->_stopServer){
-			if ( (microtime(true) - $timeClient) >= self::INTERVAL_LISTEN_CLIENT/100 ){
-				$this->listenClientsRequests();
+			if ( (microtime(true) - $timeClient) >= $this->_config->intervals->listenClient/100 ){
+				$this->_listenClientsRequests();
 				$timeClient=microtime(true);
 			}
-			if ( (microtime(true) - $timeRobot) >= self::INTERVAL_LISTEN_ROBOT/100 ){
-				$this->listenRobotResponses();
+			if ( (microtime(true) - $timeRobot) >= $this->_config->intervals->listenRobot/100 ){
+				$this->_listenRobotResponses();
 				$timeRobot=microtime(true);
 			}
-			if ( (microtime(true) - $timePeriodic) >= self::INTERVAL_SEND_HOLDING/100 ){
-				$this->sendPeriodicPaquets();
+			if ( (microtime(true) - $timePeriodic) >= $this->_config->intervals->holding/100 ){
+				$this->_sendPeriodicPaquets();
 				$timePeriodic=microtime(true);
 			}
-			time_nanosleep(0, self::INTERVAL_WORK);
+			time_nanosleep(0, $this->_config->intervals->work);
 		}
 	}
 	
-	protected function initSocketServer(){
+	protected function _initSocketServer(){
 		if(!($this->_socketServer = socket_create(AF_INET, SOCK_STREAM, 0))){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 		
-			$this->writeLog('Impossible de créer le socket : ['.$errorCode.'] '.$errorMsg."\r\n", 1);
-			die;
+			throw new ExceptionSpykee('Launching error', 'Could not create socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
-		
-		socket_set_option($this->_socketServer, SOL_SOCKET, SO_REUSEADDR, 1);
-		
-		//echo "Socket created \r\n";
-		
+		// Define reusable socket (Without you can't restart instantly the controller)
+		if(!socket_set_option($this->_socketServer, SOL_SOCKET, SO_REUSEADDR, 1)){
+			$errorCode = socket_last_error();
+			$errorMsg = socket_strerror($errorCode);
+			$this->_errorManager->error('Unable to define controller socket reusable: ['.$errorCode.'] '.$errorMsg, 1);
+		}
+		// Define a timeout for blocking socket
+		if(!socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array('sec'=> $this->_config->controller->timeoutSec, 'usec'=> $this->_config->controller->timeoutUsec))){
+			$errorCode = socket_last_error();
+			$errorMsg = socket_strerror($errorCode);
+			$this->_errorManager->error('Unable to define timeout for controller socket: ['.$errorCode.'] '.$errorMsg, 1);
+		}
 		// Bind the source address
-		if( !socket_bind($this->_socketServer, self::CONTROLLER_IP , $this->_controllerPort) )		{
+		if( !socket_bind($this->_socketServer, $this->_config->controller->ip , $this->_controllerPort) ){
+			$errorCode = socket_last_error();
+			$errorMsg = socket_strerror($errorCode);
+			if($errorCode == 98) // Port in use
+				throw new ExceptionSpykee('Launching error', 'Bind Socket: ['.$errorCode.'] Port in use('.$errorMsg.')', $errorCode);
+			else
+				throw new ExceptionSpykee('Launching error', 'Bind Socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
+		}
+		
+		if(!socket_listen($this->_socketServer , $this->_config->controller->maxConnection)){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 		
-			$this->writeLog('Impossible de lier le socket : ['.$errorCode.'] '.$errorMsg."\r\n", 1);
-			die;
+			throw new ExceptionSpykee('Launching error', 'Unable to listen socket (socket_listen): ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
 		
-		//echo "Socket bind OK \r\n";
-		
-		if(!socket_listen ($this->_socketServer , self::MAX_CONNECTIONS)){
-			$errorCode = socket_last_error();
-			$errorMsg = socket_strerror($errorCode);
-		
-			$this->writeLog('Impossible d\'écouter le socket : ['.$errorCode.'] '.$errorMsg."\r\n", 1);
-			die;
-		}
-		
-		$this->_socketsClient = array();
+		$this->_socketsClient = array(); // list of Controller users
 	}
 
-	protected function listenClientsRequests(){
-		// Source : http://www.binarytides.com/php-socket-programming-tutorial/
+	protected function _listenClientsRequests(){
+		// Helpful : http://www.binarytides.com/php-socket-programming-tutorial/
 
-		//prepare array of readable client sockets
+		// Prepare array of readable client sockets
 		$socketsClientToRead = array();
-		//first socket is the master socket
+		// set the master socket to listen
 		$socketsClientToRead[0] = $this->_socketServer;
-		//now add the existing client sockets
-		for ($i = 0; $i < self::MAX_CONNECTIONS; $i++){
+		// Add client socket
+		for ($i = 0; $i < $this->_config->controller->maxConnection; $i++){
 			if(!empty($this->_socketsClient[$i]['socket'])){
 				$socketsClientToRead[$i+1] = $this->_socketsClient[$i]['socket'];
 			}
 		}
-		//now call select - blocking call
 		$write=NULL;
 		$except=NULL;
 		if(socket_select($socketsClientToRead, $write, $except, 0, NULL) === false){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 				
-			$this->writeLog('Impossible d\'écouter le socket : ['.$errorCode.'] '.$errorMsg."\r\n", 1);
-			die;
+			throw new ExceptionSpykee('Running error', 'Unable to listen socket (socket_listen): ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
-		// TODO Permettre la connexion simultanée de plusieurs clients en même temps
-		//if read contains the master socket, then a new connection has come in
-		if (in_array($this->_socketServer, $socketsClientToRead)){
-			// Cherche un "slot" de connexion libre
-			for ($i = 0; $i < self::MAX_CONNECTIONS; $i++){
-				if (empty($this->_socketsClient[$i]['socket'])){
+		/*
+		 * Script executed at the connection of an host
+		 * If read socket contains the master socket, then a new connection has come in
+		 */ 
+		while (in_array($this->_socketServer, $socketsClientToRead)){
+			// Search an empty slot
+			for ($i = 0; $i < $this->_config->controller->maxConnection; $i++){
+				if (empty($this->_socketsClient[$i]['socket'])){ // An empty slot is available
 					$this->_socketsClient[$i]['socket'] = socket_accept($this->_socketServer);
 					/*
-					 * Code exécuté lors de la connexion entre le client et le serveur
-					*/
-					// Filtrage IP
+					 * Code executed when the connection between the client and the server is made
+					 */
+					// Get IP addresse of the host. Useful for ACL
 					socket_getpeername($this->_socketsClient[$i]['socket'], $clientIp, $clientPort);
-					if ($clientIp != self::CLIENT_IP){
-						$this->writeLog('Le client '.$clientIp.':'.$clientPort.' à tenté de se connecter mais à été rejetté par l\'ACL'."\r\n", 2);
+					if (!in_array($clientIp, $this->_config->controller->ipAllowed)){
+						$this->_errorManager->writeLog('The host '.$clientIp.':'.$clientPort.' has attempted to connect to the controller but been reject by the ACL', 2);
 						socket_close($this->_socketsClient[$i]['socket']);
-						unset($this->_socketsClient[$i]);
+						unset($this->_socketsClient[$i]); // This socket is close, remove of active user list
 					}
 					else{
-						$this->writeLog('Le client '.$clientIp.':'.$clientPort.' s\'est bien connecté'."\r\n", 2);
-						$this->_socketsClient[$i]['ip'] = $clientIp;
-						$this->_socketsClient[$i]['port'] = $clientPort;
-						$msg = pack('a3CCn', 'CTR', self::CONNECTION_TO_CONTROLLER, self::STATE_OK, 0);
+						$this->_errorManager->writeLog('The host '.$clientIp.':'.$clientPort.' is well connected', 2);
+						$this->_socketsClient[$i]['ip'] = $clientIp; // Save ip adresse
+						$this->_socketsClient[$i]['port'] = $clientPort; // Save port adresse
+						$msg = pack('a3CCn', 'CTR', self::CONNECTION_TO_CONTROLLER, self::STATE_OK, 0); // Send to user an acknowledge
 						if( !socket_send($this->_socketsClient[$i]['socket'], $msg, strlen($msg), 0)){
 							$errorCode = socket_last_error();
 							$errorMsg = socket_strerror($errorCode);
-								
-							$this->writeLog('Impossible d\'envoie l\'accusé de récépetion (Connexion établie avec succès) : '.'['.$errorCode.'] '.$errorMsg."\r\n", 1);
+							$this->_errorManager->error('Unable to send acknowledgment: Connection established successfully. '.'['.$errorCode.'] '.$errorMsg, 1);
+							// If we can't send data, we can't do anything with him so we disconnect him
+							$this->_closeClientSocket($i);
 						}
 					}
-					// On supprime le socket de la liste des socket à traiter
+					// Remove the socket from the list of socket processing
 					unset($socketsClientToRead[array_search($this->_socketServer, $socketsClientToRead)]);
 					break;
 				}
-				// Si tout les "slot" de connexion sont utilisés
-				// On lui envoie quand même un message
-				if ($i >= self::MAX_CONNECTIONS){
-					$this->writeLog('Nombre maximum de connexion au controller atteint'."\r\n", 1);
+				// If all slot are busy. We still send a message
+				if ($i >= $this->_config->controller->maxConnection){
+					$this->_errorManager->writeLog('All server slot are busy', 2);
 					$TempSocket = socket_accept($this->_socketServer);
-					$msg = pack('a3CCC', 'CTR', self::CONNECTION_TO_CONTROLLER, self::STATE_ERROR, SpykeeResponse::TOO_MANY_CONNECTION);
-					if( !socket_send($TempSocket, $msg, strlen($msg), 0)){
-						$errorCode = socket_last_error();
-						$errorMsg = socket_strerror($errorCode);
-					
-						$this->writeLog('Impossible d\'envoie l\'accusé de récépetion (Nombre maxmimum de connexion atteint) : '.'['.$errorCode.'] '.$errorMsg."\r\n", 1);
-					}
+					// Send the packet to the host
+					$this->_sendPacketToClient($TempSocket, self::CONNECTION_TO_CONTROLLER, self::STATE_ERROR, SpykeeResponse::TOO_MANY_CONNECTION);
 					socket_close($TempSocket);
 					unset($TempSocket);
-					// On supprime le socket de la liste des socket à traiter
+					// Remove this socket of list socket to manage
 					unset($socketsClientToRead[array_search($this->_socketServer, $socketsClientToRead)]);
 				}
 			}
 		}
-		//check each client if they send any data
-		for ($i = 0; $i < self::MAX_CONNECTIONS; $i++)
-		{
-			if (!empty($this->_socketsClient[$i]) AND in_array($this->_socketsClient[$i]['socket'], $socketsClientToRead))
-			{
-				echo 'Nouvelle requête'."\r\n";
-				/*
-				 * Code exécuté
-				*/
-				$request = @socket_read($this->_socketsClient[$i]['socket'], self::CTR_PACKET_HEADER_SIZE); // On lit la requête du client
-				// Si le client se déconnecte
-				if ($request == '' OR $request === false AND !is_resource($request)){
-					//zero length string meaning disconnected, remove and close the socket
-					socket_close($this->_socketsClient[$i]['socket']);
-					$this->writeLog('Le client '.$this->_socketsClient[$i]['ip'].':'.$this->_socketsClient[$i]['port'].' s\'est déconnecté'."\r\n", 2);
-					// On supprime le socket de la liste des sockets
-					foreach($this->_socketsClient as $id => $value){
-						if ($value['socket'] === $this->_socketsClient[$i]['socket']){
-							unset($this->_socketsClient[$id]);
-							break;
+		/*
+		 * Check each client if they send any data
+		 */
+		for ($i = 0; $i < $this->_config->controller->maxConnection; $i++){
+			// If a client send any data
+			if (!empty($this->_socketsClient[$i]) AND in_array($this->_socketsClient[$i]['socket'], $socketsClientToRead)){
+				// Get socket
+				$request = @socket_read($this->_socketsClient[$i]['socket'], self::CTR_PACKET_HEADER_SIZE);
+				socket_clear_error();
+				// If an error occured
+				if (($errorCode = socket_last_error()) != 0){
+					$errorMsg = socket_strerror($errorCode);
+					$this->_errorManager->error('Unable to receive packet: ['.$errorCode.'] '.$errorMsg, 1);
+					// If we can't read data, we can't do anything with him so we disconnect him
+					$this->_closeClientSocket($i);
+					return FALSE;
+				}
+				// If the client want to disconnect
+				if ($request == '' OR $request === false){
+					$this->_closeClientSocket($i);
+					return TRUE;
+				}
+				// If the client to send something to manage
+				else{
+					$header = unpack('a3header/Ctype/Cstate/CidDescription/nlength', $request);
+					// If header isn't CTR, the packet isn't send by valid host
+					if ($header['header'] != 'CTR'){
+						$this->_errorManager->error('packet receive without the correct header: '.$header['header'], 1);
+						$this->_closeSocket();
+						return FALSE;
+					}
+					if (!empty($header['length']) AND $header['length'] > 0){
+						if (@socket_recv($this->_socketsClient[$i]['socket'], $input, $header['length'], MSG_WAITALL) === false){
+							$errorCode = socket_last_error();
+							$errorMsg = socket_strerror($errorCode);
+							$this->_errorManager->error('Unable to read data sended: ['.$errorCode.'] '.$errorMsg, 1);
+							// If we can't read data, we can't do anything with him so we disconnect him
+							$this->_closeClientSocket($i);
+							return FALSE;
 						}
 					}
-					return TRUE;
-					// INFO : il n'est pas posible de connaitre l'ip d'un client qui se déconnecte
-				}
-				// Si le client à envoyer quelque chose à traiter
-				else{
-					// TODO utiliser la fonction unpack
-					$request = bin2hex($request);
-					$header = hex2bin($request[0].$request[1].$request[2].$request[3].$request[4].$request[5]);
-					$type = base_convert($request[6].$request[7], 16, 10);
-					$state = base_convert($request[8].$request[9], 16, 10);
-					$idDescription = base_convert($request[10].$request[11], 16, 10);
-					$length = base_convert($request[12].$request[13].$request[14].$request[15], 16, 10);
-					// Récupère les données enventuellement envoyés
-					$input = (!empty($length) AND $length>0) ? socket_read($this->_socketsClient[$i]['socket'], $length) : null;
-					$this->writeLog('Le client '.$this->_socketsClient[$i]['ip'].':'.$this->_socketsClient[$i]['port'].' à envoyer au serveur : "'.$request.bin2hex($input).'"'."\r\n", 3);
-					echo 'Paquet reçue : header='.$header.', type='.$type.', state ='.$state.', idDesc ='.$idDescription.', len='.$length."\r\n";
-					echo 'Data reçue : '.bin2hex($input)."\r\n";	
+					else
+						$input=NULL;
+					$packetString = $this->_packetToString($request);
+					if (!empty($input)) $packetString .= '/Data:'.$input;
+					$this->_errorManager->writeLog('Host '.$this->_socketsClient[$i]['ip'].':'.$this->_socketsClient[$i]['port'].' sent to the server: '.$packetString, 3);
 					/*
-					 * Envoie au robot l'action demandé par le client
+					 * Send action asked by the host to the robot
 					*/
-					echo "\r\n\r\n$type\r\n\r\n";
-					$responseType = $type; // Par défaut le type de réponse est celui qui à été demandé
+					$responseType = $type; // By default, the type of response that is requested
 					switch($type){
 					case self::MOVE:
 						$inputFormated = unpack('Cleft/Cright', $input);
@@ -276,7 +312,7 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 						$response = NULL;
 						break;
 					case self::STOP:
-						// On stop toutes les actions en holding
+						// Stop all holding actions
 						$this->_holdingQueue['left'] = false;
 						$this->_holdingQueue['right'] = false;
 						$this->_holdingQueue['forward'] = false;
@@ -302,17 +338,17 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 					case self::GET_LOG:
 						$response = $this->_SpykeeRobotClient->getLog();
 						break;
-					case self::SEND_MP3:
+					/*case self::SEND_MP3:
 						// TODO finir send MP3
 						$response = $this->_SpykeeRobotClient->sendMp3('./../music/music.mp3');
-						break;
+						break;*/
 					case self::GET_CONFIG:
 						$response = $this->_SpykeeRobotClient->getConfig();
 						break;
-					case self::AUDIO_PLAY:
+					/*case self::AUDIO_PLAY:
 						// TODO Finir audio play
 						$response = $this->_SpykeeRobotClient->audioPlay('./../music/music.mp3');
-						break;
+						break;*/
 					case self::VIDEO:
 						$inputFormated = unpack('Cstate', $input);
 						$this->_SpykeeRobotClient->setVideo($inputFormated['state']);
@@ -321,196 +357,331 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 					case self::STOP_SERVER:
 						$reponse = NULL;
 						$this->_stopServer=true;
-						// Ferme toutes les connexions
+						// Close all connection
 						foreach($this->_socketsClient as $key => $connection){
 							socket_close($connection['socket']);
 							unset($this->_socketsClient[$key]);
 						}
 						socket_close($this->_socketServer);
 						unset($this->_socketServer);
-						$this->writeLog('Le serveur à été éteint'."\r\n", 1);
-						return TRUE; // On arrète complètement le script
+						$this->_errorManager->writeLog('The controller was shutdown', 1);
+						return TRUE;
 						break;
 					case self::GET_POWER_LEVEL:
 						if ($this->_powerLevel != NULL)
 							$response = new SpykeeResponse(self::STATE_OK, SpykeeResponse::LEVEL_BATTERY_RETRIVED, $this->_powerLevel);
 						else{
-							$response = $this->_SpykeeRobotClient->getPpowerLlevel();
+							$response = $this->_SpykeeRobotClient->refreshPowerLevel(); // Get the real level
+							if ($response->getState() == self::STATE_OK)
+								$this->_powerLevel = $response->getData();
 						}
 						break;
 					case self::REFRESH_POWER_LEVEL:
-						$request = $this->_SpykeeRobotClient->refreshPpowerLlevel();
-						if ($request->getState() == self::STATE_OK){
-							$response = $request;
+						$response = $this->_SpykeeRobotClient->refreshPowerLevel();
+						if ($request->getState() == self::STATE_OK)
 							$this->_powerLevel = $request->getData();
-						}
-						else
-							$response = $request;
 						break;
 					case self::GET_SPEED:
-						$response = new SpykeeResponse(self::STATE_OK, MOVE_SPEED_RETRIVED, $this->_moveSpeed);
+						$response = new SpykeeResponse(self::STATE_OK, SpykeeResponse::MOVE_SPEED_RETRIVED, $this->_moveSpeed);
 						break;
 					case self::SET_SPEED:
 						$inputFormated = unpack('Cspeed', $input);
-						$response = $this->setSpeed($inputFormated['speed']);
+						$response = $this->_setSpeed($inputFormated['speed']);
 						break;
 					case self::HOLDING_LEFT:
-						$this->holdingLeft();
+						$this->_holdingLeft();
 						$response = NULL;
 						break;
 					case self::HOLDING_RIGHT:
-						$this->holdingRight();
+						$this->_holdingRight();
 						$response = NULL;
 						break;
 					case self::HOLDING_FORWARD:
-						$this->holdingForward();
+						$this->_holdingForward();
 						$response = NULL;
 						break;
 					case self::HOLDING_BACK:
-						$this->holdingBack();
+						$this->_holdingBack();
 						$response = NULL;
 						break;
 					case self::STOP_HOLDING_LEFT:
-						$this->stopHoldingLeft();
+						$this->_stopHoldingLeft();
 						$response = NULL;
 						break;
 					case self::STOP_HOLDING_RIGHT:
-						$this->stopHoldingRight();
+						$this->_stopHoldingRight();
 						$response = NULL;
 						break;
 					case self::STOP_HOLDING_FORWARD:
-						$this->stopHoldingForward();
+						$this->_stopHoldingForward();
 						$response = NULL;
 						break;
 					case self::STOP_HOLDING_BACK:
-						$this->stopHoldingBack();
+						$this->_stopHoldingBack();
 						$response = NULL;
 						break;
 						
 					default:
 						$response = new SpykeeResponse(self::STATE_ERROR, self::RECEIVE_UNKNOW_PACKET);
-						$this->writeLog('Trame inconnu : '.$request.bin2hex($input).'"'."\r\n", 1);
 						break;
 					}
 					/*
-					 * Envoie au client la réponse du robot
+					 * Responds to the host
 					*/
-					if ($response != NULL){ // Si il faut envoyer un paquet au client
-						if(!$response->getData()){
-							$data=pack('C', $response->getData());
-							$dataLength = strlen($data);
-						}
-						else
-							$dataLength = 0;
-						$reply = pack('a3CCCn', 'CTR', $responseType, $response->getState(), $response->getIdDescription(), $dataLength);
-						if (!$response->getData())
-							$reply .= $data;
-						if( !socket_send($this->_socketsClient[$i]['socket'], $reply, strlen($reply), 0)){
-							$errorCode = socket_last_error();
-							$errorMsg = socket_strerror($errorCode);
-								
-							$this->writeLog('Impossible d\'envoyer une trame au client : ['.$errorCode.'] '.$errorMsg."\r\n", 1);
-						}
-						echo 'Envoie de la trame : '.$reply."\r\n";
-						$this->writeLog('Envoie de la trame : '.bin2hex($reply).'"'."\r\n", 3);
+					if ($response != NULL){ // If we have to send a packet tot the host
+						$data = (!$response->getData()) ? pack('C', $response->getData()) : null;
+						// Send the packet
+						$this->_sendPacketToClient($this->_socketsClient[$i]['socket'], $responseType, $response->getState(), $response->getIdDescription(), $data);
 					}
 				}
 			}
 		}
 	}
 	
-	/*
-	 * Récupère les réponses du robot comme l'état de batterie ou le stream audio/video
+	/**
+	 * Disconnects a client
+	 * @param integer $clientId Client id of the $_socketsClient array
 	 */
-	protected function listenRobotResponses(){
-		$result = $this->_SpykeeRobotClient->socketHook();
-		// Si aucune trame n'a été capturée
-		if(!is_object($result))
-			return FALSE;
-			
-		// Si la fonction à retourner une image du stream vidéo
-		if ($result->getIdDescription() == SpykeeResponse::RECEIVE_PACKET_TYPE_VIDEO){
-			$file = PATH.'www/videoStream/video.jpeg';
-			if (file_put_contents($file, $result->getData()) === false){
-				echo 'Problème dans l\'enregistrement de l\'image'."\r\n";
-				$this->writeLog('Impossible d\'enregistrer une image du stream vidéo. ('.$file.')'."\r\n", 1);
+	protected function _closeClientSocket($clientId){
+		socket_close($this->_socketsClient[$clientId]['socket']);
+		$this->_errorManager->writeLog('The user '.$this->_socketsClient[$clientId]['ip'].':'.$this->_socketsClient[$clientId]['port'].' has been disconnected', 2);
+		// Delete socket of list of socket
+		foreach($this->_socketsClient as $id => $value){
+			if ($value['socket'] === $this->_socketsClient[$clientId]['socket']){
+				unset($this->_socketsClient[$id]);
+				break;
 			}
 		}
-		// Si la fonction à retourner le niveau de batterie
-		elseif ($result->getIdDescription() == SpykeeResponse::RECEIVE_PACKET_TYPE_POWER){
-			$this->_powerLevel = $result->getData(); 
+	}
+	
+	/**
+	 * Sends a packet to the host
+	 * @param resource $socket
+	 * @param integer $type
+	 * @param integer $state
+	 * @param integer $idDescription
+	 * @param integer $dataLength
+	 * @param string $data
+	 */
+	protected function _sendPacketToClient($socket, $type, $state, $idDescription, $data=null){
+		$dataLength = (!empty($data)) ? strlen($data) : 0;
+		$message = pack('a3CCCn', 'CTR', $type, $state, $idDescription, $dataLength);
+		if (!empty($data))
+			$message .= $data;
+		if( !socket_send($spcket, $message, strlen($message), 0)){
+			$errorCode = socket_last_error();
+			$errorMsg = socket_strerror($errorCode);
+		
+			$this->_errorManager->writeLog('Unable to send packet to host: ['.$errorCode.'] '.$errorMsg, 1);
+		}
+		else
+			$this->_errorManager->writeLog('Packet sent: '.$this->_packetToString($reply), 3);
+	}
+	
+	/**
+	 * Formats the display of packets
+	 * @param string $packet
+	 * @return string
+	 */
+	protected function _packetToString($packet){
+		$header = unpack('a3header/Ctype/Cstate/CidDescription/nlength', $request);
+		switch($header['type']){
+			case self::MOVE:
+				$type='Move';
+			break;
+			case self::LEFT:
+				$type='Left';
+			break;
+			case self::RIGHT:
+				$type='Right';
+			break;
+			case self::FORWARD:
+				$type='Forward';
+			break;
+			case self::BACK:
+				$type='Back';
+			break;
+			case self::STOP:
+				$type='Stop';
+			break;
+			case self::ACTIVATE:
+				$type='Activate';
+			break;
+			case self::CHARGE_STOP:
+				$type='Charge stop';
+			break;
+			case self::DOCK:
+				$type='Dock';
+			break;
+			case self::DOCK_CANCEL:
+				$type='Dock cancel';
+			break;
+			case self::WIRELESS_NETWORKS:
+				$type='Wireless networks';
+			break;
+			case self::GET_LOG:
+				$type='Get log';
+			break;
+			case self::GET_CONFIG:
+				$type='Get config';
+			break;
+			case self::STOP_SERVER:
+				$type='Stop server';
+			break;
+			case self::GET_POWER_LEVEL:
+				$type='Get power level';
+			break;
+			case self::REFRESH_POWER_LEVEL:
+				$type='Refresh power level';
+			break;
+			case self::CONNECTION_TO_CONTROLLER:
+				$type='Connection to controller';
+			break;
+			case self::SEND_MP3:
+				$type='Send mp3';
+			break;
+			case self::AUDIO_PLAY:
+				$type='Audio play';
+			break;
+			case self::HOLDING_LEFT:
+				$type='Holding left';
+			break;
+			case self::HOLDING_RIGHT:
+				$type='Holding right';
+			break;
+			case self::HOLDING_FORWARD:
+				$type='Holding forward';
+			break;
+			case self::STOP_HOLDING_LEFT:
+				$type='Stop holding left';
+			break;
+			case self::STOP_HOLDING_RIGHT:
+				$type='Stop holding right';
+			break;
+			case self::STOP_HOLDING_FORWARD:
+				$type='Stop holding forward';
+			break;
+			case self::STOP_HOLDING_BACK:
+				$type='Stop holding back';
+			break;
+			case self::VIDEO:
+				$type='Video';
+			break;
+			case self::SET_SPEED:
+				$type='Set speed';
+			break;
+			case self::GET_SPEED:
+				$type='Get speed';
+			break;
+			
+			default:
+				$type='Unknow';
+			break;
+		}
+		
+		$result = 'Header:'.$header['header'];
+		$result .= '/Type:'.$type;
+		$result .= '/Length:'.$header['length'];
+		if ($header['length']!=0){
+			$data = unpack('Cdata');
+			$result .= '/Data:'.$data['data'];
+		}
+		
+		return $result;
+	}
+	
+	/*
+	 * Retrieves responses of robot like battery status or stream audio/video
+	 */
+	protected function _listenRobotResponses(){
+		$result = $this->_SpykeeRobotClient->socketHook();
+		// If no packet has been captured
+		if(empty($result))
+			return FALSE;
+			
+		foreach($result as $packet){
+			// If the function have returned an image of the video stream
+			if ($packet->getIdDescription() == SpykeeResponse::RECEIVE_PACKET_TYPE_VIDEO){
+				$file = $this->_config->stream->videoPath.'video.jpeg';
+				if (file_put_contents($file, $packet->getData()) === false)
+					$this->_errorManager->error('Unable to write the image of video stream. ('.$file.')', 1);
+			}
+			// If the function have returned the battery level
+			elseif ($packet->getIdDescription() == SpykeeResponse::RECEIVE_PACKET_TYPE_POWER AND $packet->getState() == SpykeeRobot::STATE_OK){
+				$this->_powerLevel = $packet->getData(); 
+			}
 		}
 	}
 	
 	/*
-	 * Envoie les paquets qui doivent êtres envoyés à intervals réguliers
+	 * Sends the periodic packets
 	 */
-	protected function sendPeriodicPaquets(){
-		// Aller uniquement à gauche
+	protected function _sendPeriodicPaquets(){
+		// Go only at left
 		if ($this->_holdingQueue['left'] AND !$this->_holdingQueue['back'] AND !$this->_holdingQueue['forward'])
 			$this->_SpykeeRobotClient->left();
-		// Aller uniquement à droite
+		// Go only at right
 		else if ($this->_holdingQueue['right'] AND !$this->_holdingQueue['back'] AND !$this->_holdingQueue['forward'])
 			$this->_SpykeeRobotClient->right();
 		
-		// Avance tout droit
+		// Go forward
 		else if ($this->_holdingQueue['forward'] AND !$this->_holdingQueue['left'] AND !$this->_holdingQueue['right'])
 			$this->_SpykeeRobotClient->forward();
-		// Recule en ligne droite
+		// Go back
 		else if ($this->_holdingQueue['back'] AND !$this->_holdingQueue['left'] AND !$this->_holdingQueue['right'])
 			$this->_SpykeeRobotClient->back();
 		
-		// Diagonal haut gauche
+		// Go to the top left
 		else if ($this->_holdingQueue['forward'] AND $this->_holdingQueue['left'])
 			$this->_SpykeeRobotClient->move((int) ($this->_moveSpeed/5), $this->_moveSpeed);
-		// Diagonal haut droite
+		// Go to the top right
 		else if ($this->_holdingQueue['forward'] AND $this->_holdingQueue['right'])
 			$this->_SpykeeRobotClient->move($this->_moveSpeed, (int) ($this->_moveSpeed/8));
-		// Diagonal bas gauche
+		// Go to the down left
 		else if ($this->_holdingQueue['back'] AND $this->_holdingQueue['left'])
 			$this->_SpykeeRobotClient->move(128 + (int) ($this->_moveSpeed/5), 128 + $this->_moveSpeed);
-		// Diagonal bas droite
+		// Go to the down right
 		else if ($this->_holdingQueue['back'] AND $this->_holdingQueue['right'])
 			$this->_SpykeeRobotClient->move(128 + $this->_moveSpeed, 128 + (int) ($this->_moveSpeed/5));
 	}
 	
-	protected function holdingLeft(){
+	protected function _holdingLeft(){
 		if ($this->_holdingQueue['right'])
 			$this->_holdingQueue['right'] = false;
 		if ($this->_holdingQueue['left'])
-			$this->stopHoldingLeft();
+			$this->_stopHoldingLeft();
 		else
 			$this->_holdingQueue['left'] = true;
 	}
 	
-	protected function holdingRight(){
+	protected function _holdingRight(){
 		if ($this->_holdingQueue['left'])
 			$this->_holdingQueue['left'] = false;
 		if ($this->_holdingQueue['right'])
-			$this->stopHoldingRight();
+			$this->_stopHoldingRight();
 		else
 			$this->_holdingQueue['right'] = true;
 	}
 	
-	protected function holdingForward(){
+	protected function _holdingForward(){
 		if ($this->_holdingQueue['back'])
 			$this->_holdingQueue['back'] = false;
 		if ($this->_holdingQueue['forward'])
-			$this->stopHoldingForward();
+			$this->_stopHoldingForward();
 		else
 			$this->_holdingQueue['forward'] = true;
 	}
 	
-	protected function holdingBack(){
+	protected function _holdingBack(){
 		if ($this->_holdingQueue['forward'])
 			$this->_holdingQueue['forward'] = false;
 		if ($this->_holdingQueue['back'])
-			$this->stopHoldingBack();
+			$this->_stopHoldingBack();
 		else
 			$this->_holdingQueue['back'] = true;
 	}
 	
-	protected function stopHoldingLeft(){
+	protected function _stopHoldingLeft(){
 		$this->_holdingQueue['left'] = false;
 		$this->_SpykeeRobotClient->stop();
 	}
@@ -520,18 +691,18 @@ class SpykeeControllerServer extends SpykeeConfigControllerServer{
 		$this->_SpykeeRobotClient->stop();
 	}
 	
-	protected function stopHoldingForward(){
+	protected function _stopHoldingForward(){
 		$this->_holdingQueue['forward'] = false;
 		$this->_SpykeeRobotClient->stop();
 	}
 	
-	protected function stopHoldingBack(){
+	protected function _stopHoldingBack(){
 		$this->_holdingQueue['back'] = false;
 		$this->_SpykeeRobotClient->stop();
 	}
 	
-	protected function setSpeed(int $value){
-		$value = ($value > 0 AND $value <= 128) ? $value : self::MOVE_SPEED;
+	protected function _setSpeed(int $value){
+		$value = ($value > 0 AND $value <= 128) ? $value : $this->_config->robot->defaultSpeed;
 		$this->_moveSpeed = $value;
 		return $this->_SpykeeRobotClient->setSpeed($value);
 	}

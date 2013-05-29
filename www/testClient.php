@@ -14,6 +14,9 @@ catch (ExceptionSpykee $e){
 	die;
 }
 echo 'Connexion OK';
-echo $test->Forward();
+echo $toto = $test->Forward();
+if($toto->getState() != SpykeeRobot::STATE_OK){
+	echo '<h2>Error</h2>';
+}
 echo '<br />Fin de la page';
 ?>

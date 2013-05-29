@@ -49,7 +49,7 @@ class SpykeeError {
 			/*
 			 * Create/Append file log
 			*/
-			$logFile=PATH.$this->_config->errors->pathLogFile.$this->_robotName.'-'.$this->_config->errors->logFileName.'.log';
+			$logFile=$this->_config->errors->pathLogFile.$this->_robotName.'-'.$this->_config->errors->logFileName.'.log';
 			if (!$file = fopen($logFile, 'a'))
 				trigger_error('Unable to open the file log: '.$logFile, E_USER_ERROR); // Send the error through PHP
 			else {

@@ -18,3 +18,4 @@ class HomeController extends BaseController
 		//$this->view->display('mainTemplate.tpl');
 	}
 }
+?>

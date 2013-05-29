@@ -13,7 +13,14 @@ class PlayController extends BaseController
 	//default method
 	protected function index()
 	{
-		$this->model->index();
+		if ($this->model->isConnected()){
+			//TODO si il est 1er => redirigé sur /play
+			$this->model->index();
+			$this->model->isInQueue();
+		}
+		else{
+			$this->model->notConnected();
+		}
 		/*if (!empty($_POST['up']))
 			$this->model->up();
 		if (!empty($_POST['left']))
@@ -38,6 +45,21 @@ class PlayController extends BaseController
 			$this->model->stop();
 		if (!empty($_POST['enableVideo']))
 			$this->model->enableVideo();*/
+	}
+	
+	protected function queue(){
+	if ($this->model->isConnected()){
+		$this->model->inQueue();
+	}
+	else{
+		$this->model->notConnected();
+	}
+	}
+	
+	protected function play(){
+		$this->model->Ingame();
+		$this->model->isIngame();	
+		$this->model->play();
 	}
 	
 	
@@ -83,9 +105,13 @@ class PlayController extends BaseController
 					break;
 				case 'setSpeed':
 					$this->model->setSpeed($_POST['data']);
-					break;
-					
+					break;			
 			}
 		}
 	}
-}
+	
+
+	}
+		
+
+?>

@@ -23,7 +23,7 @@ class SpykeeController extends SpykeeRobot{
 	const WIRELESS_NETWORKS = 10;
 	const GET_LOG = 11;
 	const GET_CONFIG = 12;
-	const STOP_SERVER = 13;
+	const STOP_CONTROLLER = 13;
 	const GET_POWER_LEVEL = 14;
 	const REFRESH_POWER_LEVEL = 15;
 	const CONNECTION_TO_CONTROLLER = 16;

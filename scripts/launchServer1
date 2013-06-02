@@ -1,9 +1,3 @@
-#!/usr/bin/php5 -q 
-<?php
-if (!defined('PATH'))
-	define('PATH', realpath('../').'/');
-require_once(PATH.'libs/spykee-controller/controllerServer.php');
-
-$server1 = new SpykeeControllerServer('Robot1', '172.17.6.1', '2000', 'admin', 'admin');
-//$server1 = new SpykeeControllerServer('Robot1', '127.0.0.1', '2000', 'admin', 'admin');
-?>
+#!/bin/bash
+umask 0007
+php5 ./launchServer1.php

@@ -1,4 +1,9 @@
 <?php
+/**
+ * Content all methodes used to get informations about an action
+ * All actions returns an SpykeeResponse object
+ * @author Remi ANGENIEUX
+ */
 class SpykeeResponse{
 	
 	const NO_DESCRIPTION = 0;
@@ -10,6 +15,8 @@ class SpykeeResponse{
 	const ERROR_INCORRECT_HEADER = 20;
 	const CONNECTION_REINIT = 5;
 	const UNABLE_READ_DATA = 6;
+	const DISCONNECTED_FROM_CONTROLLER = 21;
+	const RECEIVE_NON_VALID_PACKET = 22;
 	
 	const RECEIVE_PACKET_TYPE_AUDIO = 7;
 	const RECEIVE_PACKET_TYPE_VIDEO = 8;
@@ -31,96 +38,120 @@ class SpykeeResponse{
 	protected $_idDescription=NULL;
 	protected $_description=NULL;
 	
+	/**
+	 * Create a new Spykee response
+	 * @param integer $state SpykeeRobot::STATE_OK or SpykeRobot::STATE_ERROR
+	 * @param integer $idDescription Id description content in SpykeeResponse object
+	 * @param string $data Data, like battery level
+	 */
 	public function __construct($state, $idDescription=self::NO_DESCRIPTION, $data=''){
 		$this->_state = $state;
 		$this->_idDescription = $idDescription;
 		$this->_data = $data;
 	}
 	
+	/**
+	 * To get state of this response
+	 * @return integer SpykeeRobot::STATE_OK or SpykeRobot::STATE_ERROR
+	 */
 	public function getState(){
 		return $this->_state;
 	}
 	
+	/**
+	 * To get id description of this response
+	 * @return integer Id description content in SpykeeResponse object
+	 */
 	public function getIdDescription(){
 		return $this->_idDescription;
 	}
 	
+	/**
+	 * To get description message of this response
+	 * @return string Description message
+	 */
 	public function getDescription(){
-		// Si le texte de la description à déjà été défini
+		// If the text of the description has already been retrieved once
 		if (!empty($this->_description))
 			return $this->_description;
-		// Si aucune description n'a été definie
+		// If no description has been defined. Normally it's not possible, a default id was setted
 		if (empty($this->_idDescription)){
-			$this->_description = 'Aucune description a été défini';
+			$this->_description = 'No id description has been defined. So there is no description';
 			return $this->_description;
 		}
-		// Sinon on le cherche via l'id de la description
+		// Else we look for description message
 		switch($this->_idDescription){
 			case self::NUMBER_RECONNEXION_EXCEEDED:
-				$this->_description = 'Nombre de tentative de reconnexion dépassé';
+				$this->_description = 'Number of reconnection attempts exceeded';
 				break;
 			case self::ERROR_SEND_PACKET:
-				$this->_description = 'Impossible d\'envoyer le paquet';
+				$this->_description = 'Unable to send the packet';
 				break;
 			case self::PACKET_SENT:
-				$this->_description = 'Le paquet à bien été envoyé';
+				$this->_description = 'The packet has been sent';
 				break;
 			case self::ERROR_RECEIVE_PACKET:
-				$this->_description = 'Problème de réception du paquet';
+				$this->_description = 'Problem receiving the packet';
 				break;
 			case self::ERROR_INCORRECT_HEADER:
-				$this->_description = 'Mauvais header reçue';
-			break;
+				$this->_description = 'Received bad header';
+				break;
 			case self::CONNECTION_REINIT:
-				$this->_description = 'Connexion réinitialisée';
+				$this->_description = 'Connection reset';
 				break;
 			case self::UNABLE_READ_DATA:
-				$this->_description = 'Impossible de lire les données véhiculé dans le paquet';
+				$this->_description = 'Unable to read the data carried in the packet';
+				break;
+			case self::DISCONNECTED_FROM_CONTROLLER:
+				$this->_description = 'Controller close the connection';
+				break;
+			case self::RECEIVE_NON_VALID_PACKET:
+				$this->_description = 'Received an invalid packet. The header is not good';
 				break;
 				
 			case self::RECEIVE_PACKET_TYPE_AUDIO:
-				$this->_description = 'Paquet reçu de type audio';
+				$this->_description = 'Received packet: type audio';
 				break;
 			case self::RECEIVE_PACKET_TYPE_VIDEO:
-				$this->_description = 'Paquet reçu de type vidéo';
+				$this->_description = 'Packet received: video type';
 				break;
 			case self::RECEIVE_PACKET_TYPE_POWER:
-				$this->_description = 'Paquet reçu de type niveau de batterie';
+				$this->_description = 'Packet received: battery level';
 				break;
 			case self::RECEIVE_PACKET_TYPE_AUTH_REPLY:
-				$this->_description = 'Paquet reçu de type réponse d\'authentification';
+				$this->_description = 'Packet received: auth reply';
 				break;
 			case self::RECEIVE_PACKET_TYPE_STOP:
-				$this->_description = 'Paquet reçu de type stop';
+				$this->_description = 'Packet received: stop';
 				break;
 			case self::RECEIVE_PACKET_TYPE_WIRELESS_NETWORKS:
-				$this->_description = 'Paquet reçu de type connexion sans fil';
+				$this->_description = 'Packet received: type wireless networks';
 				break;
 			case self::RECEIVE_PACKET_TYPE_CONFIG:
-				$this->_description = 'Paquet reçu de type configuration';
-			break;
+				$this->_description = 'Packet received: type config';
+				break;
 			case self::RECEIVE_PACKET_TYPE_LOG:
-				$this->_description = 'Paquet reçu de type log';
-			break;
+				$this->_description = 'Packet received: type log';
+				break;
 				$this->_description = 'Paquet reçu de type inconnu';
 				break;
 				
 			case self::LEVEL_BATTERY_RETRIVED:
-				$this->_description = 'Niveau de batterie récupéré';
+				$this->_description = 'Battery Level retrieved';
 				break;
 			case self::MOVE_SPEED_RETRIVED:
-				$this->_description = 'Vitesse récupérée';
+				$this->_description = 'Retrieved speed';
 				break;
 			case self::MOVE_SPEED_CHANGED:
-				$this->_description = 'Vitesse changée avec succès';
+				$this->_description = 'Speed ​​successfully changed';
 				break;
 			case self::TOO_MANY_CONNECTION:
-				$this->_description = 'Le nombre maximum de connexion simultannées à été atteint';
+				$this->_description = 'The maximum number of simultaneous connections has been reached';
 				break;
 				
 			case self::NO_DESCRIPTION:
 			default:
-				$this->_description = 'Aucune description a été défini';
+				$this->_description = 'No description has been defined';
 				break;
 				
 			return $this->_description;
@@ -129,10 +160,18 @@ class SpykeeResponse{
 		return $this->_description;
 	}
 	
+	/**
+	 * To get data of this response
+	 * @return string
+	 */
 	public function getData(){
 		return $this->_data;
 	}
 	
+	/**
+	 * To export this object in Json format
+	 * @return string Object exported in Json format
+	 */
 	public function jsonFormat(){
 		$return = '{';
 		$return .= '"state": '.$this->getState().', ';

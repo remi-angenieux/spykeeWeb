@@ -1,7 +1,7 @@
 <?php
 /**
  * Content all methodes used by the controller
- * @author Rémi ANGENIEUX
+ * @author Remi ANGENIEUX
  */
 set_time_limit(0); // to run PHP as server
 if (!defined('PATH'))
@@ -33,7 +33,6 @@ class SpykeeControllerServer extends SpykeeController{
 									'right' => FALSE,
 									'forward' => FALSE,
 									'back' => FALSE);
-	
 
 	/**
 	 * Create a new controller server connected to the robot
@@ -42,16 +41,16 @@ class SpykeeControllerServer extends SpykeeController{
 	 * @param string $robotUsername
 	 * @param string $robotPassword
 	 */
-	function __construct($robotName, $robotIp, $serverPort, $robotUsername='', $robotPassword=''){
+	function __construct($robotName, $robotIp, $controllerPort, $robotUsername='', $robotPassword=''){
 		$this->_robotName = $robotName;
 		$this->_setRobotIp($robotIp); // Control the input
-		$this->_setControllerPort($serverPort);
+		$this->_setControllerPort($controllerPort);
 		try{
 			$this->_config = new SpykeeConfig('spykeeControllerServer.ini'); // Load config
 		}
 		catch (ExceptionSpykee $e){ // If an error ocurred at the init of the config object
 			SpykeeError::standaloneError($e->getMessage());
-			throw $e; // re throw
+			die; // Stop the controller
 		}
 		$this->_errorManager = new SpykeeError($this->_robotName, $this->_robotIp, $this->_config);
 		$this->_robotUsername = $robotUsername;
@@ -63,7 +62,8 @@ class SpykeeControllerServer extends SpykeeController{
 			$this->_SpykeeRobotClient = new SpykeeRobotClient($this->_robotName, $this->_robotIp, $this->_robotUsername, $this->_robotPassword);
 		}
 		catch (ExceptionSpykee $e){
-			throw $e; // Resend to user
+			$this->_errorManager->error($e->getMessage(), 1);
+			die; // Stop the controller
 		}
 		$this->_initSocketServer();
 		
@@ -75,27 +75,25 @@ class SpykeeControllerServer extends SpykeeController{
 	}
 	
 	/**
-	 * Verify if the input value is an IP adresse otherwise generate an error
+	 * Verify if the input value is an IP addresse otherwise generate an error
 	 * @param string $ip
 	 */
 	protected function _setRobotIp($ip){
-		if (filter_var($ip, FILTER_VALIDATE_IP)) // If the use enter a valid IP adresse
+		if (filter_var($ip, FILTER_VALIDATE_IP)) // If the use enter a valid IP addresse
 			$this->_robotIp = $ip;
 		else{
 			// Send error with 2 methodes because it's critical programming error
 			// And kill the script
 			$trace = debug_backtrace();
-			$errorMessage = 'Argument 2 for SpykeeRobotClient::__construct() have to be an valid IP adresse, called in'
+			$errorMessage = 'Argument 2 for SpykeeControllerServer::__construct() have to be an valid IP addresse, called in'
 					.$trace[0]['file'].' on line '.$trace[0]['line'];
 			SpykeeError::standaloneError($errorMessage);
-			throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
 		}
 	}
 	
 	/**
-	 * Detect if the input value is port adresse otherwise generate an error
+	 * Detect if the input value is port addresse otherwise generate an error
 	 * @param mixed $port
-	 * @throws ExceptionSpykee
 	 */
 	protected function _setControllerPort($port){
 		if (is_numeric($port) AND $port > 0 AND $port <= 49151)
@@ -104,13 +102,15 @@ class SpykeeControllerServer extends SpykeeController{
 			// Send error with 2 methodes because it's critical programming error
 			// And kill the script
 			$trace = debug_backtrace();
-			$errorMessage = 'Argument 3 for SpykeeRobotClient::__construct() have to be an valid port adresse (between 1 and 49151 included), called in'
+			$errorMessage = 'Argument 3 for SpykeeControllerServer::__construct() have to be an valid port addresse (between 1 and 49151 included), called in'
 					.$trace[0]['file'].' on line '.$trace[0]['line'];
 			SpykeeError::standaloneError($errorMessage);
-			throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
 		}
 	}
 	
+	/**
+	 * Server loop
+	 */
 	protected function _mainLoop(){
 		$timeClient=$timeRobot=$timePeriodic=microtime(true);
 		while (!$this->_stopServer){
@@ -130,45 +130,55 @@ class SpykeeControllerServer extends SpykeeController{
 		}
 	}
 	
+	/**
+	 * Init controller server socket
+	 */
 	protected function _initSocketServer(){
 		if(!($this->_socketServer = socket_create(AF_INET, SOCK_STREAM, 0))){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-		
-			throw new ExceptionSpykee('Launching error', 'Could not create socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
+			$this->_errorManager->error('Launching error', 'Could not create socket: ['.$errorCode.'] '.$errorMsg, 1);
+			die; // Stop the controller
 		}
 		// Define reusable socket (Without you can't restart instantly the controller)
 		if(!socket_set_option($this->_socketServer, SOL_SOCKET, SO_REUSEADDR, 1)){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 			$this->_errorManager->error('Unable to define controller socket reusable: ['.$errorCode.'] '.$errorMsg, 1);
+			die; // Stop the controller
 		}
-		// Define a timeout for blocking socket
-		if(!socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array('sec'=> $this->_config->controller->timeoutSec, 'usec'=> $this->_config->controller->timeoutUsec))){
+		// Defines a timeout for receiving packet
+		if(!socket_set_option($this->_socketServer, SOL_SOCKET, SO_RCVTIMEO, array('sec'=> $this->_config->controller->timeoutSec, 'usec'=> $this->_config->controller->timeoutUsec))){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 			$this->_errorManager->error('Unable to define timeout for controller socket: ['.$errorCode.'] '.$errorMsg, 1);
 		}
-		// Bind the source address
-		if( !socket_bind($this->_socketServer, $this->_config->controller->ip , $this->_controllerPort) ){
+		// Bind the source address. Packet send by everyone (localhost, local network, internet)
+		// Note: An ACL secure the connection for each connection
+		if( !socket_bind($this->_socketServer, '0.0.0.0' , $this->_controllerPort) ){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 			if($errorCode == 98) // Port in use
-				throw new ExceptionSpykee('Launching error', 'Bind Socket: ['.$errorCode.'] Port in use('.$errorMsg.')', $errorCode);
+				$this->_errorManager->error('Bind Socket: ['.$errorCode.'] Port in use('.$errorMsg.')', 1);
 			else
-				throw new ExceptionSpykee('Launching error', 'Bind Socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
+				$this->_errorManager->error('Bind Socket: ['.$errorCode.'] '.$errorMsg, 1);
+			die; // Stop the controller
 		}
 		
 		if(!socket_listen($this->_socketServer , $this->_config->controller->maxConnection)){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-		
-			throw new ExceptionSpykee('Launching error', 'Unable to listen socket (socket_listen): ['.$errorCode.'] '.$errorMsg, $errorCode);
+			$this->_errorManager->error('Unable to listen socket (socket_listen): ['.$errorCode.'] '.$errorMsg, 1);
+			die; // Stop the controller
 		}
 		
 		$this->_socketsClient = array(); // list of Controller users
 	}
 
+	/**
+	 * Listen clients request and response to him
+	 * @return boolean
+	 */
 	protected function _listenClientsRequests(){
 		// Helpful : http://www.binarytides.com/php-socket-programming-tutorial/
 
@@ -187,8 +197,8 @@ class SpykeeControllerServer extends SpykeeController{
 		if(socket_select($socketsClientToRead, $write, $except, 0, NULL) === false){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-				
-			throw new ExceptionSpykee('Running error', 'Unable to listen socket (socket_listen): ['.$errorCode.'] '.$errorMsg, $errorCode);
+			$this->_errorManager->error('Unable to listen socket (socket_listen): ['.$errorCode.'] '.$errorMsg, 1);
+			die; // Stop the controller
 		}
 		/*
 		 * Script executed at the connection of an host
@@ -211,8 +221,8 @@ class SpykeeControllerServer extends SpykeeController{
 					}
 					else{
 						$this->_errorManager->writeLog('The host '.$clientIp.':'.$clientPort.' is well connected', 2);
-						$this->_socketsClient[$i]['ip'] = $clientIp; // Save ip adresse
-						$this->_socketsClient[$i]['port'] = $clientPort; // Save port adresse
+						$this->_socketsClient[$i]['ip'] = $clientIp; // Save ip addresse
+						$this->_socketsClient[$i]['port'] = $clientPort; // Save port addresse
 						$msg = pack('a3CCn', 'CTR', self::CONNECTION_TO_CONTROLLER, self::STATE_OK, 0); // Send to user an acknowledge
 						if( !socket_send($this->_socketsClient[$i]['socket'], $msg, strlen($msg), 0)){
 							$errorCode = socket_last_error();
@@ -246,8 +256,8 @@ class SpykeeControllerServer extends SpykeeController{
 			// If a client send any data
 			if (!empty($this->_socketsClient[$i]) AND in_array($this->_socketsClient[$i]['socket'], $socketsClientToRead)){
 				// Get socket
-				$request = @socket_read($this->_socketsClient[$i]['socket'], self::CTR_PACKET_HEADER_SIZE);
 				socket_clear_error();
+				$request = @socket_read($this->_socketsClient[$i]['socket'], self::CTR_PACKET_HEADER_SIZE);
 				// If an error occured
 				if (($errorCode = socket_last_error()) != 0){
 					$errorMsg = socket_strerror($errorCode);
@@ -263,7 +273,7 @@ class SpykeeControllerServer extends SpykeeController{
 				}
 				// If the client to send something to manage
 				else{
-					$header = unpack('a3header/Ctype/Cstate/CidDescription/nlength', $request);
+					$header = unpack('a3header/Ctype/nlength', $request);
 					// If header isn't CTR, the packet isn't send by valid host
 					if ($header['header'] != 'CTR'){
 						$this->_errorManager->error('packet receive without the correct header: '.$header['header'], 1);
@@ -354,7 +364,7 @@ class SpykeeControllerServer extends SpykeeController{
 						$this->_SpykeeRobotClient->setVideo($inputFormated['state']);
 						$response = NULL;
 						break;
-					case self::STOP_SERVER:
+					case self::STOP_CONTROLLER:
 						$reponse = NULL;
 						$this->_stopServer=true;
 						// Close all connection
@@ -436,6 +446,7 @@ class SpykeeControllerServer extends SpykeeController{
 				}
 			}
 		}
+		return TRUE;
 	}
 	
 	/**
@@ -461,7 +472,7 @@ class SpykeeControllerServer extends SpykeeController{
 	 * @param integer $state
 	 * @param integer $idDescription
 	 * @param integer $dataLength
-	 * @param string $data
+	 * @param string $data Data have to be formated with pack function for example
 	 */
 	protected function _sendPacketToClient($socket, $type, $state, $idDescription, $data=null){
 		$dataLength = (!empty($data)) ? strlen($data) : 0;
@@ -525,8 +536,8 @@ class SpykeeControllerServer extends SpykeeController{
 			case self::GET_CONFIG:
 				$type='Get config';
 			break;
-			case self::STOP_SERVER:
-				$type='Stop server';
+			case self::STOP_CONTROLLER:
+				$type='Stop controller';
 			break;
 			case self::GET_POWER_LEVEL:
 				$type='Get power level';
@@ -590,8 +601,9 @@ class SpykeeControllerServer extends SpykeeController{
 		return $result;
 	}
 	
-	/*
+	/**
 	 * Retrieves responses of robot like battery status or stream audio/video
+	 * @return boolean
 	 */
 	protected function _listenRobotResponses(){
 		$result = $this->_SpykeeRobotClient->socketHook();
@@ -611,9 +623,10 @@ class SpykeeControllerServer extends SpykeeController{
 				$this->_powerLevel = $packet->getData(); 
 			}
 		}
+		return TRUE;
 	}
 	
-	/*
+	/**
 	 * Sends the periodic packets
 	 */
 	protected function _sendPeriodicPaquets(){
@@ -645,6 +658,9 @@ class SpykeeControllerServer extends SpykeeController{
 			$this->_SpykeeRobotClient->move(128 + $this->_moveSpeed, 128 + (int) ($this->_moveSpeed/5));
 	}
 	
+	/**
+	 * Until the stop command is sent (or inverse command), turn left
+	 */
 	protected function _holdingLeft(){
 		if ($this->_holdingQueue['right'])
 			$this->_holdingQueue['right'] = false;
@@ -654,6 +670,9 @@ class SpykeeControllerServer extends SpykeeController{
 			$this->_holdingQueue['left'] = true;
 	}
 	
+	/**
+	 * Until the stop command is sent (or inverse command), turn right
+	 */
 	protected function _holdingRight(){
 		if ($this->_holdingQueue['left'])
 			$this->_holdingQueue['left'] = false;
@@ -663,6 +682,9 @@ class SpykeeControllerServer extends SpykeeController{
 			$this->_holdingQueue['right'] = true;
 	}
 	
+	/**
+	 * Until the stop command is sent (or inverse command), go forward
+	 */
 	protected function _holdingForward(){
 		if ($this->_holdingQueue['back'])
 			$this->_holdingQueue['back'] = false;
@@ -672,6 +694,9 @@ class SpykeeControllerServer extends SpykeeController{
 			$this->_holdingQueue['forward'] = true;
 	}
 	
+	/**
+	 * Until the stop command is sent (or inverse command), go back
+	 */
 	protected function _holdingBack(){
 		if ($this->_holdingQueue['forward'])
 			$this->_holdingQueue['forward'] = false;
@@ -681,28 +706,46 @@ class SpykeeControllerServer extends SpykeeController{
 			$this->_holdingQueue['back'] = true;
 	}
 	
+	/**
+	 * Stop the command "go left all the time"
+	 */
 	protected function _stopHoldingLeft(){
 		$this->_holdingQueue['left'] = false;
 		$this->_SpykeeRobotClient->stop();
 	}
 	
-	protected function stopHoldingRight(){
+	/**
+	 * Stop the command "go right all the time"
+	 */
+	protected function _stopHoldingRight(){
 		$this->_holdingQueue['right'] = false;
 		$this->_SpykeeRobotClient->stop();
 	}
 	
+	/**
+	 * Stop the command "go forward all the time"
+	 */
 	protected function _stopHoldingForward(){
 		$this->_holdingQueue['forward'] = false;
 		$this->_SpykeeRobotClient->stop();
 	}
 	
+	/**
+	 * Stop the command "go back all the time"
+	 */
 	protected function _stopHoldingBack(){
 		$this->_holdingQueue['back'] = false;
 		$this->_SpykeeRobotClient->stop();
 	}
 	
+	/**
+	 * Sets the robot speed
+	 * 1 lowest
+	 * 128 highest
+	 * @param int $value
+	 */
 	protected function _setSpeed(int $value){
-		$value = ($value > 0 AND $value <= 128) ? $value : $this->_config->robot->defaultSpeed;
+		if ($value < 0 AND $value > 128) $value = $this->_config->robot->defaultSpeed;
 		$this->_moveSpeed = $value;
 		return $this->_SpykeeRobotClient->setSpeed($value);
 	}

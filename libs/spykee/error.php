@@ -14,7 +14,7 @@ class SpykeeError {
 	/**
 	 * Prepare the error manager
 	 * @param string $robotName Name of the robot
-	 * @param string $robotIp IP Adresse of the robot
+	 * @param string $robotIp IP Addresse of the robot
 	 * @param SpykeeConfig $configs Config of the Object (Controller or Robot)
 	 */
 	public function __construct($robotName, $robotIp, $config){
@@ -50,11 +50,15 @@ class SpykeeError {
 			 * Create/Append file log
 			*/
 			$logFile=$this->_config->errors->pathLogFile.$this->_robotName.'-'.$this->_config->errors->logFileName.'.log';
-			if (!$file = fopen($logFile, 'a'))
-				trigger_error('Unable to open the file log: '.$logFile, E_USER_ERROR); // Send the error through PHP
+			if (!$file = fopen($logFile, 'a')){
+				//trigger_error('Unable to open the file log: '.$logFile, E_USER_ERROR); // Send the error through PHP
+				self::standaloneError('Unable to open the file log: '.$logFile);
+			}
 			else {
-				if (fwrite($file, $content) === FALSE )
-					trigger_error('Unable to write in the file log: '.$logFile, E_USER_ERROR); // Send the error through PHP
+				if (fwrite($file, $content) === FALSE ){
+					//trigger_error('Unable to write in the file log: '.$logFile, E_USER_ERROR); // Send the error through PHP
+					self::standaloneError('Unable to write in the file log: '.$logFile);
+				}
 				fclose($file);
 			}
 		}

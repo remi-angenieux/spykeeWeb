@@ -7,12 +7,17 @@ class PlayModel extends BaseModel
 	//data passed to the home index view
 	public function index(){
 		require_once(PATH.'libs/spykee/spykee-controller/controllerClient.php');
-		$this->_spykee = new SpykeeControllerClient('Robot1', '127.0.0.1', '2000');
 		$this->view->assign('pageTitle', 'Play');
 		// TODO mettre en place d'une configuration pour le site
 		$this->view->addAdditionalJs('http://spykee.lan/js/play.js');
 		$this->view->addAdditionalJs('http://spykee.lan/js/jquery-ui-1.10.3.custom.min.js');
 		$this->view->addAdditionalCss('http://spykee.lan/css/ui-darkness/jquery-ui-1.10.3.custom.min.css');
+		try{
+			$this->_spykee = new SpykeeControllerClient('127.0.0.1', '2000');
+		}
+		catch (ExceptionSpykee $e){
+			// TODO: Afficher un message d'erreur
+		}
 	}
 	
 	public function ajax(){

@@ -1,6 +1,7 @@
 <?php
 /**
  * Content all methodes used to control easily the robot
+ * Directly you can't manage stream (audio/video) and periodic actions
  * @author Remi ANGENIEUX
  */
 if (!defined('PATH'))
@@ -65,10 +66,10 @@ class SpykeeRobotClient extends SpykeeRobot {
 
 	/**
 	 * Create a new connection to the robot
-	 * @param string $robotName
-	 * @param string $robotIp
-	 * @param string $robotUsername
-	 * @param string $robotPassword
+	 * @param string $robotName Robot name, used for log
+	 * @param string $robotIp Ip addresse of the robot
+	 * @param string $robotUsername Username used to connects to the robot
+	 * @param string $robotPassword Username used to connects to the robot
 	 */
 	public function __construct($robotName, $robotIp, $robotUsername=null, $robotPassword=null){
 		$this->_robotName = $robotName;
@@ -91,17 +92,17 @@ class SpykeeRobotClient extends SpykeeRobot {
 	}
 	
 	/**
-	 * Verify if the input value is an IP adresse otherwise generate an error
+	 * Verify if the input value is an IP addresse otherwise generate an error
 	 * @param string $ip
 	 */
 	protected function _setRobotIp($ip){
-		if (filter_var($ip, FILTER_VALIDATE_IP)) // If the use enter a valid IP adresse
+		if (filter_var($ip, FILTER_VALIDATE_IP)) // If the use enter a valid IP addresse
 			$this->_robotIp = $ip;
 		else{
 			// Send error with 2 methodes because it's critical programming error
 			// And kill the script
 			$trace = debug_backtrace();
-			$errorMessage = 'Argument 2 for SpykeeRobotClient::__construct() have to be an valid IP adresse, called in'
+			$errorMessage = 'Argument 2 for SpykeeRobotClient::__construct() have to be an valid IP addresse, called in'
 					.$trace[0]['file'].' on line '.$trace[0]['line'];
 			SpykeeError::standaloneError($errorMessage);
 			throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
@@ -123,21 +124,25 @@ class SpykeeRobotClient extends SpykeeRobot {
 		if(!($this->_robotSocket = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP))){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-			 
-			throw new ExceptionSpykee('Connection error', 'Could not create socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
+			throw new ExceptionSpykee('Connection error', 'Could not create robot socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
 		// Put a connection timeout
-		socket_set_option($this->_robotSocket, SOL_SOCKET, SO_RCVTIMEO, array('sec' => $this->_config->robot->connectionTimeout, 'usec' => 0));
-		
+		if(!socket_set_option($this->_robotSocket, SOL_SOCKET, SO_SNDTIMEO, array('sec' => $this->_config->robot->connectionTimeout, 'usec' => 0))){
+			$errorCode = socket_last_error();
+			$errorMsg = socket_strerror($errorCode);
+			$this->_errorManager->error('Unable to define timeout for robot socket: ['.$errorCode.'] '.$errorMsg, 1);
+		}
 		if(!@socket_connect($this->_robotSocket , $this->_robotIp , self::ROBOT_PORT)){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-			 
 			throw new ExceptionSpykee('Connection error', 'Could not connect to the robot: ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
-		
 		// reset connection timeout (beacause we want a timeout just for the connection)
-		socket_set_option($this->_robotSocket, SOL_SOCKET, SO_RCVTIMEO, array('sec' => 0, 'usec' => 0));
+		if(!socket_set_option($this->_robotSocket, SOL_SOCKET, SO_RCVTIMEO, array('sec' => 0, 'usec' => 0))){
+			$errorCode = socket_last_error();
+			$errorMsg = socket_strerror($errorCode);
+			$this->_errorManager->error('Unable to reset timeout of robot socket: ['.$errorCode.'] '.$errorMsg, 1);
+		}
 	}
 	
 	/**
@@ -174,8 +179,8 @@ class SpykeeRobotClient extends SpykeeRobot {
 
 	/**
 	 * Send actions to the robot
-	 * @param integer $type
-	 * @param string $data
+	 * @param integer $type Type content in SpykeeController object
+	 * @param string $data Data to send
 	 * @return SpykeeResponse
 	 */
 	protected function _sendPacketToRobot($type, $data=NULL){
@@ -199,7 +204,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 				$this->_initSocket();
 				$this->_authentificationRobot();
 				$return = $this->_sendPacketToRobot($type, $data);
-				/*if ($return->getState() == self::STATE_OK) // Reinit du compteur
+				/*if ($return->getState() == self::STATE_OK) // Reinit the counte
 					$this->_reconnection=0;*/
 				return $return;
 			}
@@ -251,7 +256,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 				$this->_errorManager->error('Unable to read data sended ['.$errorCode.'] '.$errorMsg, 1);
 				return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::UNABLE_READ_DATA);
 			}
-			$data = unpack('Cdata');
+			$data = unpack('Cdata', $data);
 			$data = $data['data'];
 		}
 		
@@ -284,12 +289,15 @@ class SpykeeRobotClient extends SpykeeRobot {
 				break;
 			case self::PACKET_TYPE_WIRELESS_NETWORKS:
 				$description = SpykeeResponse::RECEIVE_PACKET_TYPE_WIRELESS_NETWORKS;
+				// TODO mettre en forme la sortie
 				break;
 			case self::PACKET_TYPE_CONFIG:
 				$description = SpykeeResponse::RECEIVE_PACKET_TYPE_CONFIG;
+				// TODO mettre en forme la sortie
 				break;
 			case self::PACKET_TYPE_LOG:
 				$description = SpykeeResponse::RECEIVE_PACKET_TYPE_LOG;
+				// TODO mettre en forme la sortie
 				break;
 				
 			default:
@@ -519,7 +527,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	public function wirelessNetworks(){
 		$request = $this->_sendPacketToRobot(self::PACKET_TYPE_WIRELESS_NETWORKS);
 		if ($request->getState() == self::STATE_OK) // If the packet is send sucefully
-			return $this->_getResponse(); // TODO mettre en forme la sortie
+			return $this->_getResponse();
 		else
 			return $request;
 	}
@@ -531,7 +539,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	public function getLog(){
 		$request = $this->_sendPacketToRobot(self::PACKET_TYPE_LOG);
 		if ($request->getState() == self::STATE_OK) // If the packet is send sucefully
-			return $this->_getResponse(); // TODO mettre en forme la sortie
+			return $this->_getResponse();
 		else
 			return $request;
 	}
@@ -543,7 +551,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	public function getConfig(){
 		$request = $this->_sendPacketToRobot(self::PACKET_TYPE_CONFIG);
 		if ($request->getState() == self::STATE_OK) // If the packet is send sucefully
-			return $this->_getResponse(); // TODO mettre en forme la sortie
+			return $this->_getResponse();
 		else
 			return $request;
 	}
@@ -577,7 +585,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	
 	/**
 	 * Enables or disables the video stream
-	 * @param bool $bool
+	 * @param bool $bool TRUE: enabled FALSE: disbaled
 	 * @return SpykeeResponse
 	 */
 	public function setVideo(bool $bool){
@@ -595,6 +603,8 @@ class SpykeeRobotClient extends SpykeeRobot {
 
 	/**
 	 * Sets the robot speed
+	 * 1 lowest
+	 * 128 highest
 	 * @param integer $value
 	 * @return SpykeeResponse
 	 */

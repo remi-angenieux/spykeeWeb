@@ -77,7 +77,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 		try{
 			$this->_config = new SpykeeConfig('spykeeRobot.ini');
 		}
-		catch (ExceptionSpykee $e){ // If an error ocurred at the init of the config object
+		catch (SpykeeException $e){ // If an error ocurred at the init of the config object
 			SpykeeError::standaloneError($e->getMessage());
 			throw $e; // Resend to user
 		}
@@ -105,7 +105,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 			$errorMessage = 'Argument 2 for SpykeeRobotClient::__construct() have to be an valid IP addresse, called in'
 					.$trace[0]['file'].' on line '.$trace[0]['line'];
 			SpykeeError::standaloneError($errorMessage);
-			throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
+			throw new SpykeeException('Unable to launch Spykee Script', $errorMessage);
 		}
 	}
 	
@@ -117,14 +117,14 @@ class SpykeeRobotClient extends SpykeeRobot {
 		
 		if ($this->_robotStream === FALSE){
 			$this->_errorManager->error('Unable to connect to the robot: ['.$errorCode.'] '.$errorMsg, 1);
-			throw new ExceptionSpykee('Connection error', 'Unable to connect to the robot');
+			throw new SpykeeException('Connection error', 'Unable to connect to the robot');
 		}
 		$this->_robotSocket = socket_import_stream($this->_robotStream);*/
 		
 		if(!($this->_robotSocket = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP))){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-			throw new ExceptionSpykee('Connection error', 'Could not create robot socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
+			throw new SpykeeException('Connection error', 'Could not create robot socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
 		// Put a connection timeout
 		if(!socket_set_option($this->_robotSocket, SOL_SOCKET, SO_SNDTIMEO, array('sec' => $this->_config->robot->connectionTimeout, 'usec' => 0))){
@@ -135,7 +135,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 		if(!@socket_connect($this->_robotSocket , $this->_robotIp , self::ROBOT_PORT)){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-			throw new ExceptionSpykee('Connection error', 'Could not connect to the robot: ['.$errorCode.'] '.$errorMsg, $errorCode);
+			throw new SpykeeException('Connection error', 'Could not connect to the robot: ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
 		// reset connection timeout (beacause we want a timeout just for the connection)
 		if(!socket_set_option($this->_robotSocket, SOL_SOCKET, SO_RCVTIMEO, array('sec' => 0, 'usec' => 0))){
@@ -160,7 +160,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 		// Send the auth request
 		$this->_sendPacketToRobot(self::PACKET_TYPE_AUTH_REQUEST, $this->_packString($this->_robotUsername).$this->_packString($this->_robotPassword));
 		if (false /* Connection failed*/) // TODO détection une mauvaise connexion
-			throw new ExceptionSpykee('Connection error', 'Wrong Spykee login or password');
+			throw new SpykeeException('Connection error', 'Wrong Spykee login or password');
 		$this->_getResponse(); // Wait the firmware version
 		$this->_getResponse(); // Wait the battery level
 		// Note : If you don't wait, and send move request before receive anything.

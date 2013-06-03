@@ -12,6 +12,7 @@ class View extends Smarty{
 	protected $_action;
 	protected $_headerFile;
 	protected $_footerFile;
+	protected $_config;
 
 	public function __construct($controllerClass, $action)
 	{
@@ -19,19 +20,20 @@ class View extends Smarty{
 
 		$this->_controllerName = strtolower(str_replace('Controller', '', $controllerClass));
 		$this->_action = $action;
+		$this->_config=Config::getInstance();
 
-		$this->setTemplateDir(PATH.'views/');
-		$this->setCompileDir(PATH.'views_c/');
-		$this->setConfigDir(PATH.'configs/');
-		$this->setCacheDir(PATH.'cache/');
+		$this->setTemplateDir($this->_config->template->templateDir);
+		$this->setCompileDir($this->_config->template->compileDir);
+		$this->setConfigDir($this->_config->template->configsDir);
+		$this->setCacheDir($this->_config->template->cacheDir);
 
 		$this->caching = Smarty::CACHING_LIFETIME_CURRENT;
 		// Pour la phase de développement
-		$this->force_compile = TRUE;
+		$this->force_compile = $this->_config->template->forceCompile;
 		
 		// Header et footer par défaut
-		$this->_headerFile='extras/html_header';
-		$this->_footerFile='extras/html_footer';
+		$this->_headerFile=$this->_config->template->defaultHeader;
+		$this->_footerFile=$this->_config->template->defaultFooter;
 
 	}
 	

@@ -31,7 +31,7 @@ class SpykeeConfig {
 	 */
 	protected function _loadIniFile($file){
 		if (!is_file($file)){
-			throw new ExceptionSpykee('Unable to launch Spykee Script', 'Config file doesn\'t exist ('.$file.')');
+			throw new SpykeeException('Unable to launch Spykee Script', 'Config file doesn\'t exist ('.$file.')');
 			return false;
 		}
 		else

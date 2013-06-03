@@ -86,7 +86,7 @@ class SpykeeError {
 	}
 }
 
-class ExceptionSpykee extends Exception{
+class SpykeeException extends Exception{
 	protected $_userMessage;
 	/**
 	 * Manage user errors

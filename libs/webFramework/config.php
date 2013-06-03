@@ -3,6 +3,7 @@
  * Objet gérant les différentes configurations
  * /!\ Il doit OBLIGATOIREMENT être appelé AVANT l'objet Db /!\
  */
+// NOTE: Cela pourrait être interessant d'ajout une configuration par defaut comme pour l'API Spykee
 class Config {
 	private static $_singleton=null;
 	private $_data=array();
@@ -61,7 +62,6 @@ class Config {
 		if (array_key_exists($name, $this->_data))
 			return $this->_data[$name];
 		else{
-			// TODO utiliser un gestionnaire d'erreur
 			$trace = debug_backtrace();
 			trigger_error(
 			'Propriété non-définie via __get() : ' . $name .
@@ -85,7 +85,6 @@ class ConfigSection{
 		if (array_key_exists($name, $this->_data))
 			return $this->_data[$name];
 		else{
-			// TODO utiliser un gestionnaire d'erreur
 			$trace = debug_backtrace();
 			trigger_error(
 			'Propriété non-définie via __get() : ' . $name .

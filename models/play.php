@@ -15,14 +15,19 @@ class PlayModel extends BaseModel
 		try{
 			$this->_spykee = new SpykeeControllerClient('127.0.0.1', '2000');
 		}
-		catch (ExceptionSpykee $e){
+		catch (SpykeeException $e){
 			// TODO: Afficher un message d'erreur
 		}
 	}
 	
 	public function ajax(){
 		require_once(PATH.'libs/spykee/spykee-controller/controllerClient.php');
-		$this->_spykee = new SpykeeControllerClient('Robot1', '127.0.0.1', '2000');
+		try{
+			$this->_spykee = new SpykeeControllerClient('127.0.0.1', '2000');
+		}
+		catch (SpykeeException $e){
+			
+		}
 	}
 	
 	public function up(){

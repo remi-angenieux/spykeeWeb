@@ -28,7 +28,7 @@ class Db{
 	
 		try{
 			$this->_db = new PDO($dsn, $conf['user'], $conf['password'], array(PDO::ATTR_PERSISTENT => $conf['persistent']));
-	
+			$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 			$this->_db->exec('SET CHARACTER SET '.$conf['charset']);
 		}
 		catch (PDOException $e) {

@@ -40,7 +40,7 @@ class SpykeeControllerClient extends SpykeeController{
 	/**
 	 * Verify if the input value is an IP addresse otherwise generate an error
 	 * @param string $ip
-	 * @throws ExceptionSpykee
+	 * @throws SpykeeException
 	 */
 	protected function _setControllerIp($ip){
 		if (filter_var($ip, FILTER_VALIDATE_IP)) // If the use enter a valid IP addresse
@@ -51,14 +51,14 @@ class SpykeeControllerClient extends SpykeeController{
 			$trace = debug_backtrace();
 			$errorMessage = 'Argument 2 for SpykeeControllerClient::__construct() have to be an valid IP addresse, called in'
 					.$trace[0]['file'].' on line '.$trace[0]['line'];
-			throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
+			throw new SpykeeException('Unable to launch Spykee Script', $errorMessage);
 		}
 	}
 	
 	/**
 	 * Detect if the input value is port addresse otherwise generate an error
 	 * @param mixed $port
-	 * @throws ExceptionSpykee
+	 * @throws SpykeeException
 	 */
 	protected function _setControllerPort($port){
 		if (is_numeric($port) AND $port > 0 AND $port <= 49151)
@@ -69,7 +69,7 @@ class SpykeeControllerClient extends SpykeeController{
 			$trace = debug_backtrace();
 			$errorMessage = 'Argument 3 for SpykeeControllerClient::__construct() have to be an valid port addresse (between 1 and 49151 included), called in'
 					.$trace[0]['file'].' on line '.$trace[0]['line'];
-			throw new ExceptionSpykee('Unable to launch Spykee Script', $errorMessage);
+			throw new SpykeeException('Unable to launch Spykee Script', $errorMessage);
 		}
 	}
 	
@@ -131,37 +131,37 @@ class SpykeeControllerClient extends SpykeeController{
 
 	/**
 	 * Connect to the controller
-	 * @throws ExceptionSpykee
+	 * @throws SpykeeException
 	 */
 	protected function _connectToTheController(){
 		if(!($this->_socket = socket_create(AF_INET, SOCK_STREAM, 0))){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 		
-			throw new ExceptionSpykee('Launching error', 'Could not create socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
+			throw new SpykeeException('Launching error', 'Could not create socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
 		// Defines a timeout for receiving packet
 		if(!@socket_set_option($this->_socket, SOL_SOCKET, SO_SNDTIMEO, array('sec'=> $this->_timeouts['connection']['sec'], 'usec'=> $this->_timeouts['connection']['usec']))){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-			throw new ExceptionSpykee('Launching error', 'Unable to define timeout for controller socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
+			throw new SpykeeException('Launching error', 'Unable to define timeout for controller socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
 		if(!@socket_connect($this->_socket , $this->_controllerIp, $this->_controllerPort)){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-			throw new ExceptionSpykee('Launching error', 'Unable to connect to the controller: ['.$errorCode.'] '.$errorMsg, $errorCode);
+			throw new SpykeeException('Launching error', 'Unable to connect to the controller: ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
 		// Set timeouts for reading
 		if(!@socket_set_option($this->_socket, SOL_SOCKET, SO_RCVTIMEO, array('sec' => $this->_timeouts['read']['sec'], 'usec' => $this->_timeouts['read']['usec']))){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-			throw new ExceptionSpykee('Launching error', 'Unable to set read timeout of controller socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
+			throw new SpykeeException('Launching error', 'Unable to set read timeout of controller socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
 		// Set timeouts for writing
 		if(!@socket_set_option($this->_socket, SOL_SOCKET, SO_SNDTIMEO, array('sec' => $this->_timeouts['write']['sec'], 'usec' => $this->_timeouts['write']['usec']))){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-			throw new ExceptionSpykee('Launching error', 'Unable to set write timeout of controller socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
+			throw new SpykeeException('Launching error', 'Unable to set write timeout of controller socket: ['.$errorCode.'] '.$errorMsg, $errorCode);
 		}
 	}
 	

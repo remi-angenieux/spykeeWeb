@@ -48,7 +48,7 @@ class SpykeeControllerServer extends SpykeeController{
 		try{
 			$this->_config = new SpykeeConfig('spykeeControllerServer.ini'); // Load config
 		}
-		catch (ExceptionSpykee $e){ // If an error ocurred at the init of the config object
+		catch (SpykeeException $e){ // If an error ocurred at the init of the config object
 			SpykeeError::standaloneError($e->getMessage());
 			die; // Stop the controller
 		}
@@ -61,7 +61,7 @@ class SpykeeControllerServer extends SpykeeController{
 		try{
 			$this->_SpykeeRobotClient = new SpykeeRobotClient($this->_robotName, $this->_robotIp, $this->_robotUsername, $this->_robotPassword);
 		}
-		catch (ExceptionSpykee $e){
+		catch (SpykeeException $e){
 			$this->_errorManager->error($e->getMessage(), 1);
 			die; // Stop the controller
 		}

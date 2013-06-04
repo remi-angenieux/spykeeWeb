@@ -89,16 +89,17 @@ class PlayModel extends BaseModel
 	}  //Check if the current user is the 1st of the queue
 
 	public function enterGame(){
-		    //TODO mettre en place la fonction Canplay()
-		    $freeRobot=2;
+	        $dispo=$this->canPlay();
 			$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?');
 			$query->execute(array($this->user->id));
 			$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)') ;
-			$query->execute(array($this->user->id,$freeRobot,time()));
+			$query->execute(array($this->user->id,$dispo,time()));
+			$query = $this->db->prepare('UPDATE robots SET used=true WHERE robots.id=? ') ;
+			$query->execute(array($dispo));
 		}
 	
 	
-	public function leaveGame(){
+	/*public function leaveGame(){
 		$freeRobot=1;
 		if($freeRobot=!null){
 			$query = $this->db->prepare('SELECT refmember FROM games WHERE lastinput=MAX(lastinput)');
@@ -108,7 +109,7 @@ class PlayModel extends BaseModel
 			$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)') ;
 			$query->execute(array($result,$freeRobot,time()));
 		}
-	}
+	}*/
 	
 	
 	public function play(){
@@ -119,6 +120,11 @@ class PlayModel extends BaseModel
 		$this->view->addAdditionalJs('http://spykee.lan/js/play.js');
 		$this->view->addAdditionalJs('http://spykee.lan/js/jquery-ui-1.10.3.custom.min.js');
 		$this->view->addAdditionalCss('http://spykee.lan/css/ui-darkness/jquery-ui-1.10.3.custom.min.css');
+	}
+	
+	public function lastInput(){
+		$query = $this->db->prepare('INSERT INTO games (lastinput) VALUES(?)') ;
+		$query->execute(array(time()));
 	}
 	
 	public function ajax(){
@@ -176,10 +182,11 @@ class PlayModel extends BaseModel
 	
 	
 	public function canPlay(){
-		$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.locked = false
-					EXCEPT
-					SELECT games.refRobot FROM games WHERE games.lastInput <= '.$this->config->game->timeout);
-		$response=$query->execute();
+		$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.locked = false AND  robots.used= false');
+		$query->execute();
+		$tab1 =$query->fetch(PDO::FETCH_ASSOC);
+		$dispo=$tab1['id'];
+		return $dispo;
 		/*$sql = 'SELECT robots.id FROM robots WHERE robots.loked = false
 					EXCEPT
 					SELECT games.refRobot FROM games WHERE games.lastInput <= '.$this->config->game->timeout;

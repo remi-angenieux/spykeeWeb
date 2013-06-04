@@ -27,13 +27,14 @@ class Db{
 		$dsn .= 'password='.$conf['password'].';';
 	
 		try{
-			$this->_db = new PDO($dsn, $conf['user'], $conf['password'], array(PDO::ATTR_PERSISTENT => $conf['persistent']));
+			$this->_db = new PDO($dsn, $conf['user'], $conf['password'], array(PDO::ATTR_PERSISTENT => $conf['persistent'],PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING));
 	
 			$this->_db->exec('SET CHARACTER SET '.$conf['charset']);
+			$this->_db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		}
 		catch (PDOException $e) {
 			// TODO utiliser un gestionnaire d'erreur
-			print "Erreur !: " . $e->getMessage() . "<br/>";
+			print "Erreur : " . $e->getMessage() . "<br/>";
 			die();
 		}
 	}

@@ -52,6 +52,7 @@ var holding = {
 };
 
 
+
 function sendAction(action, callback, data){
 	var post;
 	if (data == null)
@@ -69,21 +70,13 @@ function sendAction(action, callback, data){
 			callback(result);
 	});
 }
-function lastInput(){
-	$lastinput=time();
-}
 
-function Play(){
-	if (<?php this->model->isFirst==true ?>){
-		"if(confirm('Format the hard disk?'))
-		$(message)='Vous allez être redirigé vers la page de jeu';
-		$(this->view->message('Entrée en jeu' , $(message), '/play/play'));
-}
+
+
 	
 	window.setInterval(function(){Play();}, constantes.INTERVAL_REFRESH_QUEUE);
-	
+
 function up(){
-	lastInput();
 	sendAction('up');
 }
 

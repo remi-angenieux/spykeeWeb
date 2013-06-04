@@ -57,15 +57,16 @@ function sendAction(action, callback, data){
 		post = { action: action };
 	else
 		post = { action: action, data: data };
-	$.post('/play/ajax', post, function(data) {
-		var result = jQuery.parseJSON(data);
-		var text = 'Etat : '+ result.state + '<br />';
-		text += 'Données : ' + result.data + '<br />';
-		text += 'Description : ' + result.description + '<br />';
-		text += 'Id de description : ' + result.idDescription + '<br />';
-		$('.result').html(text);
-		if(typeof callback === 'function')
-			callback(result);
+		$.post('/play/ajax', post, function(data) {
+			$('.result').text(data);
+			var result = jQuery.parseJSON(data);
+			var text = 'Etat : '+ result.state + '<br />';
+			text += 'Données : ' + result.data + '<br />';
+			text += 'Description : ' + result.description + '<br />';
+			text += 'Id de description : ' + result.idDescription + '<br />';
+			$('.result').html(text);
+			if(typeof callback === 'function')
+				callback(result);
 	});
 }
 

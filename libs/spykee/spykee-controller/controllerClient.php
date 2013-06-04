@@ -179,6 +179,8 @@ class SpykeeControllerClient extends SpykeeController{
 		if (!@socket_send($this->_socket, $msg, strlen($msg))){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
+			// FIXME: A supprimer
+			echo $errorMsg;
 			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_SEND_PACKET);
 		}
 		return new SpykeeResponse(self::STATE_OK, SpykeeResponse::PACKET_SENT);

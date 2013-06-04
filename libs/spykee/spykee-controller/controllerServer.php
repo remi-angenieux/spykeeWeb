@@ -165,7 +165,7 @@ class SpykeeControllerServer extends SpykeeController{
 			die; // Stop the controller
 		}
 		
-		if(!socket_listen($this->_socketServer , $this->_config->controller->maxConnection)){
+		if(!socket_listen($this->_socketServer, $this->_config->controller->maxConnection)){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 			$this->_errorManager->error('Unable to listen socket (socket_listen): ['.$errorCode.'] '.$errorMsg, 1);

@@ -42,49 +42,49 @@ class PlayController extends BaseController
 	
 	
 	protected function ajax(){
-		$this->model->ajax();
-		$this->view->setTextPage();
-		if (!empty($_POST['action'])){
-			switch ($_POST['action']){
-				case 'up':
-					$this->model->up();
-					break;
-				case 'down':
-					$this->model->down();
-					break;
-				case 'left':
-					$this->model->left();
-					break;
-				case 'right':
-					$this->model->right();
-					break;
-					
-				case 'holdingUp':
-					$this->model->holdingUp();
-					break;
-				case 'holdingDown':
-					$this->model->holdingDown();
-					break;
-				case 'holdingLeft':
-					$this->model->holdingLeft();
-					break;
-				case 'holdingRight':
-					$this->model->holdingRight();
-					break;
-					
-				case 'move':
-					$this->model->move();
-					break;
-				case 'stop':
-					$this->model->stop();
-					break;
-				case 'enableVideo':
-					$this->model->enableVideo();
-					break;
-				case 'setSpeed':
-					$this->model->setSpeed($_POST['data']);
-					break;
-					
+		$this->view->setEnvironement('empty');
+		if ($this->model->ajax()){
+			if (!empty($_POST['action'])){
+				switch ($_POST['action']){
+					case 'up':
+						$this->model->up();
+						break;
+					case 'down':
+						$this->model->down();
+						break;
+					case 'left':
+						$this->model->left();
+						break;
+					case 'right':
+						$this->model->right();
+						break;
+						
+					case 'holdingUp':
+						$this->model->holdingUp();
+						break;
+					case 'holdingDown':
+						$this->model->holdingDown();
+						break;
+					case 'holdingLeft':
+						$this->model->holdingLeft();
+						break;
+					case 'holdingRight':
+						$this->model->holdingRight();
+						break;
+						
+					case 'move':
+						$this->model->move();
+						break;
+					case 'stop':
+						$this->model->stop();
+						break;
+					case 'enableVideo':
+						$this->model->enableVideo();
+						break;
+					case 'setSpeed':
+						$this->model->setSpeed($_POST['data']);
+						break;
+				}
 			}
 		}
 	}

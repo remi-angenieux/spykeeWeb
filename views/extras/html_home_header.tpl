@@ -34,7 +34,7 @@
 		<!--[if lte IE 8]><link rel="stylesheet" href="css/ie8.css" /><![endif]-->
 		<!--[if lte IE 7]><link rel="stylesheet" href="css/ie7.css" /><![endif]-->
 	</head>
-	<body class="no-sidebar">
+	<body class="homepage">
 
 		<!-- Header Wrapper -->
 			<div id="header-wrapper">
@@ -79,6 +79,14 @@
 									</div>
 								</header>
 
+							<!-- Banner -->
+								<div id="banner">
+									<h2><strong>Spykee Play:</strong> Une application web fun<br />
+									qui vous permet de controller un robot</h2>
+									<p>Testez tout de suite, c'est gratuit ;)</p>
+									<a href="#" class="button button-big button-icon button-icon-check">Jouer !</a>
+								</div>
+
 						</div>
 					</div>
 				</div>
@@ -86,9 +94,5 @@
 		
 		<!-- Main Wrapper -->
 			<div id="main-wrapper">
-				<div class="main-wrapper-style2">
+				<div class="main-wrapper-style1">
 					<div class="inner">
-						<div class="5grid-layout">
-							<div class="row">
-								<div class="12u mobileUI-main-content">
-									<div id="content">

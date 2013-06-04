@@ -6,18 +6,11 @@ class PlayModel extends BaseModel
 	
 	//data passed to the home index view
 	public function index(){
-		require_once(PATH.'libs/spykee/spykee-controller/controllerClient.php');
 		$this->view->assign('pageTitle', 'Play');
 		// TODO mettre en place d'une configuration pour le site
 		$this->view->addAdditionalJs('http://spykee.lan/js/play.js');
 		$this->view->addAdditionalJs('http://spykee.lan/js/jquery-ui-1.10.3.custom.min.js');
 		$this->view->addAdditionalCss('http://spykee.lan/css/ui-darkness/jquery-ui-1.10.3.custom.min.css');
-		try{
-			$this->_spykee = new SpykeeControllerClient('127.0.0.1', '2000');
-		}
-		catch (SpykeeException $e){
-			// TODO: Afficher un message d'erreur
-		}
 	}
 	
 	public function ajax(){
@@ -26,8 +19,12 @@ class PlayModel extends BaseModel
 			$this->_spykee = new SpykeeControllerClient('127.0.0.1', '2000');
 		}
 		catch (SpykeeException $e){
-			
+			require_once PATH.'libs/spykee/response.php';
+			$response = new SpykeeResponse(SpykeeControllerClient::STATE_ERROR, SpykeeResponse::UNABLE_TO_CONNECT_TO_CONTROLLER);
+			$this->view->assign('content', $response->jsonFormat());
+			return FALSE;
 		}
+		return TRUE;
 	}
 	
 	public function up(){

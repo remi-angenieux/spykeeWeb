@@ -17,6 +17,7 @@ class SpykeeResponse{
 	const UNABLE_READ_DATA = 6;
 	const DISCONNECTED_FROM_CONTROLLER = 21;
 	const RECEIVE_NON_VALID_PACKET = 22;
+	const UNABLE_TO_CONNECT_TO_CONTROLLER = 23;
 	
 	const RECEIVE_PACKET_TYPE_AUDIO = 7;
 	const RECEIVE_PACKET_TYPE_VIDEO = 8;
@@ -107,6 +108,9 @@ class SpykeeResponse{
 				break;
 			case self::RECEIVE_NON_VALID_PACKET:
 				$this->_description = 'Received an invalid packet. The header is not good';
+				break;
+			case self::UNABLE_TO_CONNECT_TO_CONTROLLER:
+				$this->_description = 'Unable to connect to the controller';
 				break;
 				
 			case self::RECEIVE_PACKET_TYPE_AUDIO:

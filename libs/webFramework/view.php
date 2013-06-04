@@ -34,6 +34,7 @@ class View extends Smarty{
 		// Header et footer par défaut
 		$this->_headerFile=$this->_config->template->defaultHeader;
 		$this->_footerFile=$this->_config->template->defaultFooter;
+		$this->assign('rootUrl', $this->_config->global->rootUrl);
 
 	}
 	
@@ -45,9 +46,17 @@ class View extends Smarty{
 		array_push($this->_additionalJs, $file);
 	}
 	
-	public function setTextPage(){
-		$this->_headerFile='';
-		$this->_footerFile='';
+	public function setEnvironement($env){
+		switch($env){
+			case 'empty':
+				$this->_headerFile='';
+				$this->_footerFile='';
+				break;
+			case 'header':
+				$this->_headerFile='extras/html_home_header';
+				$this->_footerFile='extras/html_home_footer';
+				break;
+		}
 	}
 	
 	public function setTemplate($file='', $controller=''){

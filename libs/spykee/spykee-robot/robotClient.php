@@ -316,8 +316,9 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 * @return string
 	 */
 	protected function _packetToString($packet){
-		$header = unpack('a2header/Ctype/nlength', $packet);
-		
+		$header = @unpack('a2header/Ctype/nlength/Cdata', $packet);
+		if ($header === false)
+			$header = @unpack('a2header/Ctype/nlength', $packet);
 		switch($header['type']){
 			case self::PACKET_TYPE_AUDIO:
 				$type='Audio';
@@ -370,10 +371,8 @@ class SpykeeRobotClient extends SpykeeRobot {
 		$result = 'Header:'.$header['header'];
 		$result .= '/Type:'.$type;
 		$result .= '/Length:'.$header['length'];
-		if ($header['length']!=0){
-			$data = unpack('Cdata');
-			$result .= '/Data:'.$data['data'];
-		}
+		if (!empty($header['data']))
+			$result .= '/Data:'.$header['data'];
 		
 		return $result;
 	}
@@ -392,7 +391,9 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 * @param integer $right
 	 * @return SpykeeResponse
 	 */
-	public function move(int $left, int $right){
+	public function move($left, $right){
+		$left = (int) $left;
+		$right = (int) $right;
 		if ($left > 255) $left = 255;
 		if ($left < 0) $left = 0;
 		if ($right > 255) $right = 255;
@@ -588,7 +589,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 * @param bool $bool TRUE: enabled FALSE: disbaled
 	 * @return SpykeeResponse
 	 */
-	public function setVideo(bool $bool){
+	public function setVideo($bool){
 		$status = ($bool == true) ? 1 : 0;
 		return $this->_sendPacketToRobot(self::PACKET_TYPE_STREAMCTL, pack('CC', self::STREAM_ID_VIDEO, $status));
 	}
@@ -608,7 +609,8 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 * @param integer $value
 	 * @return SpykeeResponse
 	 */
-	public function setSpeed(int $value){
+	public function setSpeed($value){
+		$value = (int) $value;
 		if ($value < 0 AND $value > 128) $value = self::MOVE_SPEED;
 		$this->_moveSpeed = $value;
 		return new SpykeeResponse(self::STATE_OK, SpykeeResponse::MOVE_SPEED_CHANGED);
@@ -634,8 +636,8 @@ class SpykeeRobotClient extends SpykeeRobot {
 			die;
 		}
 		$return=array();
-		foreach($read as $streamInput){
-			if (is_resource($streamInput) AND $streamInput != '' AND $streamInput == $this->_robotStream){
+		foreach($read as $socketInput){
+			if (is_resource($socketInput) AND $socketInput != '' AND $socketInput == $this->_robotSocket){
 				$return[] = $this->_getResponse();
 			}
 		}

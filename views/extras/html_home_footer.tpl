@@ -1,7 +1,3 @@
-									</div>
-								</div>
-							</div>
-						</div>
 					</div>
 				</div>
 				<div class="main-wrapper-style3">
@@ -145,8 +141,8 @@
 									<h2><strong>ZeroFour</strong> by HTML5 Up!</h2>
 									<p>Hello! This is <strong>ZeroFour</strong>, a free, fully responsive HTML5 site
 									template by <a href="http://n33.co/">n33</a> for <a href="http://html5up.net/">HTML5 Up!</a>
-									It's released under the <a href="http://html5up.net/license/">Creative Commons Attribution</a>
-									license so feel free to use it for any personal or commercial project (just credit us
+									It's <a href="http://html5up.net/license/">Creative Commons Attribution</a>
+									licensed so use it for any personal or commercial project (just credit us
 									for the design!)</p>
 									<a href="http://html5up.net/" class="button button-alt button-icon button-icon-rarrow">More @ HTML5Up.net</a>
 								</section>
@@ -172,7 +168,7 @@
 												<dl class="contact">
 													<dt>Snail Mail</dt>
 													<dd>
-														1234 Fictional Road<br />
+														1234 Fictional Rd<br />
 														Nashville, TN 00000-0000<br />
 														USA
 													</dd>

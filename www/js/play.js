@@ -1,6 +1,7 @@
 // Constantes
 var constantes = {
    'INTERVAL_REFRESH_IMG': 60 // Interval de temps pour le rafrachissement des images composant le flux vidéo
+   'INTERVAL_REFRESH_QUEUE': 5 // Interval de temps pour le rafrachissement de l'invitation à jouer
 };
 /*
  * Gestion du stream vidéo
@@ -68,8 +69,21 @@ function sendAction(action, callback, data){
 			callback(result);
 	});
 }
+function lastInput(){
+	$lastinput=time();
+}
 
+function Play(){
+	if (<?php this->model->isFirst==true ?>){
+		"if(confirm('Format the hard disk?'))
+		$(message)='Vous allez être redirigé vers la page de jeu';
+		$(this->view->message('Entrée en jeu' , $(message), '/play/play'));
+}
+	
+	window.setInterval(function(){Play();}, constantes.INTERVAL_REFRESH_QUEUE);
+	
 function up(){
+	lastInput();
 	sendAction('up');
 }
 

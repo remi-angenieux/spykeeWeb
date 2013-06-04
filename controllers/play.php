@@ -57,9 +57,16 @@ class PlayController extends BaseController
 	}
 	
 	protected function play(){
-		$this->model->Ingame();
-		$this->model->isIngame();	
+		$freeRobot=2;
+		//$this->model->Canplay();
+
+		if($freeRobot AND $this->model->isFirst()){//Check if a robot is available and if the user is the 1st of the queue	
+		$this->model->enterGame();	
 		$this->model->play();
+		}
+		else{
+			$this->model->notAllowed();
+		}
 	}
 	
 	

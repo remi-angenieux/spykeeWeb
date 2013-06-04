@@ -22,8 +22,8 @@ class PlayModel extends BaseModel
 		$query = $this->db->prepare('INSERT INTO queue (refmember,timestamp) VALUES(?,?)') ;
 		$query->execute(array($this->user->id,time()));
 	
-		$query = $this->db->prepare('SELECT timestamp,pseudo FROM queue INNER JOIN members ON refmember=id ORDER BY timestamp ASC;') ;
-		$result=$query->execute();
+		$query = $this->db->prepare('SELECT timestamp,pseudo FROM queue INNER JOIN members ON refmember=id ORDER BY timestamp ASC') ;
+		$query->execute();
 		$result = $query->fetchAll(PDO::FETCH_ASSOC);
 
 		foreach( $result as $key=>$value ){  //Extraction of pseudo and timestamp from array $result 
@@ -52,12 +52,13 @@ class PlayModel extends BaseModel
 	
 
 
-	public function displayQueue(){
-		
-		
+	public function notAllowed(){
+		$message='Vous n\'êtes pas autorisé a jouer';
+		$this->view->message('Erreur' , $message, '/play');
 	}
-	//delete member from queue
-	public function isInQueue(){                                        
+	
+	public function isInQueue(){         
+		$lastinput=0;                               
 			$query = $this->db->prepare('SELECT refmember FROM queue WHERE refmember=?');
 			$query->execute(array($this->user->id));
 			$result = $query->fetchAll(PDO::FETCH_ASSOC);
@@ -66,19 +67,48 @@ class PlayModel extends BaseModel
 				$query->execute(array($this->user->id));
 				$message='Vous avez bien été enlevé de la file';
 				$this->view->message('File quittée' , $message, '/play');
-			
 		    }
-	}
-	
-	/*public function inGame(){
-		//TODO Si l'user est 1er de la queue alors :
-		$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?') ;
-		$query->execute(array($this->user->id));
-		$query = $this->db->prepare('INSERT INTO games (id,refmember,refrobot,starttime,lastinput) VALUES(?,?,?,?,?)') ;
-		$query->execute(array(1,$this->user->id,,time()1));
-	}*/
+	}//Check if the current user is in the queue and delete him from there
 	
 
+	public function isFirst(){
+		$query = $this->db->prepare('SELECT MIN(timestamp) FROM queue'); 
+		$query->execute();
+		$tab1 =$query->fetch(PDO::FETCH_ASSOC);
+		$prem=$tab1['min'];
+		$query = $this->db->prepare('SELECT refmember FROM queue WHERE timestamp =?');
+		$query->execute(array($prem));
+		$result =$query->fetch(PDO::FETCH_ASSOC);
+		$resultat=$result['refmember'];
+		if ($this->user->id==$resultat){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}  //Check if the current user is the 1st of the queue
+
+	public function enterGame(){
+		    //TODO mettre en place la fonction Canplay()
+		    $freeRobot=2;
+			$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?');
+			$query->execute(array($this->user->id));
+			$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)') ;
+			$query->execute(array($this->user->id,$freeRobot,time()));
+		}
+	
+	
+	public function leaveGame(){
+		$freeRobot=1;
+		if($freeRobot=!null){
+			$query = $this->db->prepare('SELECT refmember FROM games WHERE lastinput=MAX(lastinput)');
+			$result=$query->execute();
+			$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
+			$query->execute(array($result));
+			$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)') ;
+			$query->execute(array($result,$freeRobot,time()));
+		}
+	}
 	
 	
 	public function play(){
@@ -144,12 +174,17 @@ class PlayModel extends BaseModel
 		$this->view->assign('content', $this->_spykee->setSpeed($value)->jsonFormat());
 	}
 	
+	
 	public function canPlay(){
-		$sql = 'SELECT robots.id FROM robots WHERE robots.loked = false
+		$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.locked = false
+					EXCEPT
+					SELECT games.refRobot FROM games WHERE games.lastInput <= '.$this->config->game->timeout);
+		$response=$query->execute();
+		/*$sql = 'SELECT robots.id FROM robots WHERE robots.loked = false
 					EXCEPT
 					SELECT games.refRobot FROM games WHERE games.lastInput <= '.$this->config->game->timeout;
-		$query = $this->db->query($sql);
-		$response = $query->fetch(PDO::FETCH_ASSOC);
+		$query = $this->db->query($sql);*/
+		//$response = $query->fetch(PDO::FETCH_ASSOC);
 		// Retourne le premier robot dispponible
 	}
 	

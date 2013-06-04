@@ -1,4 +1,4 @@
-<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" name="up" value="Haut" onclick="up()" /><br />
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input class="ui-icon-arrow-1-s" type="button" name="up" value="Haut" onclick="up()" /><br />
 <input type="button" name="left" value="Gauche" onclick="left()" />&nbsp;&nbsp;<input type="button" name="right" value="Droite" onclick="right()" /><br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" name="down" value="Bas" onclick="down()" /><br />
 <br />
@@ -19,5 +19,6 @@
 </p>
 <!-- TODO Récupérer la racine du site via un fichier de configuration -->
 <p><img src="http://spykee.lan/videoStream/video.jpeg" alt="Vidéo" id="imgStream" /></p>
-<p><code class="result"></code></p>
+<p><code class="result"></code></p></br>
+<a href="/play" target="_self">Revenir a la file d'attente</a>
 

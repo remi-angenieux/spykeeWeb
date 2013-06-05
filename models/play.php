@@ -8,8 +8,8 @@ class PlayModel extends BaseModel
 	public function index(){
 		$this->view->assign('pageTitle', 'Play');
 		// TODO mettre en place d'une configuration pour le site
-		$this->view->addAdditionalJs('http://spykee.lan/js/play.js');
 		$this->view->addAdditionalJs('http://spykee.lan/js/jquery-ui-1.10.3.custom.min.js');
+		$this->view->addAdditionalJs('http://spykee.lan/js/play.js');
 		$this->view->addAdditionalCss('http://spykee.lan/css/ui-darkness/jquery-ui-1.10.3.custom.min.css');
 	}
 	
@@ -73,6 +73,10 @@ class PlayModel extends BaseModel
 	
 	public function setSpeed($value){
 		$this->view->assign('content', $this->_spykee->setSpeed($value)->jsonFormat());
+	}
+	
+	public function getSpeed(){
+		$this->view->assign('content', $this->_spykee->getSpeed()->jsonFormat());
 	}
 	
 	public function canPlay(){

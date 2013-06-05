@@ -204,6 +204,7 @@ class SpykeeRobotClient extends SpykeeRobot {
 				$this->_initSocket();
 				$this->_authentificationRobot();
 				$return = $this->_sendPacketToRobot($type, $data);
+				$this->_errorManager->writeLog('Packet sent: '.$this->_packetToString($reply), 3);
 				/*if ($return->getState() == self::STATE_OK) // Reinit the counte
 					$this->_reconnection=0;*/
 				return $return;
@@ -241,7 +242,6 @@ class SpykeeRobotClient extends SpykeeRobot {
 		
 		// Read the header
 		$header = unpack('a2header/Ctype/nlength', $response);
-		$this->_errorManager->writeLog('packet received: '.$this->_packetToString($response), 3);
 		// If header isn't PK, the packet isn't send by the robot
 		if ($header['header']!='PK'){
 			$this->_errorManager->error('packet receive without the correct header: '.$header['header'], 1);
@@ -256,12 +256,10 @@ class SpykeeRobotClient extends SpykeeRobot {
 				$this->_errorManager->error('Unable to read data sended ['.$errorCode.'] '.$errorMsg, 1);
 				return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::UNABLE_READ_DATA);
 			}
-			$data = unpack('Cdata', $data);
-			$data = $data['data'];
 		}
-		
-		$this->_errorManager->writeLog('Data transported : '.$data, 3);
-		
+		else
+			$data = null;
+		$this->_errorManager->writeLog('packet received: '.$this->_packetToString($response.$data), 3);
 		/*
 		 * Response management
 		*/
@@ -275,6 +273,8 @@ class SpykeeRobotClient extends SpykeeRobot {
 				break;
 			case self::PACKET_TYPE_POWER:
 				$description = SpykeeResponse::RECEIVE_PACKET_TYPE_POWER;
+				$data = unpack('h2data', $data);
+				$data = hexdec($data['data']);
 				$this->_powerLevel = $data;
 				break;
 			case self::PACKET_TYPE_AUTH_REPLY:
@@ -283,20 +283,28 @@ class SpykeeRobotClient extends SpykeeRobot {
 				// 0003 = Already connected
 				$description = SpykeeResponse::RECEIVE_PACKET_TYPE_AUTH_REPLY;
 				// TODO détecter les erreurs de connexion. Si il y en a une l'envoyé via un exception
+				$data = unpack('Cdata', $data);
+				$data = $data['data'];
 				break;
 			case self::PACKET_TYPE_STOP:
 				$description = SpykeeResponse::RECEIVE_PACKET_TYPE_STOP;
 				break;
 			case self::PACKET_TYPE_WIRELESS_NETWORKS:
 				$description = SpykeeResponse::RECEIVE_PACKET_TYPE_WIRELESS_NETWORKS;
+				$data = unpack('Cdata', $data);
+				$data = $data['data'];
 				// TODO mettre en forme la sortie
 				break;
 			case self::PACKET_TYPE_CONFIG:
 				$description = SpykeeResponse::RECEIVE_PACKET_TYPE_CONFIG;
+				$data = unpack('Cdata', $data);
+				$data = $data['data'];
 				// TODO mettre en forme la sortie
 				break;
 			case self::PACKET_TYPE_LOG:
 				$description = SpykeeResponse::RECEIVE_PACKET_TYPE_LOG;
+				$data = unpack('Cdata', $data);
+				$data = $data['data'];
 				// TODO mettre en forme la sortie
 				break;
 				
@@ -306,7 +314,6 @@ class SpykeeRobotClient extends SpykeeRobot {
 				$description = SpykeeResponse::RECEIVE_UNKNOW_PACKET;
 				break;
 		}
-
 		return new SpykeeResponse($state, $description, $data);
 	}
 	
@@ -316,9 +323,11 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 * @return string
 	 */
 	protected function _packetToString($packet){
-		$header = @unpack('a2header/Ctype/nlength/Cdata', $packet);
-		if ($header === false)
-			$header = @unpack('a2header/Ctype/nlength', $packet);
+		$header = unpack('a2header/Ctype/nlength', $packet);
+		if ($header['length']>0)
+			$data = substr($packet, self::PACKET_HEADER_SIZE);
+		else
+			$data=null;
 		switch($header['type']){
 			case self::PACKET_TYPE_AUDIO:
 				$type='Audio';
@@ -328,9 +337,14 @@ class SpykeeRobotClient extends SpykeeRobot {
 			break;
 			case self::PACKET_TYPE_POWER:
 				$type='Power';
+				$dataFormated = unpack('h2data', $data);
+				$data = hexdec($dataFormated['data']);
+				//$data=hexdec(bin2hex($data));
 			break;
 			case self::PACKET_TYPE_MOVE:
 				$type='Move';
+				$dataFormated=unpack('Cleft/Cright', $data);
+				$data='left:'.$dataFormated['left'].' right:'.$dataFormated['right'];
 			break;
 			case self::PACKET_TYPE_FILE:
 				$type='File';
@@ -371,9 +385,8 @@ class SpykeeRobotClient extends SpykeeRobot {
 		$result = 'Header:'.$header['header'];
 		$result .= '/Type:'.$type;
 		$result .= '/Length:'.$header['length'];
-		if (!empty($header['data']))
-			$result .= '/Data:'.$header['data'];
-		
+		if (!empty($data))
+			$result .= '/Data:['.$data.']';
 		return $result;
 	}
 	

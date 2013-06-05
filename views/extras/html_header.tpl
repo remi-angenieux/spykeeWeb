@@ -15,9 +15,12 @@
 		<script src="{$rootUrl}css/5grid/init.js?use=mobile,desktop,1000px&amp;mobileUI=1&amp;mobileUI.theme=none"></script>
 		<script src="{$rootUrl}js/jquery.dropotron-1.2.js"></script>
 		<script src="{$rootUrl}js/init.js"></script>
-		<!-- <script src="/js/jquery-1.9.1.min.js" type="text/javascript" charset="utf-8"></script>-->
+		<!-- <script src="{$rootUrl}js/jquery-1.9.1.min.js" type="text/javascript" charset="utf-8"></script>-->
 		{foreach $additionalJs as $jsFile}
 		<script src="{$jsFile}" type="text/javascript" charset="utf-8"></script>
+		{/foreach}
+		{foreach $additionalCss as $cssFile}
+		<link rel="stylesheet" href="{$cssFile}" type="text/css" />
 		{/foreach}
 		<noscript>
 			<link rel="stylesheet" href="{$rootUrl}css/5grid/core.css" />
@@ -26,9 +29,6 @@
 			<link rel="stylesheet" href="{$rootUrl}css/5grid/core-noscript.css" />
 			<link rel="stylesheet" href="{$rootUrl}css/style.css" />
 			<link rel="stylesheet" href="{$rootUrl}css/style-desktop.css" />
-			{foreach $additionalCss as $cssFile}
-			<link rel="stylesheet" href="{$cssFile}" type="text/css" />
-			{/foreach}
 		</noscript>
 		<!--[if lte IE 9]><link rel="stylesheet" href="css/ie9.css" /><![endif]-->
 		<!--[if lte IE 8]><link rel="stylesheet" href="css/ie8.css" /><![endif]-->

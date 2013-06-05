@@ -176,11 +176,9 @@ class SpykeeControllerClient extends SpykeeController{
 		$msg = pack('a3Cn', 'CTR', $type, $length);
 		if (!empty($data))
 			$msg .= $data;
-		if (!@socket_send($this->_socket, $msg, strlen($msg))){
+		if (@socket_send($this->_socket, $msg, strlen($msg), 0) === false){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
-			// FIXME: A supprimer
-			echo $errorMsg;
 			return new SpykeeResponse(self::STATE_ERROR, SpykeeResponse::ERROR_SEND_PACKET);
 		}
 		return new SpykeeResponse(self::STATE_OK, SpykeeResponse::PACKET_SENT);
@@ -192,7 +190,7 @@ class SpykeeControllerClient extends SpykeeController{
 	 */
 	protected function _getResponse(){
 		socket_clear_error();
-		$response = @socket_read($this->_socket, self::CTR_PACKET_HEADER_SIZE);
+		$response = @socket_read($this->_socket, self::CTR_PACKET_RESPONSE_HEADER_SIZE);
 		// If an error occured
 		if (($errorCode = socket_last_error()) != 0){
 			// If we can't read data, the connection is corrupted. So we disconnect to the controller
@@ -248,7 +246,7 @@ class SpykeeControllerClient extends SpykeeController{
 		$left = ($left >= 0) ? $left : 0;
 		$right = ($right < 256) ? $right : 255;
 		$right = ($right >= 0) ? $right : 0;
-		return $this->__sendPacketToController(self::MOVE, pack('CC', $left, $right));
+		return $this->_sendPacketToController(self::MOVE, pack('CC', $left, $right));
 	}
 
 	/**
@@ -453,10 +451,12 @@ class SpykeeControllerClient extends SpykeeController{
 	 * @param integer $value
 	 * @return SpykeeResponse
 	 */
-	public function setSpeed(int $value){
+	public function setSpeed($value){
+		$value = (int) $value;
 		if ($value < 1) $value=1;
 		if ($value > 128) $value=128;
-		return $this->_sendPacketToController(self::SET_SPEED, pack('C', $value));
+		$this->_sendPacketToController(self::SET_SPEED, pack('C', $value));
+		return $this->_getResponse();
 	}
 
 	/**

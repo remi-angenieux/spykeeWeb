@@ -84,6 +84,9 @@ class PlayController extends BaseController
 					case 'setSpeed':
 						$this->model->setSpeed($_POST['data']);
 						break;
+					case 'getSpeed':
+						$this->model->getSpeed();
+					break;
 				}
 			}
 		}

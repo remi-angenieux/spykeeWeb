@@ -33,6 +33,8 @@ class SpykeeControllerServer extends SpykeeController{
 									'right' => FALSE,
 									'forward' => FALSE,
 									'back' => FALSE);
+	const REQUEST_PACKET=0;
+	const RESPONSE_PACKET=1;
 
 	/**
 	 * Create a new controller server connected to the robot
@@ -155,7 +157,7 @@ class SpykeeControllerServer extends SpykeeController{
 		}
 		// Bind the source address. Packet send by everyone (localhost, local network, internet)
 		// Note: An ACL secure the connection for each connection
-		if( !socket_bind($this->_socketServer, '0.0.0.0' , $this->_controllerPort) ){
+		if( !socket_bind($this->_socketServer, '127.0.0.1' , $this->_controllerPort) ){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 			if($errorCode == 98) // Port in use
@@ -188,9 +190,8 @@ class SpykeeControllerServer extends SpykeeController{
 		$socketsClientToRead[0] = $this->_socketServer;
 		// Add client socket
 		for ($i = 0; $i < $this->_config->controller->maxConnection; $i++){
-			if(!empty($this->_socketsClient[$i]['socket'])){
+			if(!empty($this->_socketsClient[$i]['socket']))
 				$socketsClientToRead[$i+1] = $this->_socketsClient[$i]['socket'];
-			}
 		}
 		$write=NULL;
 		$except=NULL;
@@ -223,14 +224,6 @@ class SpykeeControllerServer extends SpykeeController{
 						$this->_errorManager->writeLog('The host '.$clientIp.':'.$clientPort.' is well connected', 2);
 						$this->_socketsClient[$i]['ip'] = $clientIp; // Save ip addresse
 						$this->_socketsClient[$i]['port'] = $clientPort; // Save port addresse
-						$msg = pack('a3CCn', 'CTR', self::CONNECTION_TO_CONTROLLER, self::STATE_OK, 0); // Send to user an acknowledge
-						if( !socket_send($this->_socketsClient[$i]['socket'], $msg, strlen($msg), 0)){
-							$errorCode = socket_last_error();
-							$errorMsg = socket_strerror($errorCode);
-							$this->_errorManager->error('Unable to send acknowledgment: Connection established successfully. '.'['.$errorCode.'] '.$errorMsg, 1);
-							// If we can't send data, we can't do anything with him so we disconnect him
-							$this->_closeClientSocket($i);
-						}
 					}
 					// Remove the socket from the list of socket processing
 					unset($socketsClientToRead[array_search($this->_socketServer, $socketsClientToRead)]);
@@ -257,7 +250,7 @@ class SpykeeControllerServer extends SpykeeController{
 			if (!empty($this->_socketsClient[$i]) AND in_array($this->_socketsClient[$i]['socket'], $socketsClientToRead)){
 				// Get socket
 				socket_clear_error();
-				$request = @socket_read($this->_socketsClient[$i]['socket'], self::CTR_PACKET_HEADER_SIZE);
+				$request = @socket_read($this->_socketsClient[$i]['socket'], self::CTR_PACKET_REQUEST_HEADER_SIZE);
 				// If an error occured
 				if (($errorCode = socket_last_error()) != 0){
 					$errorMsg = socket_strerror($errorCode);
@@ -292,14 +285,14 @@ class SpykeeControllerServer extends SpykeeController{
 					}
 					else
 						$input=NULL;
-					$packetString = $this->_packetToString($request);
-					if (!empty($input)) $packetString .= '/Data:'.$input;
+					$packetString = $this->_packetToString($request.$input, self::REQUEST_PACKET);
+					//if (!empty($input)) $packetString .= '/Data:'.bin2hex($input);
 					$this->_errorManager->writeLog('Host '.$this->_socketsClient[$i]['ip'].':'.$this->_socketsClient[$i]['port'].' sent to the server: '.$packetString, 3);
 					/*
 					 * Send action asked by the host to the robot
 					*/
-					$responseType = $type; // By default, the type of response that is requested
-					switch($type){
+					$responseType = $header['type']; // By default, the type of response that is requested
+					switch($header['type']){
 					case self::MOVE:
 						$inputFormated = unpack('Cleft/Cright', $input);
 						$state = $this->_SpykeeRobotClient->move($inputFormated['left'], $inputFormated['right']);
@@ -360,8 +353,8 @@ class SpykeeControllerServer extends SpykeeController{
 						$response = $this->_SpykeeRobotClient->audioPlay('./../music/music.mp3');
 						break;*/
 					case self::VIDEO:
-						$inputFormated = unpack('Cstate', $input);
-						$this->_SpykeeRobotClient->setVideo($inputFormated['state']);
+						$inputFormated = unpack('Cvideo', $input);
+						$this->_SpykeeRobotClient->setVideo($inputFormated['video']);
 						$response = NULL;
 						break;
 					case self::STOP_CONTROLLER:
@@ -378,7 +371,7 @@ class SpykeeControllerServer extends SpykeeController{
 						return TRUE;
 						break;
 					case self::GET_POWER_LEVEL:
-						if ($this->_powerLevel != NULL)
+						if ($this->_powerLevel != NULL) // if the battery level isn't stored
 							$response = new SpykeeResponse(self::STATE_OK, SpykeeResponse::LEVEL_BATTERY_RETRIVED, $this->_powerLevel);
 						else{
 							$response = $this->_SpykeeRobotClient->refreshPowerLevel(); // Get the real level
@@ -392,7 +385,7 @@ class SpykeeControllerServer extends SpykeeController{
 							$this->_powerLevel = $request->getData();
 						break;
 					case self::GET_SPEED:
-						$response = new SpykeeResponse(self::STATE_OK, SpykeeResponse::MOVE_SPEED_RETRIVED, $this->_moveSpeed);
+						$response = new SpykeeResponse(self::STATE_OK, SpykeeResponse::MOVE_SPEED_RETRIVED, pack('C', $this->_moveSpeed));
 						break;
 					case self::SET_SPEED:
 						$inputFormated = unpack('Cspeed', $input);
@@ -438,11 +431,9 @@ class SpykeeControllerServer extends SpykeeController{
 					/*
 					 * Responds to the host
 					*/
-					if ($response != NULL){ // If we have to send a packet tot the host
-						$data = (!$response->getData()) ? pack('C', $response->getData()) : null;
+					if ($response != NULL) // If we have to send a packet tot the host
 						// Send the packet
-						$this->_sendPacketToClient($this->_socketsClient[$i]['socket'], $responseType, $response->getState(), $response->getIdDescription(), $data);
-					}
+						$this->_sendPacketToClient($this->_socketsClient[$i]['socket'], $responseType, $response->getState(), $response->getIdDescription(), $response->getData());
 				}
 			}
 		}
@@ -479,26 +470,42 @@ class SpykeeControllerServer extends SpykeeController{
 		$message = pack('a3CCCn', 'CTR', $type, $state, $idDescription, $dataLength);
 		if (!empty($data))
 			$message .= $data;
-		if( !socket_send($spcket, $message, strlen($message), 0)){
+		if(@socket_send($socket, $message, strlen($message), 0) === false){
 			$errorCode = socket_last_error();
 			$errorMsg = socket_strerror($errorCode);
 		
 			$this->_errorManager->writeLog('Unable to send packet to host: ['.$errorCode.'] '.$errorMsg, 1);
 		}
 		else
-			$this->_errorManager->writeLog('Packet sent: '.$this->_packetToString($reply), 3);
+			$this->_errorManager->writeLog('Packet sent: '.$this->_packetToString($message, self::RESPONSE_PACKET), 3);
 	}
 	
 	/**
 	 * Formats the display of packets
 	 * @param string $packet
+	 * @param integer $type Type of packet self::RESPONSE_PACKET or self::REQUEST_PACKET
 	 * @return string
 	 */
-	protected function _packetToString($packet){
-		$header = unpack('a3header/Ctype/Cstate/CidDescription/nlength', $request);
+	protected function _packetToString($packet, $type){
+		if ($type == self::RESPONSE_PACKET){
+			$header = unpack('a3header/Ctype/Cstate/CidDescription/nlength', $packet);
+			if ($header['length']>0)
+				$data = substr($packet, self::CTR_PACKET_RESPONSE_HEADER_SIZE);
+			else
+				$data=null;
+		}
+		else if ($type == self::REQUEST_PACKET){
+			$header = unpack('a3header/Ctype/nlength', $packet);
+			if ($header['length']>0)
+				$data = substr($packet, self::CTR_PACKET_REQUEST_HEADER_SIZE);
+			else
+				$data=null;
+		}
 		switch($header['type']){
 			case self::MOVE:
 				$type='Move';
+				$dataFormated=unpack('Cleft/Cright', $data);
+				$data='left:'.$dataFormated['left'].' right:'.$dataFormated['right'];
 			break;
 			case self::LEFT:
 				$type='Left';
@@ -563,6 +570,9 @@ class SpykeeControllerServer extends SpykeeController{
 			case self::HOLDING_FORWARD:
 				$type='Holding forward';
 			break;
+			case self::HOLDING_BACK:
+				$type='Holding back';
+			break;
 			case self::STOP_HOLDING_LEFT:
 				$type='Stop holding left';
 			break;
@@ -576,13 +586,23 @@ class SpykeeControllerServer extends SpykeeController{
 				$type='Stop holding back';
 			break;
 			case self::VIDEO:
+				$data = unpack('Cvideo', $data);
+				$data = $data['video'];
 				$type='Video';
 			break;
 			case self::SET_SPEED:
 				$type='Set speed';
+				if (!empty($data)){ // If is a request packet
+					$data = unpack('Cspeed', $data);
+					$data = $data['speed'];
+				}
 			break;
 			case self::GET_SPEED:
 				$type='Get speed';
+				if (!empty($data)){ // If is a request packet
+					$data = unpack('Cspeed', $data);
+					$data = $data['speed'];
+				}
 			break;
 			
 			default:
@@ -592,11 +612,13 @@ class SpykeeControllerServer extends SpykeeController{
 		
 		$result = 'Header:'.$header['header'];
 		$result .= '/Type:'.$type;
+		if (!empty($header['state']))
+			$result .= '/State:'.$header['state'];
+		if (!empty($header['idDescription']))
+			$result .= '/idDescription:'.$header['idDescription'];
 		$result .= '/Length:'.$header['length'];
-		if ($header['length']!=0){
-			$data = unpack('Cdata');
-			$result .= '/Data:'.$data['data'];
-		}
+		if (!empty($data))
+			$result .= '/Data:['.$data.']';
 		
 		return $result;
 	}
@@ -744,7 +766,7 @@ class SpykeeControllerServer extends SpykeeController{
 	 * 128 highest
 	 * @param int $value
 	 */
-	protected function _setSpeed(int $value){
+	protected function _setSpeed($value){
 		if ($value < 0 AND $value > 128) $value = $this->_config->robot->defaultSpeed;
 		$this->_moveSpeed = $value;
 		return $this->_SpykeeRobotClient->setSpeed($value);

@@ -7,3 +7,18 @@
 <a href="/play/play" target="_self">Jouez</a>
 	
 	
+
+<table wdith=100% border=1px>
+<tr>
+<th>Pseudo</th>
+<th>Place</th>
+</tr>
+
+{foreach $arr4 as $user=>$key}
+<tr>
+<td>{$user} </td> 
+<td>{$key}</td>
+</tr>
+{/foreach}
+</table>
+

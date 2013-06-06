@@ -3,20 +3,24 @@
 class PlayModel extends BaseModel
 {
 	protected $_spykee;
-	public $_input;
+	//public $_input;
 
 	//data passed to the home index view
 	public function index(){
-
+		$this->view->assign(array('pageTitle' => 'Play'));
 
 	}
 	
 	public function notConnected(){
+		$this->view->assign(array('pageTitle' => 'Erreur'));
 		$message = 'Vous devez être connecté pour pouvoir jouer';
 		$this->view->message('Vous n\' êtes pas connecté' , $message, '/account/login');
+		//TODO Transformer ça en bool
 	}
+	
 
 	public function notAllowed(){
+		$this->view->assign(array('pageTitle' => 'Erreur'));
 		$message='Vous n\'êtes pas autorisé a jouer';
 		$this->view->message('Erreur' , $message, '/play');
 	}
@@ -88,6 +92,7 @@ class PlayModel extends BaseModel
 
 
 	public function leaveQueue(){
+			$this->view->assign(array('pageTitle' => 'File quittée'));
 			$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?') ;
 			$query->execute(array($this->user->id));
 			$message='Vous avez bien été enlevé de la file';
@@ -95,6 +100,7 @@ class PlayModel extends BaseModel
 	}
 	
 	public function leaveGame(){
+			$this->view->assign(array('pageTitle' => 'Partie quittée'));
 			$query = $this->db->prepare('UPDATE robots SET used=false WHERE(SELECT games.refrobot FROM GAMES WHERE refmember=?)=robots.id') ;
 			$query->execute(array($this->user->id));
 			$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
@@ -104,6 +110,7 @@ class PlayModel extends BaseModel
 	}
 	
 	public function displayQueue(){
+		$this->view->assign(array('pageTitle' => 'File d\'attente'));
 		$this->view->addAdditionalJs('http://spykee.lan/js/queue.js');
 		$this->view->addAdditionalCss('http://spykee.lan/css/ui-darkness/jquery-ui-1.10.3.custom.min.css');
 		$this->view->addAdditionalJs('http://spykee.lan/js/jquery-ui-1.10.3.custom.min.js');
@@ -111,7 +118,6 @@ class PlayModel extends BaseModel
 		$query->execute();
 		$result = $query->fetchAll(PDO::FETCH_ASSOC);
 		
-	
 		foreach( $result as $key=>$value ){  //Extraction of pseudo and timestamp from array $result
 			$arr5[]=$key+1;
 			$arr=$value;
@@ -119,28 +125,11 @@ class PlayModel extends BaseModel
 			$arr3[]=$arr['timestamp'];
 		}
 		$arr4=array_combine($arr2,$arr5);
-		$this->view->assign(array('arr4' => $arr4));
-		foreach ($arr4 as $key=>$username){
-			$this->view->assign(array('key' => $key));
-			$this->view->assign(array('username' => $username));
-		}
-
-		print "<table wdith=\"100%\" border=\"1px\">";
-		print "<tr>";
-		print "<th>Pseudo</th>";
-		print "<th>Place</th>";
-		print "</tr>";
-		foreach ($arr4 as $key=>$username){
-			print "<tr>";
-			print "<td>$key </td> ";
-			print "<td>$username</td>";
-			print "</tr>";
-		}
-		print "</table>";
-
+		$this->view->assign('arr4',$arr4);
 	}
 	
 	public function play(){
+		$this->view->assign(array('pageTitle' => 'Play'));
 		require_once(PATH.'libs/spykee-controller/controllerClient.php');
 		$this->_spykee = new SpykeeControllerClient('Robot1', '127.0.0.1', '2000');
 		$this->view->assign('pageTitle', 'Play');
@@ -235,12 +224,6 @@ class PlayModel extends BaseModel
 			return false;
 		else 
 			return $dispo;
-		/*$sql = 'SELECT robots.id FROM robots WHERE robots.loked = false
-					EXCEPT
-					SELECT games.refRobot FROM games WHERE games.lastInput <= '.$this->config->game->timeout;
-		$query = $this->db->query($sql);*/
-		//$response = $query->fetch(PDO::FETCH_ASSOC);
-		// Retourne le premier robot dispponible
 	}
 	
 	

@@ -14,6 +14,10 @@ class HomeModel extends BaseModel
 		$this->view->assign(array('pageTitle' => 'Accueil',
 								'username' => $this->user->pseudo));
 	}
+	
+	
 }
+
+
 
 ?>

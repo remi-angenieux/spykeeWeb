@@ -4,7 +4,7 @@
 <p>Bienvenue {$username} !!</p>
 
 
-
+<a href="/home/admin" target="_self">Panneau d'Admin</a><br/>
 <a href="/play" target="_self">Aller sur la page de jeu</a><br/>
 <a href="/account/register" target="_self">S'inscrire</a><br/>
 <a href="/account/login" target="_self">Se connecter</a><br/>

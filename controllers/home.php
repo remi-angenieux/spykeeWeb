@@ -11,11 +11,17 @@ class HomeController extends BaseController
 	}
 
 	//default method
-	protected function index()
-	{
+	protected function index(){
 		//$this->view->output($this->model->index());
 		$this->model->index();
 		//$this->view->display('mainTemplate.tpl');
 	}
+
+	protected function admin(){
+		
+		$this->model->admin();
+	}
+
 }
+
 ?>

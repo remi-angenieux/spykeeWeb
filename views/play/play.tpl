@@ -20,5 +20,5 @@
 <!-- TODO Récupérer la racine du site via un fichier de configuration -->
 <p><img src="http://spykee.lan/videoStream/video.jpeg" alt="Vidéo" id="imgStream" /></p>
 <p><code class="result"></code></p></br>
-<a href="/play" target="_self">Revenir a la file d'attente</a>
+<a href="/play" target="_self">Se retirer de la partie</a></br>
 

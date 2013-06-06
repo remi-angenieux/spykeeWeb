@@ -72,10 +72,6 @@ function sendAction(action, callback, data){
 }
 
 
-
-	
-	window.setInterval(function(){Play();}, constantes.INTERVAL_REFRESH_QUEUE);
-
 function up(){
 	sendAction('up');
 }

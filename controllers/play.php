@@ -17,6 +17,7 @@ class PlayController extends BaseController
 			//TODO si il est 1er => redirigé sur /play
 			$this->model->index();
 			$this->model->isInQueue();
+			$this->model->isInGame();
 		}
 		else{
 			$this->model->notConnected();
@@ -57,22 +58,26 @@ class PlayController extends BaseController
 	}
 	
 	protected function play(){
-	
-
-		if($this->model->isFirst()){//if the user is the 1st of the queue	
-		$this->model->enterGame();	
-		$this->model->play();
+		if($this->model->canPlay()==false){
+			$this->model->notAllowed();
 		}
 		else{
-			$this->model->notAllowed();
+
+			if($this->model->isFirst()){//if the user is the 1st of the queue	
+				$this->model->enterGame();	
+				$this->model->play();
+			}
+			else{
+				$this->model->notAllowed();
+			}
 		}
 	}
 	
 	
 	protected function ajax(){
+		
 		$this->model->ajax();
 		$this->view->setTextPage();
-		$this->model->lastInput();
 		if (!empty($_POST['action'])){
 			switch ($_POST['action']){
 				case 'up':

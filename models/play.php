@@ -3,6 +3,7 @@
 class PlayModel extends BaseModel
 {
 	protected $_spykee;
+	public $_input;
 
 	//data passed to the home index view
 	public function index(){
@@ -57,8 +58,7 @@ class PlayModel extends BaseModel
 		$this->view->message('Erreur' , $message, '/play');
 	}
 	
-	public function isInQueue(){         
-		$lastinput=0;                               
+	public function isInQueue(){                                    
 			$query = $this->db->prepare('SELECT refmember FROM queue WHERE refmember=?');
 			$query->execute(array($this->user->id));
 			$result = $query->fetchAll(PDO::FETCH_ASSOC);
@@ -69,6 +69,20 @@ class PlayModel extends BaseModel
 				$this->view->message('File quittée' , $message, '/play');
 		    }
 	}//Check if the current user is in the queue and delete him from there
+	
+	public function isInGame(){
+		$query = $this->db->prepare('UPDATE robots SET used=false WHERE(SELECT games.refrobot FROM GAMES WHERE refmember=?)=robots.id') ;
+		$query->execute(array($this->user->id));
+		$query = $this->db->prepare('SELECT refmember FROM games WHERE refmember=?');
+		$query->execute(array($this->user->id));
+		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		if (count($result) >= 1){
+			$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
+			$query->execute(array($this->user->id));
+			$message='Vous avez bien été enlevé de la partie';
+			$this->view->message('File quittée' , $message, '/play');
+		}
+	}//Check if the current user is in the game and delete him from there
 	
 
 	public function isFirst(){
@@ -99,17 +113,12 @@ class PlayModel extends BaseModel
 		}
 	
 	
-	/*public function leaveGame(){
-		$freeRobot=1;
-		if($freeRobot=!null){
-			$query = $this->db->prepare('SELECT refmember FROM games WHERE lastinput=MAX(lastinput)');
-			$result=$query->execute();
+	public function leaveGame(){
 			$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
-			$query->execute(array($result));
-			$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)') ;
-			$query->execute(array($result,$freeRobot,time()));
-		}
-	}*/
+			$query->execute(array($this->user->id));
+		  	$query = $this->db->prepare('UPDATE robots SET used=false WHERE(SELECT games.refrobot FROM GAMES WHERE refmember=?)=robots.id') ;
+			$query->execute(array($this->user->id));
+	}
 	
 	
 	public function play(){
@@ -122,11 +131,28 @@ class PlayModel extends BaseModel
 		$this->view->addAdditionalCss('http://spykee.lan/css/ui-darkness/jquery-ui-1.10.3.custom.min.css');
 	}
 	
-	public function lastInput(){
-		$query = $this->db->prepare('INSERT INTO games (lastinput) VALUES(?)') ;
-		$query->execute(array(time()));
+	/*public function checkInput(){         JAVASCRIPT/AJAX
+		$query = $this->db->prepare('SELECT lastinput FROM games WHERE refmember=?');
+		$query->execute(array($this->user->id));
+		$result =$query->fetch(PDO::FETCH_ASSOC);
+		$resultat=$result['lastinput'];
+		if ($resultat > $this->config->game->timeout ){
+			return false;
+		}
+		else{
+			return true;
+		}
 	}
 	
+	public function trueLastInput(){       JAVASCRIPT/AJAX
+		$query = $this->db->prepare('UPDATE games SET lastinput=? WHERE refmember =?') ;
+		$query->execute(array($this->_input,$this->user->id));
+	}
+	
+	public function lastInput(){           JAVASCRIPT/AJAX
+		$this->_input=time();	
+	}
+	*/
 	public function ajax(){
 		require_once(PATH.'libs/spykee-controller/controllerClient.php');
 		$this->_spykee = new SpykeeControllerClient('Robot1', '127.0.0.1', '2000');
@@ -186,7 +212,10 @@ class PlayModel extends BaseModel
 		$query->execute();
 		$tab1 =$query->fetch(PDO::FETCH_ASSOC);
 		$dispo=$tab1['id'];
-		return $dispo;
+		if ($dispo ==null)
+			return false;
+		else 
+			return $dispo;
 		/*$sql = 'SELECT robots.id FROM robots WHERE robots.loked = false
 					EXCEPT
 					SELECT games.refRobot FROM games WHERE games.lastInput <= '.$this->config->game->timeout;

@@ -24,8 +24,6 @@ class PlayModel extends BaseModel
 	//add member to queue
 	public function enterQueue(){
 		print "<div id=\"queue\">";
-		$this->view->addAdditionalJs('http://spykee.lan/js/queue.js');
-		$this->view->addAdditionalCss('http://spykee.lan/css/ui-darkness/jquery-ui-1.10.3.custom.min.css');
 		$arr2=array();
 		$arr3=array();
 		$query = $this->db->prepare('INSERT INTO queue (refmember,timestamp) VALUES(?,?)') ;
@@ -54,13 +52,13 @@ class PlayModel extends BaseModel
 			else{
 			return true;
 			}
-	} //Check if the current user is in the queue and delete him from there
+	} //Check if the current user is in the queue 
 	
 
 	public function isInGame(){
 		$query = $this->db->prepare('SELECT refmember FROM games WHERE refmember=?');
 		$query->execute(array($this->user->id));
-		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		$result = $query->fetch(PDO::FETCH_ASSOC);
 		$resultat=$result['refmember'];
 		if ($resultat==null){
 			return false;
@@ -68,7 +66,7 @@ class PlayModel extends BaseModel
 		else{
 			return true;
 		}
-	}//Check if the current user is in the game and delete him from there
+	}//Check if the current user is in the game 
 	
 
 	public function isFirst(){
@@ -97,18 +95,22 @@ class PlayModel extends BaseModel
 	}
 	
 	public function leaveGame(){
-			$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
+			$query = $this->db->prepare('UPDATE robots SET used=false WHERE(SELECT games.refrobot FROM GAMES WHERE refmember=?)=robots.id') ;
 			$query->execute(array($this->user->id));
-		  	$query = $this->db->prepare('UPDATE robots SET used=false WHERE(SELECT games.refrobot FROM GAMES WHERE refmember=?)=robots.id') ;
+			$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
 			$query->execute(array($this->user->id));
 			$message='Vous avez bien été enlevé de la partie';
 			$this->view->message('Partie quittée' , $message, '/play');
 	}
 	
 	public function displayQueue(){
+		$this->view->addAdditionalJs('http://spykee.lan/js/queue.js');
+		$this->view->addAdditionalCss('http://spykee.lan/css/ui-darkness/jquery-ui-1.10.3.custom.min.css');
+		$this->view->addAdditionalJs('http://spykee.lan/js/jquery-ui-1.10.3.custom.min.js');
 		$query = $this->db->prepare('SELECT timestamp,pseudo FROM queue INNER JOIN members ON refmember=id ORDER BY timestamp ASC') ;
 		$query->execute();
 		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		
 	
 		foreach( $result as $key=>$value ){  //Extraction of pseudo and timestamp from array $result
 			$arr5[]=$key+1;
@@ -117,8 +119,13 @@ class PlayModel extends BaseModel
 			$arr3[]=$arr['timestamp'];
 		}
 		$arr4=array_combine($arr2,$arr5);
-	
-		print "<table wdith=\"100%\" border=\"5px\">";
+		$this->view->assign(array('arr4' => $arr4));
+		foreach ($arr4 as $key=>$username){
+			$this->view->assign(array('key' => $key));
+			$this->view->assign(array('username' => $username));
+		}
+
+		print "<table wdith=\"100%\" border=\"1px\">";
 		print "<tr>";
 		print "<th>Pseudo</th>";
 		print "<th>Place</th>";
@@ -130,7 +137,7 @@ class PlayModel extends BaseModel
 			print "</tr>";
 		}
 		print "</table>";
-				print "</div>";
+
 	}
 	
 	public function play(){

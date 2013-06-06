@@ -1,7 +1,6 @@
 // Constantes
 var constantes = {
    'INTERVAL_REFRESH_IMG': 60 // Interval de temps pour le rafrachissement des images composant le flux vidéo
-   'INTERVAL_REFRESH_QUEUE': 5000 // Interval de temps pour le rafrachissement de l'invitation à jouer
 };
 /*
  * Gestion du stream vidéo

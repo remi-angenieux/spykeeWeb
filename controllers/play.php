@@ -15,10 +15,13 @@ class PlayController extends BaseController
 	{
 		if ($this->model->isConnected()){
 			$this->model->index();
-			if($this->model->isInQueue())
-			$this->model->leaveQueue();
-			if($this->model->isInGame())
-			$this->model->leaveGame();
+			if($this->model->isInQueue()){
+				$this->model->leaveQueue();
+			}
+			if($this->model->isInGame()){
+				$this->model->leaveGame();
+			}
+			
 		}
 		else{
 			$this->model->notConnected();
@@ -61,7 +64,10 @@ class PlayController extends BaseController
 		else{
 			$this->model->notConnected();
 		}
-		}
+	}
+	if($this->model->isFirst()){
+		$this->view->addAdditionalJs('http://spykee.lan/js/askplay.js');
+	}
 	}
 	protected function play(){
 		if($this->model->canPlay()==false){

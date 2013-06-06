@@ -19,6 +19,9 @@
 		{foreach $additionalJs as $jsFile}
 		<script src="{$jsFile}" type="text/javascript" charset="utf-8"></script>
 		{/foreach}
+		{foreach $additionalCss as $cssFile}
+		<link rel="stylesheet" href="{$cssFile}" type="text/css" />
+		{/foreach}
 		<noscript>
 			<link rel="stylesheet" href="{$rootUrl}css/5grid/core.css" />
 			<link rel="stylesheet" href="{$rootUrl}css/5grid/core-desktop.css" />
@@ -26,9 +29,6 @@
 			<link rel="stylesheet" href="{$rootUrl}css/5grid/core-noscript.css" />
 			<link rel="stylesheet" href="{$rootUrl}css/style.css" />
 			<link rel="stylesheet" href="{$rootUrl}css/style-desktop.css" />
-			{foreach $additionalCss as $cssFile}
-			<link rel="stylesheet" href="{$cssFile}" type="text/css" />
-			{/foreach}
 		</noscript>
 		<!--[if lte IE 9]><link rel="stylesheet" href="css/ie9.css" /><![endif]-->
 		<!--[if lte IE 8]><link rel="stylesheet" href="css/ie8.css" /><![endif]-->
@@ -72,7 +72,7 @@
 													</li>
 													<li><a href="/play">Jouer</a></li>
 													<li><a href="/account/login">Login</a></li>
-													<li class="current_page_item"><a href="no-sidebar.html">No Sidebar</a></li>
+													<li><a href="no-sidebar.html">No Sidebar</a></li>
 												</ul>
 											</nav>
 									

@@ -26,3 +26,23 @@
 	<p><img src="{$rootUrl}videoStream/video.jpeg" alt="Vidéo" id="imgStream" /></p>
 	<p><code class="result"></code></p>
 </article>
+
+</div>
+								</div>
+								<div class="4u">
+									<div id="sidebar">
+
+										<!-- Sidebar -->
+									
+											<section>
+												<header class="major">
+													<h2>Subheading</h2>
+												</header>
+												<p>Phasellus quam turpis, feugiat sit amet ornare in, hendrerit in lectus. 
+												Praesent semper mod quis eget mi. Etiam eu ante risus. Aliquam erat volutpat. 
+												Aliquam luctus et mattis lectus sit amet pulvinar. Nam turpis nisi 
+												consequat etiam.</p>
+												<footer>
+													<a href="#" class="button button-icon button-icon-info">Find out more</a>
+												</footer>
+											</section>

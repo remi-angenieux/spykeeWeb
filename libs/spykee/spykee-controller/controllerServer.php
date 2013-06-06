@@ -636,7 +636,7 @@ class SpykeeControllerServer extends SpykeeController{
 		foreach($result as $packet){
 			// If the function have returned an image of the video stream
 			if ($packet->getIdDescription() == SpykeeResponse::RECEIVE_PACKET_TYPE_VIDEO){
-				$file = $this->_config->stream->videoPath.'video.jpeg';
+				$file = $this->_config->stream->videoPath.'/video.jpeg';
 				if (file_put_contents($file, $packet->getData()) === false)
 					$this->_errorManager->error('Unable to write the image of video stream. ('.$file.')', 1);
 			}

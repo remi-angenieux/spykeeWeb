@@ -72,7 +72,7 @@
 													</li>
 													<li><a href="/play">Jouer</a></li>
 													<li><a href="/account/login">Login</a></li>
-													<li class="current_page_item"><a href="no-sidebar.html">No Sidebar</a></li>
+													<li><a href="no-sidebar.html">No Sidebar</a></li>
 												</ul>
 											</nav>
 									

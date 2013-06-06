@@ -1,7 +1,11 @@
 // Constantes
 var constants = {
    'INTERVAL_REFRESH_IMG': 60, // Interval de temps pour le rafrachissement des images composant le flux vidéo
-   'DEFAULT_SPEED': 100
+   'DEFAULT_SPEED': 100,
+   'KEY_DOWN': 40,
+   'KEY_UP': 38,
+   'KEY_LEFT': 37,
+   'KEY_RIGHT': 39
 };
 /*
  * Gestion du stream vidéo
@@ -188,3 +192,76 @@ function enableVideo(){
 function setSpeed(){
 	sendAction('setSpeed', null, $('#speed').slider('value'));
 }
+
+$(document).keydown(function(e){
+    if (e.keyCode == constants.KEY_LEFT) { 
+    	holdingLeft();
+       return false;
+    }
+    else if (e.keyCode == constants.KEY_UP){
+    	holdingUp();
+    	return false;
+    }
+    else if (e.keyCode == constants.KEY_RIGHT){
+    	holdingRight();
+    	return false;
+    }
+    else if (e.keyCode == constants.KEY_DOWN){
+    	holdingDown();
+    	return false;
+    }
+});
+
+/*$(document).keyup(function(e){
+    if (e.keyCode == 37) { 
+    	alert(1);
+    	holdingLeft();
+       return false;
+    }
+    else if (e.keyCode == 38){
+    	holdingUp();
+    	return false;
+    }
+    else if (e.keyCode == 39){
+    	holdingRight();
+    	return false;
+    }
+    else if (e.keyCode == 40){
+    	holdingDown();
+    	return false;
+    }
+});*/
+
+/*function checkEventObj(_event_){
+	if (window.event)
+		return window.event;
+	else
+		return _event_;
+}
+
+function test(_event_){
+	var winObj = checkEventObj(_event_);
+	var intKeyCode = winObj.keyCode;
+	if (intKeyCode == constants.KEY_UP){
+		holdingUp();
+		winObj.returnValue = false;
+		return false;
+	}
+	else if (intKeyCode == constants.KEY_DOWN){
+		holdingDown();
+		winObj.returnValue = false;
+		return false;
+	}
+	else if (intKeyCode == constants.KEY_LEFT){
+		holdingLeft();
+		winObj.returnValue = false;
+		return false;
+	}
+	else if (intKeyCode == constants.KEY_RIGHT){
+		holdingRight();
+		winObj.returnValue = false;
+		return false;
+	}
+}
+document.onkeydown = test;*/
+//document.onkeyup = test;

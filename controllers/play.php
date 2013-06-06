@@ -14,10 +14,11 @@ class PlayController extends BaseController
 	protected function index()
 	{
 		if ($this->model->isConnected()){
-			//TODO si il est 1er => redirigé sur /play
 			$this->model->index();
-			$this->model->isInQueue();
-			$this->model->isInGame();
+			if($this->model->isInQueue())
+			$this->model->leaveQueue();
+			if($this->model->isInGame())
+			$this->model->leaveGame();
 		}
 		else{
 			$this->model->notConnected();
@@ -49,14 +50,19 @@ class PlayController extends BaseController
 	}
 	
 	protected function queue(){
-	if ($this->model->isConnected()){
-		$this->model->inQueue();
-	}
+	if ($this->model->isInQueue()){
+    	$this->model->displayQueue();
+	}	
 	else{
-		$this->model->notConnected();
+		if ($this->model->isConnected()){
+			$this->model->enterQueue();
+			$this->model->displayQueue();
+		}
+		else{
+			$this->model->notConnected();
+		}
+		}
 	}
-	}
-	
 	protected function play(){
 		if($this->model->canPlay()==false){
 			$this->model->notAllowed();

@@ -8,79 +8,65 @@ class PlayModel extends BaseModel
 	//data passed to the home index view
 	public function index(){
 
-		//TODO si il est 1er => redirigé sur /play/play
+
 	}
 	
 	public function notConnected(){
 		$message = 'Vous devez être connecté pour pouvoir jouer';
 		$this->view->message('Vous n\' êtes pas connecté' , $message, '/account/login');
 	}
-	//add member to queue
-	public function inQueue(){
-	
-		$arr2=array();
-		$arr3=array();
-		$query = $this->db->prepare('INSERT INTO queue (refmember,timestamp) VALUES(?,?)') ;
-		$query->execute(array($this->user->id,time()));
-	
-		$query = $this->db->prepare('SELECT timestamp,pseudo FROM queue INNER JOIN members ON refmember=id ORDER BY timestamp ASC') ;
-		$query->execute();
-		$result = $query->fetchAll(PDO::FETCH_ASSOC);
-
-		foreach( $result as $key=>$value ){  //Extraction of pseudo and timestamp from array $result 
-		 $arr5[]=$key+1;
-		 $arr=$value;
-		 $arr2[]=$arr['pseudo']; 
-		 $arr3[]=$arr['timestamp'];
-		}
-		$arr4=array_combine($arr2,$arr5);   
-		
-		print "<table wdith=\"100%\" border=\"5px\">";
-		print "<tr>";
-		print "<th>Pseudo</th>";
-		print "<th>Place</th>";
-		print "</tr>";
-	foreach ($arr4 as $key=>$username){	
-			 print "<tr>";
-	   		 print "<td>$key </td> ";
-	   		 print "<td>$username</td>";
-	   		 print "</tr>";
-		}	
-		print "</table>";
-		
-		
-	}
-	
-
 
 	public function notAllowed(){
 		$message='Vous n\'êtes pas autorisé a jouer';
 		$this->view->message('Erreur' , $message, '/play');
 	}
 	
+	//add member to queue
+	public function enterQueue(){
+		print "<div id=\"queue\">";
+		$this->view->addAdditionalJs('http://spykee.lan/js/queue.js');
+		$this->view->addAdditionalCss('http://spykee.lan/css/ui-darkness/jquery-ui-1.10.3.custom.min.css');
+		$arr2=array();
+		$arr3=array();
+		$query = $this->db->prepare('INSERT INTO queue (refmember,timestamp) VALUES(?,?)') ;
+		$query->execute(array($this->user->id,time()));
+	}
+	
+	public function enterGame(){
+		$dispo=$this->canPlay();
+		$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?');
+		$query->execute(array($this->user->id));
+		$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)') ;
+		$query->execute(array($this->user->id,$dispo,time()));
+		$query = $this->db->prepare('UPDATE robots SET used=true WHERE robots.id=? ') ;
+		$query->execute(array($dispo));
+	}
+	
+
 	public function isInQueue(){                                    
 			$query = $this->db->prepare('SELECT refmember FROM queue WHERE refmember=?');
 			$query->execute(array($this->user->id));
-			$result = $query->fetchAll(PDO::FETCH_ASSOC);
-			if (count($result) >= 1){
-				$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?') ;
-				$query->execute(array($this->user->id));
-				$message='Vous avez bien été enlevé de la file';
-				$this->view->message('File quittée' , $message, '/play');
-		    }
-	}//Check if the current user is in the queue and delete him from there
+			$result =$query->fetch(PDO::FETCH_ASSOC);
+			$resultat=$result['refmember'];
+			if ($resultat==null){
+			return false;
+			}
+			else{
+			return true;
+			}
+	} //Check if the current user is in the queue and delete him from there
 	
+
 	public function isInGame(){
-		$query = $this->db->prepare('UPDATE robots SET used=false WHERE(SELECT games.refrobot FROM GAMES WHERE refmember=?)=robots.id') ;
-		$query->execute(array($this->user->id));
 		$query = $this->db->prepare('SELECT refmember FROM games WHERE refmember=?');
 		$query->execute(array($this->user->id));
 		$result = $query->fetchAll(PDO::FETCH_ASSOC);
-		if (count($result) >= 1){
-			$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
-			$query->execute(array($this->user->id));
-			$message='Vous avez bien été enlevé de la partie';
-			$this->view->message('File quittée' , $message, '/play');
+		$resultat=$result['refmember'];
+		if ($resultat==null){
+			return false;
+		}
+		else{
+			return true;
 		}
 	}//Check if the current user is in the game and delete him from there
 	
@@ -102,24 +88,50 @@ class PlayModel extends BaseModel
 		}
 	}  //Check if the current user is the 1st of the queue
 
-	public function enterGame(){
-	        $dispo=$this->canPlay();
-			$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?');
+
+	public function leaveQueue(){
+			$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?') ;
 			$query->execute(array($this->user->id));
-			$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)') ;
-			$query->execute(array($this->user->id,$dispo,time()));
-			$query = $this->db->prepare('UPDATE robots SET used=true WHERE robots.id=? ') ;
-			$query->execute(array($dispo));
-		}
-	
+			$message='Vous avez bien été enlevé de la file';
+			$this->view->message('File quittée' , $message, '/play');
+	}
 	
 	public function leaveGame(){
 			$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
 			$query->execute(array($this->user->id));
 		  	$query = $this->db->prepare('UPDATE robots SET used=false WHERE(SELECT games.refrobot FROM GAMES WHERE refmember=?)=robots.id') ;
 			$query->execute(array($this->user->id));
+			$message='Vous avez bien été enlevé de la partie';
+			$this->view->message('Partie quittée' , $message, '/play');
 	}
 	
+	public function displayQueue(){
+		$query = $this->db->prepare('SELECT timestamp,pseudo FROM queue INNER JOIN members ON refmember=id ORDER BY timestamp ASC') ;
+		$query->execute();
+		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+	
+		foreach( $result as $key=>$value ){  //Extraction of pseudo and timestamp from array $result
+			$arr5[]=$key+1;
+			$arr=$value;
+			$arr2[]=$arr['pseudo'];
+			$arr3[]=$arr['timestamp'];
+		}
+		$arr4=array_combine($arr2,$arr5);
+	
+		print "<table wdith=\"100%\" border=\"5px\">";
+		print "<tr>";
+		print "<th>Pseudo</th>";
+		print "<th>Place</th>";
+		print "</tr>";
+		foreach ($arr4 as $key=>$username){
+			print "<tr>";
+			print "<td>$key </td> ";
+			print "<td>$username</td>";
+			print "</tr>";
+		}
+		print "</table>";
+				print "</div>";
+	}
 	
 	public function play(){
 		require_once(PATH.'libs/spykee-controller/controllerClient.php');

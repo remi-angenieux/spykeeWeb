@@ -1,6 +1,6 @@
 <?php
 
-require_once('smarty/Smarty.class.php');
+require_once(PATH.'libs/smarty/Smarty.class.php');
 
 
 class View extends Smarty{

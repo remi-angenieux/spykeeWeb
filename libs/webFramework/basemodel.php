@@ -31,6 +31,8 @@ class BaseModel {
 			return false;
 	}
 	
+
+	
 	//establish viewModel data that is required for all views in this method (i.e. the main template)
 	protected function commonViewData() {
 

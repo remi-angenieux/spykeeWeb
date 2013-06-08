@@ -70,11 +70,15 @@ class PlayController extends BaseController
 	}
 	}
 	protected function play(){
+		
+		if($this->model->isAdmin())
+		{
+			$this->model->play();
+		}
 		if($this->model->canPlay()==false){
 			$this->model->notAllowed();
 		}
 		else{
-
 			if($this->model->isFirst()){//if the user is the 1st of the queue	
 				$this->model->enterGame();	
 				$this->model->play();

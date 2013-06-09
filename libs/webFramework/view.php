@@ -13,6 +13,7 @@ class View extends Smarty{
 	protected $_headerFile;
 	protected $_footerFile;
 	protected $_config;
+	protected static $_instance;
 
 	public function __construct($controllerClass, $action)
 	{
@@ -34,6 +35,7 @@ class View extends Smarty{
 		$this->_headerFile=$this->_config->template->defaultHeader;
 		$this->_footerFile=$this->_config->template->defaultFooter;
 		$this->assign('rootUrl', $this->_config->global->rootUrl);
+		self::$_instance = $this;
 
 	}
 	
@@ -84,6 +86,12 @@ class View extends Smarty{
 		$this->assign('littleErrorTitle', $title);
 	}
 	
+	// Standalone fonction
+	static function displayError($message, $title='Erreur :'){
+		self::$_instance->assign('littleError', $message);
+		self::$_instance->assign('littleErrorTitle', $title);
+	}
+	
 	public function redirect($page){
 		header('Location: '.$this->_config->global->rootUrl.$page);
 	}
@@ -99,8 +107,9 @@ class View extends Smarty{
 				'tpl_body' => $this->_viewFile,
 				'tpl_footer' => $this->_footerFile
 		));
-		// Affiche la page web
-		$this->display('mainTemplate.tpl');
+		// Affiche la page web si il y a pas eu une erreur fatale
+		if (!Error::getFatalError())
+			$this->display('mainTemplate.tpl');
 
 		parent::__destruct();
 	}

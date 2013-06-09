@@ -32,22 +32,29 @@ class AccountModel extends BaseModel
 			$erreurs .= 'L\'adresse mail entrée n\'est pas une addresse mail valide.<br />';
 		
 		// Si il y a des erreurs
-		if (!empty($erreurs))
+		if (!empty($erreurs)){
 			$this->view->littleError($erreurs, 'Erreur de saisie');
+			$this->showRegister();
+		}
 		else{
 			// Vérifie que le pseudo est libre
-			$query = $this->db->prepare('SELECT id FROM members WHERE pseudo=?');
-			$query->execute(array($values['pseudo']));
-			$result = $query->fetchAll(PDO::FETCH_ASSOC);
-			if (count($result) >= 1){
-				$message = 'Nous somme désolé mais ce pseudo est déjà utilisé.';
-				$this->view->littleError($message);
+			try{
+				$query = $this->db->prepare('SELECT id FROM members WHERE pseudo=?');
+				$query->execute(array($values['pseudo']));
+				$result = $query->fetchAll(PDO::FETCH_ASSOC);
+				if (count($result) >= 1){
+					$message = 'Nous somme désolé mais ce pseudo est déjà utilisé.';
+					$this->view->littleError($message);
+				}
+				else{
+					$query = $this->db->prepare('INSERT INTO members (pseudo, password, email) VALUES (?, ?, ?)');
+					$query->execute(array($values['pseudo'], sha1($values['password']), $values['e-mail']));
+					
+					$this->view->redirect('?wellRegistred');
+				}
 			}
-			else{
-				$query = $this->db->prepare('INSERT INTO members (pseudo, password, email) VALUES (?, ?, ?)');
-				$query->execute(array($values['pseudo'], sha1($values['password']), $values['e-mail']));
-				
-				$this->view->redirect('?wellRegistred');
+			catch (PDOException $e){
+				Error::displayError($e);
 			}
 		}
 	}
@@ -81,18 +88,23 @@ class AccountModel extends BaseModel
 		if (!empty($erreurs))
 			$this->view->littleError($erreurs, 'Erreur de saisie');
 		else{
-			$query = $this->db->prepare('SELECT id FROM members WHERE pseudo=? AND password=?');
-			$query->execute(array($values['pseudo'], sha1($values['password'])));
-			$response = $query->fetchAll(PDO::FETCH_ASSOC);
-			
-			// Si la connexion à échoué
-			if (count($response) != 1){
-				$message = 'Vous avez du vous tromper dans le pseudo ou le mot de passe.';
-				$this->view->littleError($message);
+			try{
+				$query = $this->db->prepare('SELECT id FROM members WHERE pseudo=? AND password=?');
+				$query->execute(array($values['pseudo'], sha1($values['password'])));
+				$response = $query->fetchAll(PDO::FETCH_ASSOC);
+				
+				// Si la connexion à échoué
+				if (count($response) != 1){
+					$message = 'Vous avez du vous tromper dans le pseudo ou le mot de passe.';
+					$this->view->littleError($message);
+				}
+				else{
+					$_SESSION['id'] = $response[0]['id'];
+					$this->view->redirect('?WellLogin');
+				}
 			}
-			else{
-				$_SESSION['id'] = $response[0]['id'];
-				$this->view->redirect('?WellLogin');
+			catch (PDOException $e){
+				Error::displayError($e);
 			}
 		}
 	}

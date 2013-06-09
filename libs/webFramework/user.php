@@ -24,9 +24,15 @@ class User {
 	}
 	protected function _getInfo(){
 		$db = Db::getInstance()->db();
-		$query = $db->prepare('SELECT id, pseudo, password, email FROM members WHERE id=?');
-		$query->execute(array($this->_id));
-		$this->_data = $query->fetch(PDO::FETCH_ASSOC);
+		try{
+			$query = $db->prepare('SELECT id, pseudo, password, email FROM members WHERE id=?');
+			$query->execute(array($this->_id));
+			$this->_data = $query->fetch(PDO::FETCH_ASSOC);
+		}
+		catch (PDOException $e){
+			Error::setFatalError(true);
+			Error::displayError($e);
+		}
 	}
 	
 	static function getInstance() {

@@ -6,7 +6,6 @@
 			<article>
 				<header class="major">
 					<h2>Connexion</h2>
-					<span class="byline">Sidebars are not welcome here</span>
 				</header>
 				<form method="post" action="/account/login">
 					<table>

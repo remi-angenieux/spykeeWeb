@@ -67,14 +67,14 @@ class View extends Smarty{
 		$this->_viewFile = $controller.'/'.$file;
 	}
 	
-	public function message($title, $message, $url=''){
+	/*public function message($title, $message, $url=''){
 		$this->_viewFile = 'extras/message';
 		$this->assign('pageTitle', 'Message');
 		$this->assign(array('title' => $title,
 				'message' => $message,
 				'url' => $url
 		));
-	}
+	}*/
 	
 	public function littleMessage($message, $title='Info :'){
 		$this->assign('littleMessage', $message);

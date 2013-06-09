@@ -446,14 +446,14 @@ class SpykeeControllerClient extends SpykeeController{
 	
 	/**
 	 * Sets the robot speed
-	 * 1 lowest
+	 * 28 lowest
 	 * 128 highest
 	 * @param integer $value
 	 * @return SpykeeResponse
 	 */
 	public function setSpeed($value){
 		$value = (int) $value;
-		if ($value < 1) $value=1;
+		if ($value < 28) $value=28;
 		if ($value > 128) $value=128;
 		$this->_sendPacketToController(self::SET_SPEED, pack('C', $value));
 		return $this->_getResponse();

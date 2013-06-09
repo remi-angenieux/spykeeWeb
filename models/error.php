@@ -11,6 +11,7 @@ class ErrorModel extends BaseModel
 	//data passed to the bad URL error view
 	public function badURL()
 	{
+		$this->view->setEnvironement('home');
 		$this->view->assign('pageTitle', 'Erreur');
 	}
 }

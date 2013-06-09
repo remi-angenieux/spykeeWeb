@@ -9,11 +9,11 @@ class User {
 	
 	
 	private function __construct(){
-		$this->getId();
-		$this->getInfo();
+		$this->_getId();
+		$this->_getInfo();
 	}
 	
-	protected function getId()
+	protected function _getId()
 	{
 		if (empty($_SESSION['id']))
 			$this->_id = Config::getInstance()->global->guestId;
@@ -22,7 +22,7 @@ class User {
 		else
 			$this->_id = Config::getInstance()->global->banId;
 	}
-	protected function getInfo(){
+	protected function _getInfo(){
 		$db = Db::getInstance()->db();
 		$query = $db->prepare('SELECT id, pseudo, password, email FROM members WHERE id=?');
 		$query->execute(array($this->_id));
@@ -30,9 +30,8 @@ class User {
 	}
 	
 	static function getInstance() {
-		if(is_null (self::$_singleton) ) {
+		if(is_null (self::$_singleton) )
 			self::$_singleton = new self;
-		}
 		return self::$_singleton;
 	}
 	
@@ -40,7 +39,6 @@ class User {
 		if (array_key_exists($name, $this->_data))
 			return $this->_data[$name];
 		else{
-			// TODO utiliser un gestionnaire d'erreur
 			$trace = debug_backtrace();
 			trigger_error(
 			'Propriété non-définie via __get() : ' . $name .

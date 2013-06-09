@@ -1,6 +1,6 @@
 <?php
 
-require_once('smarty/Smarty.class.php');
+require_once(PATH.'libs/smarty/Smarty.class.php');
 
 
 class View extends Smarty{
@@ -28,7 +28,6 @@ class View extends Smarty{
 		$this->setCacheDir($this->_config->template->cacheDir);
 
 		$this->caching = Smarty::CACHING_LIFETIME_CURRENT;
-		// Pour la phase de développement
 		$this->force_compile = $this->_config->template->forceCompile;
 		
 		// Header et footer par défaut
@@ -39,11 +38,11 @@ class View extends Smarty{
 	}
 	
 	public function addAdditionalCss($file){
-		array_push($this->_additionalCss, $file);
+		array_push($this->_additionalCss, $this->_config->global->rootUrl.'css/'.$file);
 	}
 	
 	public function addAdditionalJs($file){
-		array_push($this->_additionalJs, $file);
+		array_push($this->_additionalJs, $this->_config->global->rootUrl.'js/'.$file);
 	}
 	
 	public function setEnvironement($env){
@@ -52,7 +51,7 @@ class View extends Smarty{
 				$this->_headerFile='';
 				$this->_footerFile='';
 				break;
-			case 'header':
+			case 'home':
 				$this->_headerFile='extras/html_home_header';
 				$this->_footerFile='extras/html_home_footer';
 				break;
@@ -73,6 +72,20 @@ class View extends Smarty{
 				'message' => $message,
 				'url' => $url
 		));
+	}
+	
+	public function littleMessage($message, $title='Info :'){
+		$this->assign('littleMessage', $message);
+		$this->assign('littleMessageTitle', $title);
+	}
+	
+	public function littleError($message, $title='Erreur :'){
+		$this->assign('littleError', $message);
+		$this->assign('littleErrorTitle', $title);
+	}
+	
+	public function redirect($page){
+		header('Location: '.$this->_config->global->rootUrl.$page);
 	}
 	
 	public function __destruct(){

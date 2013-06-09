@@ -6,7 +6,7 @@
 -->
 <html>
 	<head>
-		<title>{$pageTitle}</title>
+		<title>SpykeePlay - {$pageTitle}</title>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<meta name="description" content="" />
 		<meta name="keywords" content="" />
@@ -22,6 +22,7 @@
 		{foreach $additionalCss as $cssFile}
 		<link rel="stylesheet" href="{$cssFile}" type="text/css" />
 		{/foreach}
+		<link rel="stylesheet" href="{$rootUrl}css/ui-darkness/jquery-ui-1.10.3.custom.min.css" type="text/css" />
 		<noscript>
 			<link rel="stylesheet" href="{$rootUrl}css/5grid/core.css" />
 			<link rel="stylesheet" href="{$rootUrl}css/5grid/core-desktop.css" />
@@ -52,7 +53,7 @@
 										<!-- Nav -->
 											<nav id="nav" class="mobileUI-site-nav">
 												<ul>
-													<li><a href="/">Accueil</a></li>
+													<li><a href="{$rootUrl}">Accueil</a></li>
 													<li>
 														<a href="" class="arrow">Admin</a>
 														<ul>
@@ -71,8 +72,12 @@
 														</ul>
 													</li>
 													<li><a href="/play">Jouer</a></li>
-													<li><a href="/account/login">Login</a></li>
-													<li><a href="no-sidebar.html">No Sidebar</a></li>
+													{if !$isConnected}
+													<li><a href="{$rootUrl}account/login">Se connecter</a></li>
+													<li><a href="{$rootUrl}account/register">S'inscrire</a></li>
+													{else}
+													<li><a href="{$rootUrl}account/logout">Se déconnecter</a></li>
+													{/if}
 												</ul>
 											</nav>
 									
@@ -84,7 +89,7 @@
 									<h2><strong>Spykee Play:</strong> Une application web fun<br />
 									qui vous permet de controller un robot</h2>
 									<p>Testez tout de suite, c'est gratuit ;)</p>
-									<a href="#" class="button button-big button-icon button-icon-check">Jouer !</a>
+									<a href="/play" class="button button-big button-icon button-icon-check">Jouer !</a>
 								</div>
 
 						</div>
@@ -94,5 +99,23 @@
 		
 		<!-- Main Wrapper -->
 			<div id="main-wrapper">
+				{if !empty($littleMessage) || !empty($littleError)}
+				<div id="messages" class="ui-widget" style="float: left; margin-bottom: 25px; z-index: 3;  position: relative;">
+				{/if}
+					{if !empty($littleMessage)}
+					<div class="ui-state-highlight ui-corner-all" style="margin-top: 15px; padding: 0 .7em; font-size:11px; line-height:1.3em; width: 600px; margin-left: 90px; margin-bottom: 15px;">
+						<p style="padding:0px; margin:0px; margin-top: 11px; margin-bottom: 11px; font-size: 1.1em;"><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>
+							<strong style="color: rgb(46, 125, 178); font-weight: bold;">{$littleMessageTitle}</strong> {$littleMessage}</p>
+					</div>
+					{/if}
+					{if !empty($littleError)}
+					<div class="ui-state-error ui-corner-all" style="margin-top: 15px; padding: 0 .7em; font-size:11px; line-height:1.3em; width: 600px; margin-left: 90px; margin-bottom: 15px;">
+						<p style="padding:0px; margin:0px; margin-top: 11px; margin-bottom: 11px; font-size: 1.1em;"><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>
+							<strong style="color: rgb(17, 17, 17); font-weight: bold;">{$littleErrorTitle}</strong> {$littleError}</p>
+					</div>
+					{/if}
+				{if !empty($littleMessage) || !empty($littleError)}
+				</div>
+				{/if}
 				<div class="main-wrapper-style1">
 					<div class="inner">

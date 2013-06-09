@@ -10,3 +10,8 @@ _5grid.ready(function() {
 	}
 
 });
+
+$(document).ready(function(){
+	$('#messages').hide();
+	$('#messages').fadeIn(2000);
+});

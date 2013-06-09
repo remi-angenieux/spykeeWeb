@@ -23,7 +23,6 @@
 		<link rel="stylesheet" href="{$cssFile}" type="text/css" />
 		{/foreach}
 		<link rel="stylesheet" href="{$rootUrl}css/ui-darkness/jquery-ui-1.10.3.custom.min.css" type="text/css" />
-		<link rel="stylesheet" href="file:///D:/Windows/remi/Downloads/jquery-ui-1.10.3.custom/jquery-ui-1.10.3.custom/css/ui-darkness/jquery-ui-1.10.3.custom.css" type="text/css" />
 		<noscript>
 			<link rel="stylesheet" href="{$rootUrl}css/5grid/core.css" />
 			<link rel="stylesheet" href="{$rootUrl}css/5grid/core-desktop.css" />

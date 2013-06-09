@@ -9,7 +9,6 @@ class PlayModel extends BaseModel
 		$this->view->assign('pageTitle', 'Jouer');
 		$this->view->addAdditionalJs('jquery-ui-1.10.3.custom.min.js');
 		$this->view->addAdditionalJs('play.js');
-		//$this->view->addAdditionalCss('ui-darkness/jquery-ui-1.10.3.custom.min.css');
 		$this->view->addAdditionalCss('robot.css');
 	}
 	

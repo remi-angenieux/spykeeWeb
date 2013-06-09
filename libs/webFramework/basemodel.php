@@ -31,6 +31,14 @@ class BaseModel {
 			return false;
 	}
 	
+	public function isAdmin(){
+		if ($this->user->refmember==$this->user->id){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
 
 	
 	//establish viewModel data that is required for all views in this method (i.e. the main template)

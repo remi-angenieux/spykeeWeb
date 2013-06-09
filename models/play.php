@@ -11,7 +11,7 @@ class PlayModel extends BaseModel
 
 	}
 	
-	public function notConnected(){
+	public function showNotConnected(){
 		$this->view->assign(array('pageTitle' => 'Erreur'));
 		$message = 'Vous devez être connecté pour pouvoir jouer';
 		$this->view->message('Vous n\' êtes pas connecté' , $message, '/account/login');
@@ -19,10 +19,25 @@ class PlayModel extends BaseModel
 	}
 	
 
-	public function notAllowed(){
+	public function showNotAllowed(){
 		$this->view->assign(array('pageTitle' => 'Erreur'));
 		$message='Vous n\'êtes pas autorisé a jouer';
 		$this->view->message('Erreur' , $message, '/play');
+	}
+	
+	public function displayImg(){
+		$imgDir="/images/";
+		$query = $this->db->prepare('SELECT image FROM members INNER JOIN games ON games.refmember=members.id') ;
+		$query->execute();
+		$array = $query->fetch(PDO::FETCH_ASSOC);
+		$resultat=$array['image'];
+		if(!$resultat){
+			$src=null;
+		}
+		else{
+			$src=$imgDir.$resultat;
+		}
+		$this->view->assign('src',$src);
 	}
 	
 	//add member to queue
@@ -42,6 +57,20 @@ class PlayModel extends BaseModel
 		$query->execute(array($this->user->id,$dispo,time()));
 		$query = $this->db->prepare('UPDATE robots SET used=true WHERE robots.id=? ') ;
 		$query->execute(array($dispo));
+		$query = $this->db->prepare('INSERT INTO gameshistory (refmember,refrobot,date,duration) VALUES(?,?,?,?)') ;
+		$query->execute(array($this->user->id,$dispo,date('c'),time()));
+	}
+	
+	public function enterGameAdmin(){
+		$dispo=$this->canPlayAdmin();
+		$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?');
+		$query->execute(array($this->user->id));
+		$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)') ;
+		$query->execute(array($this->user->id,$dispo,time()));
+		$query = $this->db->prepare('UPDATE robots SET used=true WHERE robots.id=? ') ;
+		$query->execute(array($dispo));
+		$query = $this->db->prepare('INSERT INTO gameshistory (refmember,refrobot,date,duration) VALUES(?,?,?,?)') ;
+		$query->execute(array($this->user->id,$dispo,date('c'),time()));
 	}
 	
 
@@ -101,10 +130,17 @@ class PlayModel extends BaseModel
 	
 	public function leaveGame(){
 			$this->view->assign(array('pageTitle' => 'Partie quittée'));
-			$query = $this->db->prepare('UPDATE robots SET used=false WHERE(SELECT games.refrobot FROM GAMES WHERE refmember=?)=robots.id') ;
+			$query = $this->db->prepare('UPDATE robots SET used=false WHERE(SELECT games.refrobot FROM games WHERE refmember=?)=robots.id') ;
 			$query->execute(array($this->user->id));
 			$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
 			$query->execute(array($this->user->id));
+			$query = $this->db->prepare('SELECT duration FROM gameshistory WHERE refmember=? AND date=(SELECT MAX(date) FROM gameshistory)');
+			$query->execute(array($this->user->id));
+			$result =$query->fetch(PDO::FETCH_ASSOC);
+			$duration=time()-$result['duration'];
+			print($duration);
+			$query = $this->db->prepare('UPDATE gameshistory SET duration=? WHERE date=(SELECT MAX(date) FROM gameshistory) ') ;
+			$query->execute(array($duration));
 			$message='Vous avez bien été enlevé de la partie';
 			$this->view->message('Partie quittée' , $message, '/play');
 	}
@@ -162,8 +198,14 @@ class PlayModel extends BaseModel
 	}
 	*/
 	public function ajax(){
+		$query = $this->db->prepare('SELECT name,Ctrip,Ctrport FROM robots INNER JOIN games ON robots.id=games.refrobot WHERE refmember=? )') ;
+		$query->execute(array($this->user->id));
+		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		foreach($result as $value){
+			$array=$value;
+		}
 		require_once(PATH.'libs/spykee-controller/controllerClient.php');
-		$this->_spykee = new SpykeeControllerClient('Robot1', '127.0.0.1', '2000');
+		$this->_spykee = new SpykeeControllerClient($array['name'], $array['Ctrip'], $array['Ctrport']);
 	}
 	
 	public function up(){
@@ -220,9 +262,20 @@ class PlayModel extends BaseModel
 		$query->execute();
 		$tab1 =$query->fetch(PDO::FETCH_ASSOC);
 		$dispo=$tab1['id'];
-		if ($dispo ==null)
+		if (!$dispo)
 			return false;
 		else 
+			return $dispo;
+	}
+	
+	public function canPlayAdmin(){
+		$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.used= false');
+		$query->execute();
+		$tab1 =$query->fetch(PDO::FETCH_ASSOC);
+		$dispo=$tab1['id'];
+		if (!$dispo)
+			return false;
+		else
 			return $dispo;
 	}
 	

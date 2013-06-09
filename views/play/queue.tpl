@@ -22,3 +22,12 @@
 {/foreach}
 </table>
 
+<p>
+<input type="button" name="enableVideo" value="Activer la vidéo" onclick="enableVideo()" />
+</p>
+
+<p>
+ <img src="{$src}" alt="Avatar" />
+ </p>
+ 
+

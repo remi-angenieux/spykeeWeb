@@ -24,7 +24,7 @@ class PlayController extends BaseController
 			
 		}
 		else{
-			$this->model->notConnected();
+			$this->model->showNotConnected();
 		}
 		/*if (!empty($_POST['up']))
 			$this->model->up();
@@ -55,6 +55,7 @@ class PlayController extends BaseController
 	protected function queue(){
 	if ($this->model->isInQueue()){
     	$this->model->displayQueue();
+    	$this->model->displayImg();
 	}	
 	else{
 		if ($this->model->isConnected()){
@@ -62,10 +63,10 @@ class PlayController extends BaseController
 			$this->model->displayQueue();
 		}
 		else{
-			$this->model->notConnected();
+			$this->model->showNotConnected();
 		}
 	}
-	if($this->model->isFirst()){
+	if($this->model->isFirst() && $this->model->canPlay()){
 		$this->view->addAdditionalJs('http://spykee.lan/js/askplay.js');
 	}
 	}
@@ -73,10 +74,11 @@ class PlayController extends BaseController
 		
 		if($this->model->isAdmin())
 		{
+			$this->model->enterGameAdmin();
 			$this->model->play();
 		}
-		if($this->model->canPlay()==false){
-			$this->model->notAllowed();
+		if(!$this->model->canPlay()){
+			$this->model->showNotAllowed();
 		}
 		else{
 			if($this->model->isFirst()){//if the user is the 1st of the queue	
@@ -84,7 +86,7 @@ class PlayController extends BaseController
 				$this->model->play();
 			}
 			else{
-				$this->model->notAllowed();
+				$this->model->showNotAllowed();
 			}
 		}
 	}

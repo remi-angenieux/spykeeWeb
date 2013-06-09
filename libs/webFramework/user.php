@@ -25,10 +25,11 @@ class User {
 	
 	protected function getInfo(){
 		$db = Db::getInstance()->db();
-		$query = $db->prepare('SELECT id, pseudo, password, email ,refmember FROM members WHERE id=?');
+		$query = $db->prepare('SELECT id, pseudo, password, email , refmember FROM members FULL OUTER JOIN admin ON refmember=id WHERE id=?');
 		$query->execute(array($this->_id));
 		$this->_data = $query->fetch(PDO::FETCH_ASSOC);
 	}
+	
 	
 	static function getInstance() {
 		if(is_null (self::$_singleton) ) {
@@ -52,28 +53,7 @@ class User {
 		}
 	}
 	
-	protected function isAdmin()
-	{
-		$i=0;
-		$query = $this->db->prepare('SELECT refmember FROM admin');
-		$query->execute();
-		$result =$query->fetchAll(PDO::FETCH_ASSOC);
-		foreach($result as $key=>$value){
-			foreach($value as $key2=>$value2){
-				$resultat[]=$value2;
-			}
-		}
-		foreach($resultat as $value4){
-			if($this->user->id==$value4)
-				$i=$i+1;
-		}
-		if($i==1){
-			return true;
-		}
-		else{
-			return false;
-		}
-	}
+
 	
 }
 

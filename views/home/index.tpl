@@ -8,4 +8,5 @@
 <a href="/play" target="_self">Aller sur la page de jeu</a><br/>
 <a href="/account/register" target="_self">S'inscrire</a><br/>
 <a href="/account/login" target="_self">Se connecter</a><br/>
-<a href="/account/logout" target="_self">Se déconnecter</a>
+<a href="/account/logout" target="_self">Se déconnecter</a><br/>
+<a href="/account" target="_self">aller sur son profil</a>

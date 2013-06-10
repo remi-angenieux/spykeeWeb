@@ -13,10 +13,21 @@ class AccountController extends BaseController
 	//default method
 	protected function index()
 	{
+		$this->model->index();
+		if(isset($this->urlValues['wellChangePass']))
+			$this->view->littleMessage('Votre mot de passe à bien été changé.');
+		if(isset($this->urlValues['wellChangeEmail']))
+			$this->view->littleMessage('Votre e-mail à bien été changé.');
+		if(isset($this->urlValues['wellChangeImg']))
+			$this->view->littleMessage('Votre avatar à bien été changé.');
+		if(isset($this->urlValues['wellDelHistory']))
+			$this->view->littleMessage('Historique des parties effacés.');
+		
+			
 		if ($this->model->isConnected()){
 			$this->model->displayProfil();
 			$this->model->displayImg();
-			$this->model->history();
+			$this->model->displayHistory();
 			$this->model->displayUser();
 			$this->view->setTemplate('profil');
 		}
@@ -80,8 +91,7 @@ class AccountController extends BaseController
 		}
 	}
 	protected function visitProfil(){
-		
-	
+	$this->model->visitProfil($_POST);
 	
 	}
 

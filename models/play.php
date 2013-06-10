@@ -24,13 +24,14 @@ class PlayModel extends BaseModel
 	}
 	
 	public function displayImg(){
-		$imgDir="/images/";
+		//TODO mettre le dossier d'image a image/profil
+		$imgDir=$this->config->global->rootUrl."images/";
 		$query = $this->db->prepare('SELECT image FROM members INNER JOIN games ON games.refmember=members.id') ;
 		$query->execute();
 		$array = $query->fetch(PDO::FETCH_ASSOC);
 		$resultat=$array['image'];
 		if(!$resultat){
-			$src=null;
+			$src=$imgDir.'default.jpg';
 		}
 		else{
 			$src=$imgDir.$resultat;
@@ -118,6 +119,7 @@ class PlayModel extends BaseModel
 	
 
 	public function isFirst(){
+		//TODO essayer de fusionner les requêtes
 		$query = $this->db->prepare('SELECT MIN(timestamp) FROM queue'); 
 		$query->execute();
 		$tab1 =$query->fetch(PDO::FETCH_ASSOC);

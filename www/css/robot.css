@@ -1,0 +1,202 @@
+@CHARSET "UTF-8";
+#console{
+	background-color: black;
+	width: 100%;
+	overflow:auto;
+	max-height: 12em;
+}
+#console p{
+	margin: 0px;
+	padding-top: 4px;
+	padding-bottom: 4px;
+	padding-left: 2px;
+	padding-right: 2px;
+	font-family: 'Monospace';
+	font-size: 12px;
+	color: white;
+	line-height: 1.2em;
+}
+.consoleError{
+	color: red;
+	font-weight: bold;
+}
+#left{
+	float: left;
+}
+#right{
+	float: right;
+	margin-right: 50px;
+}
+.clear{
+	clear: both;
+}
+#robotMove{
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 0px;
+	margin-bottom: 0px;
+	padding: 0px;
+	width: 130px;
+}
+#robotMove p{
+	margin: 0px;
+	padding: 0px;
+}
+#robotMove p.center{
+	text-align: center;
+	clear: both;
+}
+#robotMove p.right{
+	float: right;
+}
+#robotMove p.left{
+	float: left;
+}
+#speed, #speedDescription{
+	width: 300px;
+}
+#speedDescription p.lowest{
+	float: left;
+}
+#speedDescription p.highest{
+	float: right;
+}
+#holdingUp.up{
+	background-image: url('../images/buttonUpUp.png');
+	background-repeat:no-repeat;
+	background-position: center;
+	width: 45px;
+	height: 49px;
+	cursor: pointer;
+	border: none;
+	background-color: transparent;
+	color: transparent;
+	margin: 0px;
+}
+#holdingUp.down{
+	background-image: url('../images/buttonUpDown.png');
+	background-repeat:no-repeat;
+	background-position: center;
+	width: 45px;
+	height: 49px;
+	cursor: pointer;
+	border: none;
+	background-color: transparent;
+	color: transparent;
+	margin: 0px;
+}
+#holdingDown.up{
+	background-image: url('../images/buttonDownUp.png');
+	background-repeat:no-repeat;
+	background-position: center;
+	width: 45px;
+	height: 45px;
+	cursor: pointer;
+	border: none;
+	background-color: transparent;
+	color: transparent;
+	margin: 0px;
+}
+#holdingDown.down{
+	background-image: url('../images/buttonDownDown.png');
+	background-repeat:no-repeat;
+	background-position: center;
+	width: 45px;
+	height: 45px;
+	cursor: pointer;
+	border: none;
+	background-color: transparent;
+	color: transparent;
+	margin: 0px;
+}
+#holdingLeft.up{
+	background-image: url('../images/buttonLeftUp.png');
+	background-repeat:no-repeat;
+	background-position: center;
+	width: 45px;
+	height: 45px;
+	cursor: pointer;
+	border: none;
+	background-color: transparent;
+	color: transparent;
+	margin: 0px;
+}
+#holdingLeft.down{
+	background-image: url('../images/buttonLeftDown.png');
+	background-repeat:no-repeat;
+	background-position: center;
+	width: 45px;
+	height: 45px;
+	cursor: pointer;
+	border: none;
+	background-color: transparent;
+	color: transparent;
+	margin: 0px;
+}
+#holdingRight.up{
+	background-image: url('../images/buttonRightUp.png');
+	background-repeat:no-repeat;
+	background-position: center;
+	width: 45px;
+	height: 45px;
+	cursor: pointer;
+	border: none;
+	background-color: transparent;
+	color: transparent;
+	margin: 0px;
+}
+#holdingRight.down{
+	background-image: url('../images/buttonRightDown.png');
+	background-repeat:no-repeat;
+	background-position: center;
+	width: 45px;
+	height: 45px;
+	cursor: pointer;
+	border: none;
+	background-color: transparent;
+	color: transparent;
+	margin: 0px;
+}
+#stop{
+	background-image: url('../images/buttonStop.png');
+	background-repeat:no-repeat;
+	background-position: center;
+	width: 50px;
+	height: 50px;
+	cursor: pointer;
+	border: none;
+	background-color: transparent;
+	color: transparent;
+	margin: 0px;
+}
+li.keyboardTop
+{
+	background-image: url('../images/keyboardUp.png');
+	background-repeat: no-repeat; padding-left: 55px;
+	min-height: 55px;
+}
+li.keyboardLeft{
+	background-image: url('../images/keyboardLeft.png');
+	background-repeat: no-repeat; padding-left: 55px;
+	min-height: 55px;
+	margin-top: 10px;
+}
+li.keyboardRight{
+	background-image: url('../images/keyboardRight.png');
+	background-repeat: no-repeat; padding-left: 55px;
+	min-height: 55px;
+	margin-top: 10px;
+}
+li.keyboardDown{
+	background-image: url('../images/keyboardDown.png');
+	background-repeat: no-repeat; padding-left: 55px;
+	min-height: 55px;
+	margin-top: 10px;
+}
+li.keyboardCtrl{
+	background-image: url('../images/keyboardCtrl.png');
+	background-repeat: no-repeat; padding-left: 55px;
+	min-height: 55px;
+	margin-top: 10px;
+	line-height: 50px;
+}

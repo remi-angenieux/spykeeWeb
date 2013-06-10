@@ -71,6 +71,8 @@ class SpykeeControllerServer extends SpykeeController{
 		
 		// Set the default speed
 		$this->_SpykeeRobotClient->setSpeed($this->_moveSpeed);
+		// Enable video
+		$this->_SpykeeRobotClient->setVideo(true);
 		
 		// Launch the server
 		$this->_mainLoop();

@@ -18,8 +18,8 @@ class AccountController extends BaseController
 			$this->view->setTemplate('profile');
 		}
 		else{
-			$this->model->login();
-			$this->view->setTemplate('connection');
+			$this->model->showLogin();
+			$this->view->setTemplate('login');
 		}
 	}
 	

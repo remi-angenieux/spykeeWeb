@@ -14,6 +14,8 @@ class AccountModel extends BaseModel
 	}
 	
 	public function processRegister($values){
+		$values['pseudo'] = trim($values['pseudo']);
+		$values['e-mail'] = trim($values['e-mail']);
 		/*
 		 * Recherche les éventuels erreur de saisies
 		 */
@@ -30,23 +32,29 @@ class AccountModel extends BaseModel
 			$erreurs .= 'L\'adresse mail entrée n\'est pas une addresse mail valide.<br />';
 		
 		// Si il y a des erreurs
-		if (!empty($erreurs))
-			$this->view->message('Erreur de saisie', $erreurs, '/account/register');
+		if (!empty($erreurs)){
+			$this->view->littleError($erreurs, 'Erreur de saisie');
+			$this->showRegister();
+		}
 		else{
 			// Vérifie que le pseudo est libre
-			$query = $this->db->prepare('SELECT id FROM members WHERE pseudo=?');
-			$query->execute(array($values['pseudo']));
-			$result = $query->fetchAll(PDO::FETCH_ASSOC);
-			if (count($result) >= 1){
-				$message = 'Nous somme désolé mais ce pseudo est déjà utilisé.';
-				$this->view->message('Pseudo déjà utilisé', $message, '/account/register');
+			try{
+				$query = $this->db->prepare('SELECT id FROM members WHERE pseudo=?');
+				$query->execute(array($values['pseudo']));
+				$result = $query->fetchAll(PDO::FETCH_ASSOC);
+				if (count($result) >= 1){
+					$message = 'Nous somme désolé mais ce pseudo est déjà utilisé.';
+					$this->view->littleError($message);
+				}
+				else{
+					$query = $this->db->prepare('INSERT INTO members (pseudo, password, email) VALUES (?, ?, ?)');
+					$query->execute(array($values['pseudo'], sha1($values['password']), $values['e-mail']));
+					
+					$this->view->redirect('?wellRegistred');
+				}
 			}
-			else{
-				$query = $this->db->prepare('INSERT INTO members (pseudo, password, email) VALUES (?, ?, ?)');
-				$query->execute(array($values['pseudo'], sha1($values['password']), $values['e-mail']));
-				
-				$message = 'Votre inscription s\'est bien déroulée, vous pouvez dorénavant vous connecter.';
-				$this->view->message('Inscription réussi', $message, '/account/login');
+			catch (PDOException $e){
+				Error::displayError($e);
 			}
 		}
 	}
@@ -59,10 +67,7 @@ class AccountModel extends BaseModel
 	}
 	
 	public function messageAlreadyConnected(){
-		$message = 'Vous êtes dejà connecté. Cette action vous est inutile.<br>
-				Si vous voulez faire quand même cette action il faut que vous vous déconnectiez.';
-		$url='/'; // Accueil
-		$this->view->message('Vous êtes déjà connecté', $message, $url);
+		$this->view->redirect('?alreadyLogin');
 	}
 	
 	public function showLogin(){
@@ -81,34 +86,36 @@ class AccountModel extends BaseModel
 		
 		// Si il y a des erreurs
 		if (!empty($erreurs))
-			$this->view->message('Erreur de saisie', $erreurs, '/account/login');
+			$this->view->littleError($erreurs, 'Erreur de saisie');
 		else{
-			$query = $this->db->prepare('SELECT id FROM members WHERE pseudo=? AND password=?');
-			$query->execute(array($values['pseudo'], sha1($values['password'])));
-			$response = $query->fetchAll(PDO::FETCH_ASSOC);
-			
-			// Si la connexion à échoué
-			if (count($response) != 1){
-				$message = 'Vous avez du vous tromper dans le pseudo ou le mot de passe.';
-				$this->view->message('Connexion échoué', $message, '/account/login');
+			try{
+				$query = $this->db->prepare('SELECT id FROM members WHERE pseudo=? AND password=?');
+				$query->execute(array($values['pseudo'], sha1($values['password'])));
+				$response = $query->fetchAll(PDO::FETCH_ASSOC);
+				
+				// Si la connexion à échoué
+				if (count($response) != 1){
+					$message = 'Vous avez du vous tromper dans le pseudo ou le mot de passe.';
+					$this->view->littleError($message);
+				}
+				else{
+					$_SESSION['id'] = $response[0]['id'];
+					$this->view->redirect('?WellLogin');
+				}
 			}
-			else{
-				$_SESSION['id'] = $response[0]['id'];
-				$message = 'Vous avez bien été connecté ;)';
-				$this->view->message('Connexion réussie', $message, '/');
+			catch (PDOException $e){
+				Error::displayError($e);
 			}
 		}
 	}
 	
 	public function messageAlreadyLogout(){
-		$message = 'Vous êtes déjà déconnecté';
-		$this->view->message('Vous êtes déjà déconnecté', $message, '/');
+		$this->view->redirect('?alreadyLogout');
 	}
 	
 	public function logout(){
 		session_unset();
-		$message = 'Vous avez bien été déconnecté.';
-		$this->view->message('Deconnexion réussie', $message, '/');
+		$this->view->redirect('?WellLogout');
 	}
 }
 

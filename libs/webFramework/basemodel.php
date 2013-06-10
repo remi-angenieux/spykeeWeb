@@ -17,10 +17,10 @@ class BaseModel {
 	public function __construct($view)
 	{
 		$this->view = $view;
-		$this->commonViewData();
 		$this->config = Config::getInstance();
 		$this->db = Db::getInstance()->db();
 		$this->user = User::getInstance();
+		$this->commonViewData();
 		
 	}
 
@@ -33,7 +33,7 @@ class BaseModel {
 	
 	//establish viewModel data that is required for all views in this method (i.e. the main template)
 	protected function commonViewData() {
-
+		$this->view->assign('isConnected', $this->isConnected());
 	}
 	
 }

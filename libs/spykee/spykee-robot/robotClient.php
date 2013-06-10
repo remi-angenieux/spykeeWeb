@@ -624,7 +624,8 @@ class SpykeeRobotClient extends SpykeeRobot {
 	 */
 	public function setSpeed($value){
 		$value = (int) $value;
-		if ($value < 0 AND $value > 128) $value = self::MOVE_SPEED;
+		if ($value < 28) $value=28;
+		if ($value > 128) $value=128;
 		$this->_moveSpeed = $value;
 		return new SpykeeResponse(self::STATE_OK, SpykeeResponse::MOVE_SPEED_CHANGED);
 	}

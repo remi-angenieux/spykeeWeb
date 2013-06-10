@@ -13,6 +13,7 @@ class View extends Smarty{
 	protected $_headerFile;
 	protected $_footerFile;
 	protected $_config;
+	protected static $_instance;
 
 	public function __construct($controllerClass, $action)
 	{
@@ -28,22 +29,22 @@ class View extends Smarty{
 		$this->setCacheDir($this->_config->template->cacheDir);
 
 		$this->caching = Smarty::CACHING_LIFETIME_CURRENT;
-		// Pour la phase de développement
 		$this->force_compile = $this->_config->template->forceCompile;
 		
 		// Header et footer par défaut
 		$this->_headerFile=$this->_config->template->defaultHeader;
 		$this->_footerFile=$this->_config->template->defaultFooter;
 		$this->assign('rootUrl', $this->_config->global->rootUrl);
+		self::$_instance = $this;
 
 	}
 	
 	public function addAdditionalCss($file){
-		array_push($this->_additionalCss, $file);
+		array_push($this->_additionalCss, $this->_config->global->rootUrl.'css/'.$file);
 	}
 	
 	public function addAdditionalJs($file){
-		array_push($this->_additionalJs, $file);
+		array_push($this->_additionalJs, $this->_config->global->rootUrl.'js/'.$file);
 	}
 	
 	public function setEnvironement($env){
@@ -52,7 +53,7 @@ class View extends Smarty{
 				$this->_headerFile='';
 				$this->_footerFile='';
 				break;
-			case 'header':
+			case 'home':
 				$this->_headerFile='extras/html_home_header';
 				$this->_footerFile='extras/html_home_footer';
 				break;
@@ -66,13 +67,33 @@ class View extends Smarty{
 		$this->_viewFile = $controller.'/'.$file;
 	}
 	
-	public function message($title, $message, $url=''){
+	/*public function message($title, $message, $url=''){
 		$this->_viewFile = 'extras/message';
 		$this->assign('pageTitle', 'Message');
 		$this->assign(array('title' => $title,
 				'message' => $message,
 				'url' => $url
 		));
+	}*/
+	
+	public function littleMessage($message, $title='Info :'){
+		$this->assign('littleMessage', $message);
+		$this->assign('littleMessageTitle', $title);
+	}
+	
+	public function littleError($message, $title='Erreur :'){
+		$this->assign('littleError', $message);
+		$this->assign('littleErrorTitle', $title);
+	}
+	
+	// Standalone fonction
+	static function displayError($message, $title='Erreur :'){
+		self::$_instance->assign('littleError', $message);
+		self::$_instance->assign('littleErrorTitle', $title);
+	}
+	
+	public function redirect($page){
+		header('Location: '.$this->_config->global->rootUrl.$page);
 	}
 	
 	public function __destruct(){
@@ -86,8 +107,9 @@ class View extends Smarty{
 				'tpl_body' => $this->_viewFile,
 				'tpl_footer' => $this->_footerFile
 		));
-		// Affiche la page web
-		$this->display('mainTemplate.tpl');
+		// Affiche la page web si il y a pas eu une erreur fatale
+		if (!Error::getFatalError())
+			$this->display('mainTemplate.tpl');
 
 		parent::__destruct();
 	}

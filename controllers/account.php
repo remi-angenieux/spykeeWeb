@@ -14,8 +14,11 @@ class AccountController extends BaseController
 	protected function index()
 	{
 		if ($this->model->isConnected()){
-			$this->model->showProfile();
-			$this->view->setTemplate('profile');
+			$this->model->displayProfil();
+			$this->model->displayImg();
+			$this->model->history();
+			$this->model->displayUser();
+			$this->view->setTemplate('profil');
 		}
 		else{
 			$this->model->showLogin();
@@ -36,6 +39,10 @@ class AccountController extends BaseController
 		}
 	}
 	
+	protected function delHistory(){
+		$this->model->delHistory();
+	}
+	
 	protected function login(){
 		if ($this->model->isConnected())
 			$this->model->messageAlreadyConnected();
@@ -53,4 +60,44 @@ class AccountController extends BaseController
 		else
 			$this->model->messageAlreadyLogout();
 	}
-}
+	
+	
+	protected function changePass(){
+		if ($this->model->isConnected()){
+			$this->model->changePass($_POST);
+		}
+		else{
+			$this->model->showNotConnected();
+		}
+	}
+		
+	protected function changeMail(){
+		if ($this->model->isConnected()){
+			$this->model->changeMail($_POST);
+		}
+		else{
+			$this->model->showNotConnected();
+		}
+	}
+	protected function visitProfil(){
+		
+	
+	
+	}
+
+	
+	protected function displayHistory(){
+		if ($this->model->isConnected()){
+			$this->model->displayHistory();
+		}
+		else{
+			$this->model->showNotConnected();
+		}
+	}
+	
+	
+	protected function uploadImg(){
+		$this->model->uploadImg($_FILES,$_POST);
+	}
+		
+		}

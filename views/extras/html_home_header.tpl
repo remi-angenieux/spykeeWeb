@@ -54,6 +54,7 @@
 											<nav id="nav" class="mobileUI-site-nav">
 												<ul>
 													<li><a href="{$rootUrl}">Accueil</a></li>
+													{if $isAdmin}
 													<li>
 														<a href="" class="arrow">Admin</a>
 														<ul>
@@ -71,6 +72,7 @@
 															<li><a href="#">Veroeros feugiat</a></li>
 														</ul>
 													</li>
+													{/if}
 													<li><a href="/play">Jouer</a></li>
 													{if !$isConnected}
 													<li><a href="{$rootUrl}account/login">Se connecter</a></li>

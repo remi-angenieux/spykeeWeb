@@ -31,9 +31,14 @@ class BaseModel {
 			return false;
 	}
 	
+	public function isAdmin(){
+		return $this->user->isAdmin;
+	}
+	
 	//establish viewModel data that is required for all views in this method (i.e. the main template)
 	protected function commonViewData() {
 		$this->view->assign('isConnected', $this->isConnected());
+		$this->view->assign('isAdmin', $this->isAdmin());
 	}
 	
 }

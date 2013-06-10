@@ -35,10 +35,10 @@ function sendAction(action, callback, data){
 	else
 		post = { action: action, data: data };
 	$.post('/play/ajax', post, function(data) {
-		/*$('.result').text(data);*/
+		var robotConsole = $('#console');
+		//$('p', robotConsole).html(data);
 		var result = jQuery.parseJSON(data);
 		var currentTime = new Date();
-		var robotConsole = $('#console');
 		var consoleText=$('p', robotConsole).html();
 		consoleText += '['+currentTime.getHours()+'h'+currentTime.getMinutes()+'min'+currentTime.getSeconds()+'] ';
 		if (result.state != 1)

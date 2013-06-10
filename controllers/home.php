@@ -11,8 +11,7 @@ class HomeController extends BaseController
 	}
 
 	//default method
-	protected function index()
-	{
+	protected function index(){
 		$this->model->index();
 		// Gestion de l'affichage des messages
 		if(isset($this->urlValues['wellRegistred']))
@@ -26,4 +25,12 @@ class HomeController extends BaseController
 		else if(isset($this->urlValues['WellLogout']))
 			$this->view->littleMessage('Vous avez bien été déconnecté.');
 	}
+
+	protected function admin(){
+		
+		$this->model->admin();
+	}
+
 }
+
+?>

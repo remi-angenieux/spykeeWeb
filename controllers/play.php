@@ -13,7 +13,19 @@ class PlayController extends BaseController
 	//default method
 	protected function index()
 	{
-		$this->model->index();
+		if ($this->model->isConnected()){
+			$this->model->index();
+			if($this->model->isInQueue()){
+				$this->model->leaveQueue();
+			}
+			if($this->model->isInGame()){
+				$this->model->leaveGame();
+			}
+			
+		}
+		else{
+			$this->model->showNotConnected();
+		}
 		/*if (!empty($_POST['up']))
 			$this->model->up();
 		if (!empty($_POST['left']))
@@ -38,6 +50,52 @@ class PlayController extends BaseController
 			$this->model->stop();
 		if (!empty($_POST['enableVideo']))
 			$this->model->enableVideo();*/
+	}
+	
+	protected function queue(){
+	if ($this->model->isInQueue()){
+    	$this->model->displayQueue();
+    	$this->model->displayImg();
+	}	
+	else{
+		if ($this->model->isConnected()){
+			$this->model->enterQueue();
+			$this->model->displayQueue();
+		}
+		else{
+			$this->model->showNotConnected();
+		}
+	}
+	if($this->model->isFirst() && $this->model->canPlay()){
+		$this->view->addAdditionalJs('askplay.js');
+	}
+	}
+	protected function play(){
+		
+		if($this->model->isInGame()){
+			$this->model->leaveGame();
+		}
+		else if($this->model->isAdmin())
+		{
+			$this->model->enterGameAdmin();
+			$this->model->play();
+		}
+		else {
+			if(!$this->model->canPlay()){
+				$this->model->showNotAllowed();
+			}
+			else{
+				if($this->model->isFirst()){//if the user is the 1st of the queue
+					if(!$this->model->isInGame())
+						$this->model->enterGame();
+					$this->model->play();
+				}
+				else{
+					$this->model->showNotAllowed();
+				}
+			}
+		}
+		
 	}
 	
 	
@@ -91,4 +149,9 @@ class PlayController extends BaseController
 			}
 		}
 	}
-}
+	
+
+	}
+		
+
+?>

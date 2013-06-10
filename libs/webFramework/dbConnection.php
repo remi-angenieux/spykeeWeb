@@ -33,7 +33,7 @@ class Db{
 		}
 		catch (PDOException $e) {
 			// TODO utiliser un gestionnaire d'erreur
-			print "Erreur !: " . $e->getMessage() . "<br/>";
+			print "Erreur : " . $e->getMessage() . "<br/>";
 			die();
 		}
 	}

@@ -25,16 +25,22 @@ class User {
 	protected function _getInfo(){
 		$db = Db::getInstance()->db();
 		try{
-			$query = $db->prepare('SELECT id, pseudo, password, email FROM members WHERE id=?');
+			$query = $db->prepare('SELECT id, pseudo, password, email , refmember FROM members FULL OUTER JOIN admin ON refmember=id WHERE id=?');
 			$query->execute(array($this->_id));
 			$this->_data = $query->fetch(PDO::FETCH_ASSOC);
+			if (!empty($this->_data['refmember']) AND $this->_data['refmember'] == $this->_data['id']){ // si il est admin
+				$this->_data['isAdmin'] = true;
+				unset($this->_data['refmember']);
+			}
+			else
+				$this->_data['isAdmin'] = false;
 		}
 		catch (PDOException $e){
 			Error::setFatalError(true);
 			Error::displayError($e);
 		}
 	}
-	
+		
 	static function getInstance() {
 		if(is_null (self::$_singleton) )
 			self::$_singleton = new self;
@@ -54,6 +60,9 @@ class User {
 			return null;
 		}
 	}
+	
+
+	
 }
 
 ?>

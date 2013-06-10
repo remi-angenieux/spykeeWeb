@@ -76,6 +76,17 @@ class AccountModel extends BaseModel
 		$this->view->assign('array2',$array2);	
 	}
 	
+	public function visitProfil($var){
+		$query = $this->db->prepare('SELECT id FROM members WHERE pseudo=?') ;
+		$query->execute(array($var['pseudo']));
+		$array1 = $query->fetchAll(PDO::FETCH_ASSOC);
+		foreach($array1 as $key=>$value){
+			foreach($value as $key2=>$value2){
+				$resultat[]=$value2;
+			}
+		}
+		return $resultat;
+	}
 	
 	public function showLogin(){
 		$this->view->assign('pageTitle', 'Connexion');
@@ -192,7 +203,6 @@ class AccountModel extends BaseModel
 	}
 	
 	public function uploadImg($var,$var1){
-		print_r($var);
 		$var['icone']['name'];     //Le nom original du fichier
 		$var['icone']['type'];     //Le type du fichier
 		$var['icone']['size'];     //La taille du fichier en octets.
@@ -266,15 +276,15 @@ class AccountModel extends BaseModel
 		}
 	
 	
-		public function displayImg(){
+	public function displayImg(){
 		$imgDir="/images/";
 	
 		$query = $this->db->prepare('SELECT image FROM members WHERE id=?') ;
 		$query->execute(array($this->user->id));
-$array = $query->fetch(PDO::FETCH_ASSOC);
-	$resultat=$array['image'];
-	if(!$resultat){
-	$src=null;
+		$array = $query->fetch(PDO::FETCH_ASSOC);
+		$resultat=$array['image'];
+		if(!$resultat){
+			$src=null;
 		}
 		else{
 		$src=$imgDir.$resultat;

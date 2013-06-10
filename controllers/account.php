@@ -17,8 +17,8 @@ class AccountController extends BaseController
 			$this->model->displayProfil();
 			$this->model->displayImg();
 			$this->model->history();
-			$this->view->setTemplate('Profil');
 			$this->model->displayUser();
+			$this->view->setTemplate('Profil');
 		}
 		else{
 			$this->model->showNotConnected();
@@ -37,6 +37,7 @@ class AccountController extends BaseController
 			}
 		}
 	}
+	
 	protected function delHistory(){
 		$this->model->delHistory();
 	}
@@ -78,7 +79,9 @@ class AccountController extends BaseController
 		}
 	}
 	protected function visitProfil(){
-		$this->urlValues['id'];
+		
+	
+	
 	}
 
 	

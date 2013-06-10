@@ -83,7 +83,11 @@ class PlayController extends BaseController
 	protected function play(){
 		
 		if($this->model->isInGame()){
+			if(!$this->model->isAdmin())
 			$this->model->leaveGame();
+			else{
+			$this->model->play();
+			}
 		}
 		else if($this->model->isAdmin())
 		{

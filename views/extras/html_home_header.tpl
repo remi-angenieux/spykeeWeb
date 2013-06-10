@@ -60,17 +60,22 @@
 														<ul>
 															<li><a href="#">Panneau d'administrateur</a></li>
 															<li><a href="#">Listes des utilisateurs</a></li>
+															<form method="post" id="form1" action="{$rootUrl}Admin/takeControlAs">
 															<li>
 																<span class="arrow">Entrer en partie En tant que :</span>
+																
 																<ul>
 																	{foreach name=outer item=arr from=$array1}
     																	 {foreach key=key item=item from=$arr}
-     														 	    		 <li><a href="{$rootUrl}Admin/" >{$item}</a></li>
+     														 	    		 <input type="hidden" name="takeControlAs" value="{$item}">
+  																		    <a href="javascript:;" onclick="javascript: document.getElementById('form1') .submit()">{$item}</a>
   																	 	 {/foreach}
 																	{/foreach}
 																	
 																</ul>
+																
 															</li>
+															</form>
 														</ul>
 													</li>
 													{/if}

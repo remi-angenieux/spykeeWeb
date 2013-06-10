@@ -2,7 +2,7 @@
 #console{
 	background-color: black;
 	width: 100%;
-	overflow:auto;
+	overflow: auto;
 	max-height: 12em;
 }
 #console p{

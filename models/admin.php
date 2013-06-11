@@ -3,7 +3,8 @@ class AdminModel extends BaseModel
 {
 
 public function index(){
-
+	$this->view->addAdditionalCss('admin.css');
+	$this->view->assign(array('pageTitle' => 'Panneau d\'Administrateur'));
 }
 
 public function displayAdminRobots(){
@@ -37,8 +38,8 @@ public function delUser($var){
 }
 
 public function displayUser(){
-	$this->view->assign(array('pageTitle' => 'Panneau d\'Administrateur'));
-	$query = $this->db->prepare('SELECT id,pseudo,email,refmember FROM members FULL OUTER JOIN admin ON refmember=id') ;
+
+	$query = $this->db->prepare('SELECT id,pseudo,email,refmember FROM members FULL OUTER JOIN admin ON refmember=id');
 	$query->execute();
 	try{
 		$array4 = $query->fetchAll(PDO::FETCH_ASSOC);
@@ -60,7 +61,8 @@ public function displayUser(){
 }
 
 public function displaySelectsUser(){
-	$query = $this->db->prepare('SELECT pseudo FROM members') ;
+	$query = $this->db->prepare('SELECT pseudo FROM members 
+								EXCEPT SELECT pseudo FROM members WHERE id=-1 OR id=0 ORDER BY pseudo ASC ') ;
 	$query->execute();
 	try{
 		$result = $query->fetchAll(PDO::FETCH_ASSOC);
@@ -76,8 +78,7 @@ public function displaySelectsUser(){
 }
 
 public function displayRobot(){
-	$this->view->assign(array('pageTitle' => 'Panneau d\'Administrateur'));
-	$query = $this->db->prepare('SELECT robots.id,name,ctrip,ctrport,locked,refrobot FROM robots FULL OUTER JOIN games ON games.refrobot=robots.id') ;
+	$query = $this->db->prepare('SELECT robots.id,name,ctrip,ctrport,locked,refrobot FROM robots FULL OUTER JOIN games ON games.refrobot=robots.id ORDER BY robots.id ASC') ;
 	$query->execute();
 	try{
 		$array = $query->fetchAll(PDO::FETCH_ASSOC);
@@ -118,7 +119,7 @@ public function displayGames(){
 
 
 public function displaySelectsRobot(){
-	$query = $this->db->prepare('SELECT name FROM robots') ;
+	$query = $this->db->prepare('SELECT name FROM robots ORDER BY name ASC') ;
 	$query->execute();
 	try{
 		$result = $query->fetchAll(PDO::FETCH_ASSOC);
@@ -154,7 +155,6 @@ public function changePass($var){
 
 	
 public function block($var){
-	$this->view->assign(array('pageTitle' => 'Bloquer un Robot'));
 	$query = $this->db->prepare('UPDATE robots SET locked=true WHERE name=?') ;
 	$query->execute(array($var));
 	try{
@@ -166,7 +166,6 @@ public function block($var){
 }
 
 public function deblock($var){
-	$this->view->assign(array('pageTitle' => 'Débloquer un Robot'));
 	$query = $this->db->prepare('UPDATE robots SET locked=false WHERE name=?') ;
 	$query->execute(array($var));
 	try{
@@ -183,9 +182,7 @@ public function showNotAllowed(){
 }
 
 public function takeControlAs($var){
-	print_r($var);
-	$this->view->assign(array('pageTitle' => 'Contôler un Robot'));
-	$query = $this->db->prepare('SELECT robots.id FROM robots WHERE id=?') ;
+	$query = $this->db->prepare('SELECT robots.id FROM robots WHERE name=?') ;
 	$query->execute(array($var));
 	try{
 		$value2 = $query->fetch(PDO::FETCH_ASSOC);
@@ -193,10 +190,8 @@ public function takeControlAs($var){
 		$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)') ;
 		$query->execute(array($this->user->id,$value3,time()));
 		try{
-			$value2 = $query->fetch(PDO::FETCH_ASSOC);
-			$value3=$value2['id'];
 			$message="Vous allez êtres redirigé vers la page de jeu";
-			$this->view->message('Redirection',$message,'/admin/play/play');
+			$this->view->message('Redirection',$message,'play/play');
 		}
 		catch(PDOException $e){
 			Error::displayError($e);
@@ -210,8 +205,7 @@ public function takeControlAs($var){
 }
 
 public function delRobot($var){
-	$this->view->assign(array('pageTitle' => 'Supprimer un robot'));
-	$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.name=? AND used=false ') ;
+	$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.name=?') ;
 	$query->execute(array($var));
 	try{
 		$value2 = $query->fetch(PDO::FETCH_ASSOC);
@@ -231,26 +225,9 @@ public function delRobot($var){
 }
 
 public function setNotUsed($var){
-	$this->view->assign(array('pageTitle' => 'Enlever l\'utilisation d\'un robot'));
-	$query = $this->db->prepare('UPDATE robots SET used=false WHERE name=?') ;
+	$query = $this->db->prepare('DELETE FROM games WHERE refrobot=(SELECT robots.id FROM robots WHERE robots.name=?)') ;
 	$query->execute(array($var));
 	try{
-		$query = $this->db->prepare('SELECT refmember FROM games WHERE refrobot=(SELECT robots.id from robots INNER JOIN games ON refrobot=robots.id WHERE robots.name=?)') ;
-		$query->execute(array($var));
-		try{
-			$id = $query->fetch(PDO::FETCH_ASSOC);
-			$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
-			$query->execute(array($id['refmember']));
-			try{
-				$this->view->redirect('admin/?wellSetNotUsed');
-			}
-			catch(PDOException $e){
-				Error::displayError($e);
-			}
-		}
-		catch(PDOException $e){
-			Error::displayError($e);
-		}
 	}
 	catch(PDOException $e){
 		Error::displayError($e);
@@ -283,56 +260,155 @@ public function isName($string){
 
 
 public function modifyRobot($var){
-
+	$bool=true;
+	$this->view->setTemplate('index');
+	
 	if($var['modifyName']){
-		$query = $this->db->prepare('UPDATE robots SET name=? WHERE id=? ') ;
-		$query->execute(array($var['modifyName'],$var['modify']));
+		$query = $this->db->prepare('SELECT name FROM robots') ;
+		$query->execute();
 		try{
-			$this->view->redirect('admin/?wellModName');
-			if($var['modifyCtrip']){
-				$query = $this->db->prepare('UPDATE robots SET ctrip=? WHERE id=? ') ;
-				$query->execute(array($var['modifyCtrip'],$var['modify']));
+			$resultat= $query->fetchAll(PDO::FETCH_ASSOC);
+			foreach($resultat as $value){
+				$resultat2[]=$value['name'];
+			}
+			foreach($resultat2 as $value2){
+				if($var['modifyName']==$value2){
+					$bool=false;
+					break;
+				}
+		}
+		if($bool==true){
+			$query = $this->db->prepare('UPDATE robots SET name=? WHERE id=? ') ;
+			$query->execute(array($var['modifyName'],$var['modify']));
+			try{
+				$this->view->redirect('admin/?wellModName');
+			}
+			catch(PDOException $e){
+				Error::displayError($e);
+			}
+		}
+		else{
+			$this->view->redirect('admin/?badModName');
+		}
+	}
+		catch(PDOException $e){
+			Error::displayError($e);
+		}
+	}
+	
+
+	
+		if($var['modifyCtrport']){
+			$query = $this->db->prepare('UPDATE robots SET ctrport=? WHERE id=? ') ;
+			$query->execute(array($var['modifyCtrport'],$var['modify']));
+			try{
+				$this->view->redirect('admin/?wellModPort');
+			}
+			catch(PDOException $e){
+				Error::displayError($e);
+			}
+		}
+		if($var['modifyCtrip']){
+			if (filter_var($var['modifyCtrip'], FILTER_VALIDATE_IP)){
+				$bool2=true;
+				$query = $this->db->prepare('SELECT ctrip FROM robots') ;
+				$query->execute();
 				try{
-					$this->view->redirect('admin/?wellModIp');
-					if($var['modifyCtrport']){
-						$query = $this->db->prepare('UPDATE robots SET ctrport=? WHERE id=? ') ;
-						$query->execute(array($var['modifyCtrport'],$var['modify']));
+					$resultat= $query->fetchAll(PDO::FETCH_ASSOC);
+					foreach($resultat as $value){
+						$resultat2[]=$value['ctrip'];
+					}
+					foreach($resultat2 as $value2){
+						if($var['modifyCtrip']==$value2){
+							$bool2=false;
+							break;
+						}
+					}
+					if($bool2==true){
+						$query = $this->db->prepare('UPDATE robots SET ctrip=? WHERE id=? ') ;
+						$query->execute(array($var['modifyCtrip'],$var['modify']));
 						try{
-							$this->view->redirect('admin/?wellModPort');
+							$this->view->redirect('admin/?wellModIp');
 						}
 						catch(PDOException $e){
 							Error::displayError($e);
 						}
+					}
+					else{
+						$this->view->redirect('admin/?badModIpSame');
 					}
 				}
 				catch(PDOException $e){
 					Error::displayError($e);
 				}
 			}
-		}
-		catch(PDOException $e){
-			Error::displayError($e);
+			else{
+				$this->view->redirect('admin/?badModIp');
+			}
 		}
 	}
-}
-
+	
 
 public function addRobot($var){
-	if($var['addName'] && $var['addCtrip'] && $var['addCtrport'] && $var['addId']){
-		$this->view->assign(array('pageTitle' => 'Ajouter un Robot'));
-		$query = $this->db->prepare('INSERT INTO robots (id,name,ctrip,ctrport) VALUES (?,?,?,?)') ;
-		$query->execute(array($var['addId'],$var['addName'],$var['addCtrip'],$var['addCtrport']));
+	
+	$this->view->setTemplate('index');
+	$var1=3;
+	if (filter_var($var['addCtrip'], FILTER_VALIDATE_IP)){ //Test if ip is valid
+		$query = $this->db->prepare('SELECT name,ctrip,id FROM robots') ;
+		$query->execute();
 		try{
-			$this->view->redirect('admin/?wellAddRobot');
+			$resultat= $query->fetchAll(PDO::FETCH_ASSOC);
+			foreach($resultat as $value){
+				$resultat2[]=$value['ctrip'];
+				$resultat3[]=$value['name'];
+				$resultat4[]=$value['id'];
+			}
+			foreach($resultat2 as $value2){   //Test if ip already exits
+				if($var['addCtrip']==$value2 ){
+					$var1=0;
+					break;
+				}
+			}
+			foreach($resultat3 as $value3){		//Test if name already exits
+				if($var['addName']==$value3 ){
+					$var1=1;
+					break;
+				}
+			}
+			foreach($resultat4 as $value4){		//Test if id already exits
+				if($var['addId']==$value4 ){
+					$var1=2;
+					break;
+				}
+			}
+			if($var1==3){ 						 //Then all works fine
+				$query = $this->db->prepare('INSERT INTO robots (id,name,ctrip,ctrport) VALUES (?,?,?,?)') ;
+				$query->execute(array($var['addId'],$var['addName'],$var['addCtrip'],$var['addCtrport']));
+				try{
+					$this->view->redirect('admin/?wellAddRobot');
+				}
+				catch(PDOException $e){
+					Error::displayError($e);
+				}
+			}
+			else if($var1==0){
+				$this->view->redirect('admin/?badModIpSame');
+			}
+			else if($var1==1){
+				$this->view->redirect('admin/?badModName');
+			}
+			else{
+				$this->view->redirect('admin/?badModIdSame');
+			}
 		}
 		catch(PDOException $e){
 			Error::displayError($e);
 		}
 	}
 	else{
-		$message = 'Vous n\'avez pas entré de valeur pour tous les champs.';
-					$this->view->littleError($message);
+		$this->view->redirect('admin/?badModIp');
 	}
+
 }
 
 public function addAdmin($var){

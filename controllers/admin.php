@@ -25,6 +25,8 @@ class AdminController extends BaseController
 				$this->view->littleMessage('L\'administrateur été ajouté avec succés.');
 			if(isset($this->urlValues['wellBlock']))
 				$this->view->littleMessage('Le robot à été bloqué avec succés.');
+			if(isset($this->urlValues['wellChangePass']))
+				$this->view->littleMessage('Le mot de passe à été modifié avec succés.');
 			if(isset($this->urlValues['wellDeblock']))
 				$this->view->littleMessage('Le robot à été débloqué avec succés.');
 			if(isset($this->urlValues['wellSetNotUsed']))
@@ -39,6 +41,16 @@ class AdminController extends BaseController
 				$this->view->littleMessage('Le robot à été effacé avec succés.');
 			if(isset($this->urlValues['wellDelUser']))
 				$this->view->littleMessage('L\'utilisateur à été effacé avec succés.');
+			if(isset($this->urlValues['badModName']))
+				$this->view->littleError('Ce nom existe déjà.');
+			if(isset($this->urlValues['badModIpSame']))
+				$this->view->littleError('Cette addresse IP existe déjà.');
+			if(isset($this->urlValues['badModIp']))
+				$this->view->littleError('L\'addresse IP rentrée n\'est pas valide.');
+			if(isset($this->urlValues['badModIdSame']))
+				$this->view->littleError('L\'id rentré existe déjà.');
+			
+
 		}
 		else{
 			$this->model->showNotAllowed();

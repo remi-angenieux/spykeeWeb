@@ -6,7 +6,7 @@
 -->
 <html>
 	<head>
-		<title>SpykeePlay - {$pageTitle}</title>
+		<title>Joueur - {$pageTitle}</title>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<meta name="description" content="" />
 		<meta name="keywords" content="" />
@@ -48,7 +48,7 @@
 									<div class="inner">
 									
 										<!-- Logo -->
-											<h1><a href="#" class="mobileUI-site-name">Spykee Play</a></h1>
+											<h1><a href="#" class="mobileUI-site-name"> SpykeePlay</a></h1>
 										
 										<!-- Nav -->
 											<nav id="nav" class="mobileUI-site-nav">
@@ -58,7 +58,7 @@
 													<li>
 														<a href="{$rootUrl}Admin" class="arrow">Admin</a>
 														<ul>
-															<li><a href="#">Panneau d'administrateur</a></li>
+															<li><a href="{$rootUrl}Admin">Panneau d'administrateur</a></li>
 															<li><a href="{$rootUrl}admin/listUser">Listes des utilisateurs</a></li>
 															<form method="post" id="form1" action="{$rootUrl}Admin/takeControlAs">
 															<li>

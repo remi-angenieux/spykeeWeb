@@ -16,14 +16,16 @@ class HomeModel extends BaseModel
 								'username' => $this->user->pseudo));
 	}
 	
-	public function displaySelectsRobot(){
-		$query = $this->db->prepare('SELECT name FROM robots') ;
+	public function displayAdminRobots(){
+		$query = $this->db->prepare('SELECT name FROM robots
+									 EXCEPT 
+									SELECT name FROM robots INNER JOIN games ON refrobot=robots.id WHERE robots.id=(SELECT refrobot FROM games)') ;
 		$query->execute();
 		$result = $query->fetchAll(PDO::FETCH_ASSOC);
 		foreach ($result as $key=>$value){
-			$array1[]=$value;
+			$adminRobots[]=$value;
 		}
-		$this->view->assign('array1',$array1);
+		$this->view->assign('adminRobots',$adminRobots);
 	
 	}
 	

@@ -13,6 +13,7 @@ class PlayController extends BaseController
 	//default method
 	protected function index()
 	{
+		$this->model->displayAdminRobots();
 		if ($this->model->isConnected()){
 			$this->model->index();
 			if($this->model->isInQueue()){

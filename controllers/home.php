@@ -24,7 +24,7 @@ class HomeController extends BaseController
 			$this->view->littleMessage('Vous êtes déjà déconnecté');
 		else if(isset($this->urlValues['WellLogout']))
 			$this->view->littleMessage('Vous avez bien été déconnecté.');
-		$this->model->displaySelectsRobot();
+		$this->model->displayAdminRobots();
 	}
 
 	protected function admin(){

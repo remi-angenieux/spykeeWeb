@@ -35,10 +35,22 @@ class BaseModel {
 		return $this->user->isAdmin;
 	}
 	
+	public function displayAdminRobots(){
+		$query = $this->db->prepare('SELECT name FROM robots
+									 EXCEPT
+									SELECT name FROM robots INNER JOIN games ON refrobot=robots.id WHERE robots.id=(SELECT refrobot FROM games)') ;
+		$query->execute();
+		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		foreach ($result as $key=>$value){
+			$adminRobots[]=$value;
+		}
+	}
+	
 	//establish viewModel data that is required for all views in this method (i.e. the main template)
 	protected function commonViewData() {
 		$this->view->assign('isConnected', $this->isConnected());
 		$this->view->assign('isAdmin', $this->isAdmin());
+		$this->view->assign('adminRobots', $this->displayAdminRobots());
 	}
 	
 }

@@ -10,6 +10,20 @@ class AccountModel extends BaseModel
 				'username' => $this->user->pseudo));
 		$this->view->addAdditionalCss('profil.css');
 	}
+	
+	public function displayAdminRobots(){
+		$query = $this->db->prepare('SELECT name FROM robots
+									 EXCEPT
+									SELECT name FROM robots INNER JOIN games ON refrobot=robots.id WHERE robots.id=(SELECT refrobot FROM games)') ;
+		$query->execute();
+		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		foreach ($result as $key=>$value){
+			$adminRobots[]=$value;
+		}
+		$this->view->assign('adminRobots',$adminRobots);
+	
+	}
+	
 	public function showProfile(){
 		$this->view->assign('pageTitle', 'Votre profil');
 	}
@@ -81,6 +95,7 @@ class AccountModel extends BaseModel
 		$this->view->redirect('?alreadyLogin');
 	}
 	
+
 	public function displayUser(){
 		$query = $this->db->prepare('SELECT pseudo FROM members 
 								     EXCEPT

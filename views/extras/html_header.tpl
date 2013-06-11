@@ -59,16 +59,24 @@
 														<a href="{$rootUrl}Admin" class="arrow">Admin</a>
 														<ul>
 															<li><a href="#">Panneau d'administrateur</a></li>
-															<li><a href="#">Listes des utilisateurs</a></li>
+															<li><a href="{$rootUrl}admin/listUser">Listes des utilisateurs</a></li>
+															<form method="post" id="form1" action="{$rootUrl}Admin/takeControlAs">
 															<li>
 																<span class="arrow">Entrer en partie En tant que :</span>
+																
 																<ul>
-																	<li><a href="#">Spykee</a></li>
-																	<li><a href="#">Spykee2</a></li>
+																	{foreach name=outer item=arr from=$adminRobots}
+    																	 {foreach key=key item=item from=$arr}
+     														 	    		 <input type="hidden" name="takeControlAs" value="{$item}">
+  																		    <a href="javascript:;" onclick="javascript: document.getElementById('form1') .submit()">{$item}</a>
+  																	 	 {/foreach}
+																	{/foreach}
+																	
 																</ul>
+																
 															</li>
+															</form>
 														</ul>
-														
 													</li>
 													{/if}
 													<li><a href="{$rootUrl}play">Jouer</a></li>

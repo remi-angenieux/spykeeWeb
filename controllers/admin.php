@@ -13,15 +13,46 @@ class AdminController extends BaseController
 	protected function index(){
 		if($this->model->isAdmin() && $this->model->isConnected()){
 			$this->model->index();
+			$this->model->displayAdminRobots();
 			$this->model->displayRobot();
 			$this->model->displaySelectsRobot();
 			$this->model->displaySelectsUser();
 			$this->model->displayGames();
 			$this->model->displayUser();
+			if(isset($this->urlValues['wellAddRobot']))
+				$this->view->littleMessage('Le robot à été ajouté avec succés.');
+			if(isset($this->urlValues['wellAddAdmin']))
+				$this->view->littleMessage('L\'administrateur été ajouté avec succés.');
+			if(isset($this->urlValues['wellBlock']))
+				$this->view->littleMessage('Le robot à été bloqué avec succés.');
+			if(isset($this->urlValues['wellDeblock']))
+				$this->view->littleMessage('Le robot à été débloqué avec succés.');
+			if(isset($this->urlValues['wellSetNotUsed']))
+				$this->view->littleMessage('Le robot à été retiré de la partie avec succés.');
+			if(isset($this->urlValues['wellModName']))
+				$this->view->littleMessage('Changement du nom du robot avec succés.');
+			if(isset($this->urlValues['wellModIp']))
+				$this->view->littleMessage('Changement de l\'addresse IP du robot avec succés.');
+			if(isset($this->urlValues['wellModPort']))
+				$this->view->littleMessage('Changement du port du robot avec succés.');
+			if(isset($this->urlValues['wellDelRobot']))
+				$this->view->littleMessage('Le robot à été effacé avec succés.');
+			if(isset($this->urlValues['wellDelUser']))
+				$this->view->littleMessage('L\'utilisateur à été effacé avec succés.');
 		}
 		else{
 			$this->model->showNotAllowed();
 		}
+	}
+	
+
+	protected function delUser(){
+		$this->model->delUser($_POST);
+	}
+	
+	
+	protected function listUser(){
+		$this->model->displayUser();
 	}
 	
 	protected function block(){
@@ -66,6 +97,7 @@ class AdminController extends BaseController
 	protected function takeControlAs(){
 		if($this->model->isAdmin() && $this->model->isConnected()){
 			$this->model->takeControlAs($_POST['takeControlAs']);
+			print_r($_POST);
 		}
 		else{
 			$this->model->showNotAllowed();

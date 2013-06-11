@@ -14,6 +14,7 @@ class AccountController extends BaseController
 	protected function index()
 	{
 		$this->model->index();
+		$this->model->displayAdminRobots();
 		if(isset($this->urlValues['wellChangePass']))
 			$this->view->littleMessage('Votre mot de passe à bien été changé.');
 		if(isset($this->urlValues['wellChangeEmail']))
@@ -53,7 +54,7 @@ class AccountController extends BaseController
 	protected function delHistory(){
 		$this->model->delHistory();
 	}
-	
+
 	protected function login(){
 		if ($this->model->isConnected())
 			$this->model->messageAlreadyConnected();

@@ -7,7 +7,20 @@ class PlayModel extends BaseModel
 
 	//data passed to the home index view
 	public function index(){
-		$this->view->assign(array('pageTitle' => 'Play'));
+		
+	}
+	
+	public function displayAdminRobots(){
+		$query = $this->db->prepare('SELECT name FROM robots
+									 EXCEPT
+									SELECT name FROM robots INNER JOIN games ON refrobot=robots.id WHERE robots.id=(SELECT refrobot FROM games)') ;
+		$query->execute();
+		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		foreach ($result as $key=>$value){
+			$adminRobots[]=$value;
+		}
+		$this->view->assign('adminRobots',$adminRobots);
+	
 	}
 	
 	public function showNotConnected(){
@@ -54,8 +67,6 @@ class PlayModel extends BaseModel
 		$query->execute(array($this->user->id));
 		$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)');
 		$query->execute(array($this->user->id, $dispo,time()));
-		$query = $this->db->prepare('UPDATE robots SET used=true WHERE robots.id=? ');
-		$query->execute(array($dispo));
 		$query = $this->db->prepare('INSERT INTO gameshistory (refmember,refrobot,date,duration) VALUES(?,?,?,?)') ;
 		$query->execute(array($this->user->id,$dispo,date('c'),time()));
 	}
@@ -66,16 +77,12 @@ class PlayModel extends BaseModel
 		$query->execute(array($this->user->id));
 		$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)') ;
 		$query->execute(array($this->user->id,$dispo,time()));
-		$query = $this->db->prepare('UPDATE robots SET used=true WHERE robots.id=? ') ;
-		$query->execute(array($dispo));
 		$query = $this->db->prepare('INSERT INTO gameshistory (refmember,refrobot,date,duration) VALUES(?,?,?,?)') ;
 		$query->execute(array($this->user->id,$dispo,date('c'),time()));
 	}
 	
 	public function leaveGame(){
 		$this->view->assign(array('pageTitle' => 'Partie quittée'));
-		$query = $this->db->prepare('UPDATE robots SET used=false WHERE(SELECT games.refrobot FROM games WHERE refmember=?)=robots.id') ;
-		$query->execute(array($this->user->id));
 		$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
 		$query->execute(array($this->user->id));
 		$query = $this->db->prepare('SELECT duration FROM gameshistory WHERE refmember=? AND date=(SELECT MAX(date) FROM gameshistory)');
@@ -176,8 +183,7 @@ class PlayModel extends BaseModel
 	}
 	
 	public function canPlay(){
-		//TODO enlever le champs used et passer par inner join
-		$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.locked = false AND robots.used= false');
+		$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.locked = false EXCEPT SELECT games.refrobot FROM games');
 		$query->execute();
 		$tab1 =$query->fetch(PDO::FETCH_ASSOC);
 		$dispo=$tab1['id'];
@@ -189,7 +195,7 @@ class PlayModel extends BaseModel
 	
 	public function canPlayAdmin(){
 		//TODO l'admin doit pouvoir choisir son robot
-		$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.used= false');
+		$query = $this->db->prepare('SELECT robots.id FROM robots EXCEPT SELECT games.refrobot FROM games');
 		$query->execute();
 		$tab1 =$query->fetch(PDO::FETCH_ASSOC);
 		$dispo=$tab1['id'];

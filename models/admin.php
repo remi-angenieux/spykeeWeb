@@ -105,7 +105,8 @@ public function showNotAllowed(){
 	$this->view->message('Erreur' , $message, '/home');
 }
 
-public function takeControl($var){
+public function takeControlAs($var){
+	print_r($var);
 	$this->view->assign(array('pageTitle' => 'Contôler un Robot'));
 	$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.name=? AND used=false ') ;
 	$query->execute(array($var));

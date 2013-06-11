@@ -16,6 +16,16 @@ class HomeModel extends BaseModel
 								'username' => $this->user->pseudo));
 	}
 	
+	public function displaySelectsRobot(){
+		$query = $this->db->prepare('SELECT name FROM robots') ;
+		$query->execute();
+		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		foreach ($result as $key=>$value){
+			$array1[]=$value;
+		}
+		$this->view->assign('array1',$array1);
+	
+	}
 	
 }
 

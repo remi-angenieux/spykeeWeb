@@ -56,20 +56,17 @@
 													<li><a href="{$rootUrl}">Accueil</a></li>
 													{if $isAdmin}
 													<li>
-														<a href="" class="arrow">Admin</a>
+														<a href="{$rootUrl}Admin" class="arrow">Admin</a>
 														<ul>
-															<li><a href="#">Lorem ipsum dolor</a></li>
-															<li><a href="#">Magna phasellus</a></li>
+															<li><a href="#">Panneau d'administrateur</a></li>
+															<li><a href="#">Listes des utilisateurs</a></li>
 															<li>
-																<span class="arrow">Phasellus consequat</span>
+																<span class="arrow">Entrer en partie En tant que :</span>
 																<ul>
-																	<li><a href="#">Lorem ipsum dolor</a></li>
-																	<li><a href="#">Phasellus consequat</a></li>
-																	<li><a href="#">Magna phasellus</a></li>
-																	<li><a href="#">Etiam dolore nisl</a></li>
+																	<li><a href="#">Spykee</a></li>
+																	<li><a href="#">Spykee2</a></li>
 																</ul>
 															</li>
-															<li><a href="#">Veroeros feugiat</a></li>
 														</ul>
 														
 													</li>
@@ -79,6 +76,7 @@
 													<li><a href="{$rootUrl}account/login">Se connecter</a></li>
 													<li><a href="{$rootUrl}account/register">S'inscrire</a></li>
 													{else}
+													<li><a href="{$rootUrl}account">Profil</a></li>
 													<li><a href="{$rootUrl}account/logout">Se déconnecter</a></li>
 													{/if}
 												</ul>

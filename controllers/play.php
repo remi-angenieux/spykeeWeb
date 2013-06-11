@@ -53,6 +53,7 @@ class PlayController extends BaseController
 	}
 	
 	protected function queue(){
+		//TODO afficher message pas de robot dispo
 	if ($this->model->isInQueue()){
     	$this->model->displayQueue();
     	$this->model->displayImg();
@@ -61,19 +62,32 @@ class PlayController extends BaseController
 		if ($this->model->isConnected()){
 			$this->model->enterQueue();
 			$this->model->displayQueue();
+			$this->model->displayImg();
 		}
 		else{
 			$this->model->showNotConnected();
 		}
 	}
-	if($this->model->isFirst() && $this->model->canPlay()){
-		$this->view->addAdditionalJs('askplay.js');
+	if($this->model->isAdmin()){
+		if($this->model->isFirst() && $this->model->canPlayAdmin()){
+			$this->view->addAdditionalJs('askplay.js');
+		}
 	}
+	else{
+		if($this->model->isFirst() && $this->model->canPlay()){
+			$this->view->addAdditionalJs('askplay.js');
+		}
+	}
+
 	}
 	protected function play(){
 		
 		if($this->model->isInGame()){
+			if(!$this->model->isAdmin())
 			$this->model->leaveGame();
+			else{
+			$this->model->play();
+			}
 		}
 		else if($this->model->isAdmin())
 		{

@@ -63,9 +63,9 @@ class AdminController extends BaseController
 	
 	}
 	
-	protected function takeControl(){
+	protected function takeControlAs(){
 		if($this->model->isAdmin() && $this->model->isConnected()){
-			$this->model->takeControl($_POST['takeControl']);
+			$this->model->takeControlAs($_POST['takeControlAs']);
 		}
 		else{
 			$this->model->showNotAllowed();

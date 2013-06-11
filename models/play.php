@@ -222,11 +222,9 @@ class PlayModel extends BaseModel
 	public function ajax(){
 		require_once(PATH.'libs/spykee/spykee-controller/controllerClient.php');
 		try{
-			$query = $this->db->prepare('SELECT name,Ctrip,Ctrport FROM robots INNER JOIN games ON robots.id=games.refrobot WHERE refmember=? )') ;
+			$query = $this->db->prepare('SELECT name,ctrip,ctrport FROM robots INNER JOIN games ON robots.id=games.refrobot WHERE refmember=? ') ;
 			$query->execute(array($this->user->id));
-			$result = $query->fetchAll(PDO::FETCH_ASSOC);
-			foreach($result as $value)
-				$array=$value;
+			$result = $query->fetch(PDO::FETCH_ASSOC);
 		}
 		catch(PDOException $e){
 			require_once PATH.'libs/spykee/response.php';
@@ -235,9 +233,10 @@ class PlayModel extends BaseModel
 			return FALSE;
 		}
 		try{
-			$this->_spykee = new SpykeeControllerClient($array['ctrip'], $array['ctrport']);
+			$this->_spykee = new SpykeeControllerClient($result['ctrip'], $result['ctrport']);
 		}
 		catch (SpykeeException $e){
+			// TODO Gerer les erreurs
 			require_once PATH.'libs/spykee/response.php';
 			$response = new SpykeeResponse(SpykeeControllerClient::STATE_ERROR, SpykeeResponse::UNABLE_TO_CONNECT_TO_CONTROLLER);
 			$this->view->assign('content', $response->jsonFormat());

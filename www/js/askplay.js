@@ -1,9 +1,9 @@
 function askPlay(){
 	if(confirm('Vous voulez jouez ?')){
-		window.location = "http://spykee.lan/play/play";
+		window.location = "/play/play";
 	}
 	else{
-		window.location = "http://spykee.lan/play";
+		window.location = "/play";
 	}
 }
 askPlay();

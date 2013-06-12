@@ -14,7 +14,6 @@ class AccountController extends BaseController
 	protected function index()
 	{
 		$this->model->index();
-		$this->model->displayAdminRobots();
 		if(isset($this->urlValues['wellChangePass']))
 			$this->view->littleMessage('Votre mot de passe à bien été changé.');
 		if(isset($this->urlValues['wellChangeEmail']))
@@ -23,8 +22,29 @@ class AccountController extends BaseController
 			$this->view->littleMessage('Votre avatar à bien été changé.');
 		if(isset($this->urlValues['wellDelHistory']))
 			$this->view->littleMessage('Historique des parties effacés.');
-		
-			
+		if(isset($this->urlValues['badUpload']))
+			$this->view->littleError('Erreur dans l\'upload de votre image, veuillez réessayer ou contacter un administrateur.');
+		if(isset($this->urlValues['badUploadSize']))
+			$this->view->littleError('L\'image est trop grande.');
+		if(isset($this->urlValues['badUpload']))
+			$this->view->littleError('Erreur dans l\'upload de votre image, veuillez réessayer ou contacter un administrateur.');
+		if(isset($this->urlValues['badUploadWeight']))
+			$this->view->littleError('L\'image est trop grosse.');
+		if(isset($this->urlValues['badProfil']))
+			$this->view->littleError('Erreur dans le chargement du profil.');
+		if(isset($this->urlValues['badAccountSame']))
+			$this->view->littleError('Le pseudo que vous avez entré est déjà utilisé.');
+		if(isset($this->urlValues['badEmail']))
+			$this->view->littleError('Erreur dans le changement de votre mail.');
+		if(isset($this->urlValues['badChangePass']))
+			$this->view->littleError('Erreur dans le changement de votre mot de passe.');
+		if(isset($this->urlValues['badAccountCon']))
+			$this->view->littleError('Vous avez du vous tromper de pseudo ou de mot de passe.');
+		if(isset($this->urlValues['badProfilUser']))
+			$this->view->littleError('Erreur dans le chargement des profils des utilisateurs.');
+		if(isset($this->urlValues['badListUser']))
+			$this->view->littleError('Erreur dans le chargement des utilisateurs.');
+	
 		if ($this->model->isConnected()){
 			$this->model->displayProfil();
 			$this->model->displayImg();

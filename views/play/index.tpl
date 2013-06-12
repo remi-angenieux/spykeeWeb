@@ -5,11 +5,11 @@
 			<!-- Content -->
 			<article>
 				<header class="major">
-					<h2>Jouez !</h2>
+					<h2 align="center">Jouer !</h2>
 				</header>
-				 <p>Pour pouvoir contrôler un robot , il faut vous inscrire dans la file d'attente. <br />
-				 Pour cela vous devez être connecté.</p>
-				 <h3>File d'attente</h3>
-				 <p><a href="{$rootUrl}play/queue" target="_blank">Se mettre dans la liste d'attente</a><br />
-				 <a href="{$rootUrl}">Revenir a l'accueil</a></p>
+				<h3><p class="text">Si vous voulez jouer, c'est par la !.</h3> 
+				 </p>
+				 <p align="center"><a href="{$rootUrl}play/queue" class ="button button-alt button-icon button-icon-rarrow" target="_blank" >Se mettre dans la file d'attente</a><p/>
+							 
+				 <a class ="button" href="{$rootUrl}">Revenir a l'accueil</a></p>
 			</article>

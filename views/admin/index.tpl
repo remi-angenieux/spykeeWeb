@@ -1,6 +1,6 @@
 	<div class="5grid-layout box-feature1">
 	<div class="row">
-		<div class="15u">
+		<div class="18u">
 			<div id="content mobileUI-main-content">
 			
 			<header>
@@ -12,10 +12,10 @@
 					<h3>Partie(s) en cours :</h3>
 						<table>
 							<tr>
-								<th><img src="{$rootUrl}images/joueur.jpg" width="130" /></th>
-								<th><img src="{$rootUrl}images/idJoueur.jpg" width="130" /></th>
-								<th><img src="{$rootUrl}images/idRobot.jpg" width="130" /></th>
-								<th><img src="{$rootUrl}images/robot.jpg" width="130" /></th>
+								<th><span class="byline"><a class="button button-alt">ID Joueur</a></span></th>
+								<th><span class="byline"><a class="button button-alt">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspJoueur&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</a></span></th>								
+								<th><span class="byline"><a class="button button-alt">ID Robot</a></span></th>
+								<th><span class="byline"><a class="button button-alt">Robot</a></span></th>
 							</tr>
 							{foreach name=outer item=arr from=$array3}
 								<tr>
@@ -28,18 +28,49 @@
 							{/foreach}
 						</table>
 				</div>
+				
+						<div class="6u">
+					<h3>File d'attente :</h3>
+						<table>
+							<tr>
+								<th><span class="byline"><a class="button button-alt">ID Joueur</a></span></th>
+								<th><span class="byline"><a class="button button-alt">Joueur</a></span></th>								
+								<th><span class="byline"><a class="button button-alt">Temps d'attente</a></span></th>
+								<th><span class="byline"><a class="button button-alt">Place</a></span></th>
+							</tr>
+							{foreach name=outer item=arr from=$file}
+								<tr>
+   									{foreach key=key item=item from=$arr}
+   											<td>
+      	  									<span class="text">{$item}</span>
+		      	  			   				</td>
+		  					   		 {/foreach}
+								</tr>
+							{/foreach}
+						</table>
+								<form action="/admin/puOutOfQueue" method="post">
+							<select name="block">
+								{foreach name=outer item=arr from=$member_queue}
+								    {foreach key=key item=item from=$arr}
+								        <option value="{$item}">{$item}</option>
+								    {/foreach}
+								{/foreach}
+							</select>
+						    <input type="submit" value="Enlever de la file d'attente"  class="button button-alt button-icon button-icon-rarrow"/>
+						</form>
+				</div>
 					
 				<div class="4u">
 		 				<h3>Etats des robots</h3>
 		
 						<table>
 							<tr>
-								<span class="byline"><th><img src="{$rootUrl}images/id.jpg" width="130" /></th></span>
-								<span class="byline"><th><img src="{$rootUrl}images/name.jpg" width="130" /></th></span>
-								<span class="byline"><th><img src="{$rootUrl}images/ip.jpg" width="130" /></th></span>
-								<span class="byline"><th><img src="{$rootUrl}images/port.jpg" width="130" /></th></span>
-								<span class="byline"><th><img src="{$rootUrl}images/locked.jpg" width="130" /></th></span>
-								<span class="byline"><th><img src="{$rootUrl}images/used.jpg" width="130" /></th></span>
+								<th><span class="byline"><a class="button button-alt">Id</a></span></th>
+								<th><span class="byline"><a class="button button-alt">Name</a></span></th>
+								<th><span class="byline"><a class="button button-alt">&nbsp&nbsp&nbsp&nbspIP&nbsp&nbsp&nbsp&nbsp</a></span></th>
+								<th><span class="byline"><a class="button button-alt">Port</a></span></th>
+								<th><span class="byline"><a class="button button-alt">Locked</a></span></th>
+								<th><span class="byline"><a class="button button-alt">Used</a></span></th>
 							<tr>
 									{foreach name=outer item=arr from=$array}
 										<tr>
@@ -60,7 +91,7 @@
 </article>
 				
 				<div class="6u">
-		 				<form action="/admin/changePass" method="post">
+		 				<form method="post">
 		 				<input name="pass" type="password" >
 							<select name="pseudo">
 								{foreach name=outer item=arr from=$array5}
@@ -69,72 +100,30 @@
     								{/foreach}
 								{/foreach}
 							</select>
-				   		    <blockquote><input type="submit" value="Changer le mot de passe" class="button button-alt button-icon button-icon-rarrow"/></blockquote>
-						</form><br />
-							
-								<form action="/admin/addAdmin" method="post">
-								    <input  name="addAdmin" type=text id="addAdmin">
-								    <blockquote><input type="submit" value="Ajouter un administrateur" class="button button-alt button-icon button-icon-rarrow"/></blockquote>
-								    
-								</form>
-								<br />
-								
-						
-						<form action="/admin/block" method="post">
-							<select name="block">
+				   		    	<blockquote><button type="submit" formaction="/admin/ChangePass" class="button button-alt ">Changer de mot de passe</button></blockquote>
+								<blockquote><button type="submit" formaction="/admin/addAdmin" class="button button-alt ">Ajouter l' administrateur</button></blockquote>
+								<button type="submit" formaction="/admin/delAdmin" class="button button-alt ">Enlever l' administrateur</button>
+						</form>
+							<br />
+								</div>
+						<div class="6u">
+						<form method="post">
+							<select name="robot">
 								{foreach name=outer item=arr from=$array1}
 								    {foreach key=key item=item from=$arr}
 								        <option value="{$item}">{$item}</option>
 								    {/foreach}
 								{/foreach}
 							</select>
-						    <input type="submit" value="Bloquer le robot"  class="button button-alt button-icon button-icon-rarrow"/>
+							<br />
+						    <button type="submit" formaction="/admin/deblock" class="button button-alt ">debloquer le robot</button>
+						    <button type="submit" formaction="/admin/block" class="button button-alt ">bloquer le robot</button>
+						    <button type="submit" formaction="/admin/SetNotUsed" class="button button-alt ">désassocier le robot</button>
+						    <button type="submit" formaction="/admin/delRobot" class="button button-alt ">supprimer le robot</button>
+						    <button type="submit" formaction="/admin/takeControlAs" class="button button-alt ">prendre le controle du robot</button>
 						</form>
 								
-						<form action="/admin/deblock" method="post">
-							<select name="deblock">
-								{foreach name=outer item=arr from=$array1}
-								    {foreach key=key item=item from=$arr}
-								        <option value="{$item}">{$item}</option>
-								    {/foreach}
-								{/foreach}
-							</select>
-						    <input type="submit" value="Débloquer le Robot" class="button button-alt button-icon button-icon-rarrow"/>
-						</form>
-								
-						<form action="/admin/setNotUsed" method="post">
-							<select name="setNotUsed">
-								{foreach name=outer item=arr from=$array1}
-								    {foreach key=key item=item from=$arr}
-								        <option value="{$item}">{$item}</option>
-								    {/foreach}
-								{/foreach}
-							</select>
-						    <input type="submit" value="Désassocier le Robot" class="button button-alt button-icon button-icon-rarrow"/>
-						</form>
-								
-						<form action="/admin/delRobot" method="post">
-							<select name="delRobot">
-								{foreach name=outer item=arr from=$array1}
-								    {foreach key=key item=item from=$arr}
-								        <option value="{$item}">{$item}</option>
-								    {/foreach}
-								{/foreach}
-	 						</select>
-						    <input type="submit" value="Supprimer le Robot" class="button button-alt button-icon button-icon-rarrow" />
-						</form>
-								
-						<form action="/admin/takeControlAs" method="post">
-							<select name="takeControl">
-								{foreach name=outer item=arr from=$array1}
-								    {foreach key=key item=item from=$arr}
-								        <option value="{$item}">{$item}</option>
-								    {/foreach}
-								{/foreach}
-							</select>
-								    <input type="submit" value="Contrôler le Robot" class="button button-alt button-icon button-icon-rarrow"/>
-						</form>
-								
+			
 								
 																		</div>
 																		

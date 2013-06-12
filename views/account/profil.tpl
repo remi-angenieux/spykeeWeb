@@ -19,7 +19,7 @@
 							{/foreach}
 						{/foreach}
 					</select>
-    				<input type="submit" value="Visiter le profil" />
+    				<input type="submit" value="Visiter le profil" class="button button-alt button-icon button-icon-rarrow"/>
 				</form>
 			</section>	
 			</header>
@@ -115,7 +115,7 @@
 
 				</table>
 				<form action="/account/delHistory" method="post">
-   					 <input type="submit" value="Effacer l'historique" />
+   					 <input type="submit" value="Effacer l'historique" class="button button-alt button-icon button-icon-rarrow" />
 				</form>
 			</article>
 

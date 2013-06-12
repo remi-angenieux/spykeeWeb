@@ -96,7 +96,7 @@
 							<!-- Banner -->
 								<div id="banner">
 									<h2><strong>Spykee Play:</strong> Une application web fun<br />
-									qui vous permet de controller un robot</h2>
+									qui vous permet de contrôler un robot</h2>
 									<p>Testez tout de suite, c'est gratuit ;)</p>
 									<a href="/play" class="button button-big button-icon button-icon-check">Jouer !</a>
 								</div>

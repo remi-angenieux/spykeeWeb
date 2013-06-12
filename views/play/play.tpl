@@ -37,17 +37,17 @@
 					</div>
 					<div class="clear">
 						<br />
-						<p><a href="{$rootUrl}play">Se retirer de la partie</a></p>
+						<p><a href="{$rootUrl}play" class="button">Se retirer de la partie</a></p>
 						<h4><a href="#console" id="showHideConsole">Console:</a></h4>
 						<div id="console"><p></p></div>
 						<br />
 						<h4><img src="{$rootUrl}images/informations.png" alt="Informations" /> Astuces :</h4>
 						<ul>
-							<li class="keyboardTop">En appuyant sur cette touche vous demenderez au robot d'<strong>avancer</strong>. Un second appui lui demandera d'arrêter d'<strong>avancer</strong></li>
-							<li class="keyboardLeft">En appuyant sur cette touche vous demenderez au robot de tourner a <strong>gauche</strong>. Un second appui lui demandera d'arrêter de tourner à <strong>gauche</strong></li>
-							<li class="keyboardRight">En appuyant sur cette touche vous demenderez au robot de tourner a <strong>droite</strong>. Un second appui lui demandera d'arrêter de tourner à <strong>droite</strong></li>
-							<li class="keyboardDown">En appuyant sur cette touche vous demenderez au robot de <strong>reculer</strong>. Un second appui lui demandera d'arrêter de <strong>reculer</strong></li>
-							<li class="keyboardCtrl">En appuyant sur cette touche vous demenderea au robot de s'<strong>immobiliser</strong></li>
+							<li class="keyboardTop">En appuyant sur cette touche vous demanderez au robot d'<strong>avancer</strong>. Un second appui lui demandera d'arrêter d'<strong>avancer</strong></li>
+							<li class="keyboardLeft">En appuyant sur cette touche vous demanderez au robot de tourner a <strong>gauche</strong>. Un second appui lui demandera d'arrêter de tourner à <strong>gauche</strong></li>
+							<li class="keyboardRight">En appuyant sur cette touche vous demanderez au robot de tourner a <strong>droite</strong>. Un second appui lui demandera d'arrêter de tourner à <strong>droite</strong></li>
+							<li class="keyboardDown">En appuyant sur cette touche vous demanderez au robot de <strong>reculer</strong>. Un second appui lui demandera d'arrêter de <strong>reculer</strong></li>
+							<li class="keyboardCtrl">En appuyant sur cette touche vous demandera au robot de s'<strong>immobiliser</strong></li>
 						</ul>
 					</div>
 				</article>

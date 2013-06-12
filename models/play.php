@@ -10,19 +10,25 @@ class PlayModel extends BaseModel
 		
 	}
 	
+
 	public function displayAdminRobots(){
 		$query = $this->db->prepare('SELECT name FROM robots
 									 EXCEPT
 									SELECT name FROM robots INNER JOIN games ON refrobot=robots.id WHERE robots.id=(SELECT refrobot FROM games)') ;
 		$query->execute();
-		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		try{
+			$result = $query->fetchAll(PDO::FETCH_ASSOC);
 		foreach ($result as $key=>$value){
 			$adminRobots[]=$value;
 		}
 		$this->view->assign('adminRobots',$adminRobots);
-	
+		}
+			catch (PDOException $e){
+				if($this->model->isAdmin){
+					Error::displayError($e);
+				}
+	       }
 	}
-	
 	public function showNotConnected(){
 		$this->view->assign(array('pageTitle' => 'Erreur'));
 		$message = 'Vous devez être connecté pour pouvoir jouer';
@@ -35,64 +41,97 @@ class PlayModel extends BaseModel
 		$message='Vous n\'êtes pas autorisé a jouer';
 		$this->view->message('Erreur' , $message, '/play');
 	}
-	
-	public function displayImg(){
-		//TODO mettre le dossier d'image a image/profil
-		$imgDir=$this->config->global->rootUrl."images/";
-		$query = $this->db->prepare('SELECT image FROM members INNER JOIN games ON games.refmember=members.id') ;
-		$query->execute();
-		$array = $query->fetch(PDO::FETCH_ASSOC);
-		$resultat=$array['image'];
-		if(!$resultat){
-			$src=$imgDir.'default.jpg';
-		}
-		else{
-			$src=$imgDir.$resultat;
-		}
-		$this->view->assign('src',$src);
-	}
-	
+
 	//add member to queue
 	public function enterQueue(){
-		print "<div id=\"queue\">";
-		$arr2=array();
-		$arr3=array();
 		$query = $this->db->prepare('INSERT INTO queue (refmember,timestamp) VALUES(?,?)') ;
 		$query->execute(array($this->user->id,time()));
+		try{
+		}
+		catch (PDOException $e){
+			if($this->model->isAdmin){
+				Error::displayError($e);
+				$this->view->redirect('?badEnterQueue');
+			}
+		}
 	}
 	
-	public function enterGameAdmin(){
-		$dispo=$this->canPlayAdmin();
-		$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?');
-		$query->execute(array($this->user->id));
-		$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)');
-		$query->execute(array($this->user->id, $dispo,time()));
-		$query = $this->db->prepare('INSERT INTO gameshistory (refmember,refrobot,date,duration) VALUES(?,?,?,?)') ;
-		$query->execute(array($this->user->id,$dispo,date('c'),time()));
+	public function isRobotOn(){
+		//TODO faire une fonction qui check si un robot est en fonction
 	}
-	
-	public function enterGame(){
+
+
+		public function enterGame(){
 		$dispo=$this->canPlay();
 		$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?');
 		$query->execute(array($this->user->id));
-		$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)') ;
-		$query->execute(array($this->user->id,$dispo,time()));
-		$query = $this->db->prepare('INSERT INTO gameshistory (refmember,refrobot,date,duration) VALUES(?,?,?,?)') ;
-		$query->execute(array($this->user->id,$dispo,date('c'),time()));
+		try{
+			$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)');
+			$query->execute(array($this->user->id, $dispo,time()));
+			try{
+				$query = $this->db->prepare('INSERT INTO gameshistory (refmember,refrobot,date,duration) VALUES(?,?,?,?)') ;
+				$query->execute(array($this->user->id,$dispo,date('c'),time()));
+				try{
+				}
+				catch (PDOException $e){
+					if($this->model->isAdmin)
+						Error::displayError($e);
+				}
+			}
+			catch (PDOException $e){
+				if($this->model->isAdmin)
+					Error::displayError($e);
+					$this->view->setTemplate('index.tpl');
+					$this->view->redirect('play?badEnterGame');
+			}
+		}
+		catch (PDOException $e){
+			if($this->model->isAdmin)
+				Error::displayError($e);
+			$this->view->setTemplate('index.tpl');
+			$this->view->redirect('play?badLeaveQueue');
+		}
+		
+		
 	}
+		
+	
 	
 	public function leaveGame(){
 		$this->view->assign(array('pageTitle' => 'Partie quittée'));
 		$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
 		$query->execute(array($this->user->id));
-		$query = $this->db->prepare('SELECT duration FROM gameshistory WHERE refmember=? AND date=(SELECT MAX(date) FROM gameshistory)');
-		$query->execute(array($this->user->id));
-		$result =$query->fetch(PDO::FETCH_ASSOC);
-		$duration=time()-$result['duration'];
-		$query = $this->db->prepare('UPDATE gameshistory SET duration=? WHERE date=(SELECT MAX(date) FROM gameshistory) ') ;
-		$query->execute(array($duration));
-		$message='Vous avez bien été enlevé de la partie';
-		$this->view->message('Partie quittée' , $message, '/play');
+		try{
+			$query = $this->db->prepare('SELECT duration FROM gameshistory WHERE refmember=? AND date=(SELECT MAX(date) FROM gameshistory)');
+			$query->execute(array($this->user->id));
+			try{
+				$result =$query->fetch(PDO::FETCH_ASSOC);
+				$duration=time()-$result['duration'];
+				$query = $this->db->prepare('UPDATE gameshistory SET duration=? WHERE date=(SELECT MAX(date) FROM gameshistory) ') ;
+				$query->execute(array($duration));
+				try{
+					$this->view->setTemplate('index.tpl');
+					$this->view->redirect('play?wellLeaveQueue');
+				}
+				catch (PDOException $e){
+					if($this->model->isAdmin)
+					Error::displayError($e);
+				}
+			}
+			catch (PDOException $e){
+				if($this->model->isAdmin)
+				Error::displayError($e);
+			}
+		}
+		catch (PDOException $e){
+			if($this->model->isAdmin)
+			Error::displayError($e);
+			$this->view->setTemplate('play.tpl');
+			$this->view->redirect('play/play?badLeaveGame');
+		}
+		
+		
+		
 	}
 	
 	
@@ -100,13 +139,19 @@ class PlayModel extends BaseModel
 	public function isInQueue(){                                    
 			$query = $this->db->prepare('SELECT refmember FROM queue WHERE refmember=?');
 			$query->execute(array($this->user->id));
-			$result =$query->fetch(PDO::FETCH_ASSOC);
-			$resultat=$result['refmember'];
-			if ($resultat==null){
-			return false;
+			try{
+				$result =$query->fetch(PDO::FETCH_ASSOC);
+				$resultat=$result['refmember'];
+				if ($resultat==null){
+					return false;
+				}
+				else{
+					return true;
+				}
 			}
-			else{
-			return true;
+			catch (PDOException $e){
+				if($this->model->isAdmin)
+				Error::displayError($e);
 			}
 	} //Check if the current user is in the queue 
 	
@@ -114,46 +159,82 @@ class PlayModel extends BaseModel
 	public function isInGame(){
 		$query = $this->db->prepare('SELECT refmember FROM games WHERE refmember=?');
 		$query->execute(array($this->user->id));
-		$result = $query->fetch(PDO::FETCH_ASSOC);
-		$resultat=$result['refmember'];
-		if (!$resultat){
-			return false;
+		try{
+			$result = $query->fetch(PDO::FETCH_ASSOC);
+			$resultat=$result['refmember'];
+			if (!$resultat){
+				return false;
+			}
+			else{
+				return true;
+			}
 		}
-		else{
-			return true;
+		catch (PDOException $e){
+			if($this->model->isAdmin)
+			Error::displayError($e);
 		}
+		
 	}//Check if the current user is in the game 
 	
 
 	public function isFirst(){
-		//TODO essayer de fusionner les requêtes
-		$query = $this->db->prepare('SELECT MIN(timestamp) FROM queue'); 
-		$query->execute();
-		$tab1 =$query->fetch(PDO::FETCH_ASSOC);
-		$prem=$tab1['min'];
-		$query = $this->db->prepare('SELECT refmember FROM queue WHERE timestamp =?');
-		$query->execute(array($prem));
-		$result =$query->fetch(PDO::FETCH_ASSOC);
-		$resultat=$result['refmember'];
-		if ($this->user->id==$resultat){
-			return true;
+
+			$query = $this->db->prepare('SELECT refmember FROM queue WHERE timestamp =(SELECT MIN(timestamp) FROM queue)');
+			$query->execute();
+			try{
+				$result =$query->fetch(PDO::FETCH_ASSOC);
+				$resultat=$result['refmember'];
+				if ($this->user->id==$resultat){
+					return true;
+				}
+				else{
+					return false;
+				}
+			}
+			catch (PDOException $e){
+				if($this->model->isAdmin)
+				Error::displayError($e);
+			}
+			
 		}
-		else{
-			return false;
-		}
-	}  //Check if the current user is the 1st of the queue
+	 //Check if the current user is the 1st of the queue
 
 
 	public function leaveQueue(){
 			$this->view->assign(array('pageTitle' => 'File quittée'));
 			$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?') ;
 			$query->execute(array($this->user->id));
-			$message='Vous avez bien été enlevé de la file';
-			$this->view->message('File quittée' , $message, '/play');
+			try{
+				$this->view->setTemplate('play.tpl');
+				$this->view->redirect('play?wellLeaveQueue');
+				}
+				catch (PDOException $e){
+					if($this->model->isAdmin)
+					Error::displayError($e);
+			}
 	}
 	
 	
 	public function displayQueue(){
+		$imgDir=$this->config->global->rootUrl."images/";
+		$query = $this->db->prepare('SELECT image FROM members INNER JOIN games ON games.refmember=members.id') ;
+		$query->execute();
+		try{
+			$array = $query->fetch(PDO::FETCH_ASSOC);
+			$resultat=$array['image'];
+			if(!$resultat){
+				$src=$imgDir.'default.jpg';
+			}
+			else{
+				$src=$imgDir.$resultat;
+			}
+			$this->view->assign('src',$src);
+		}
+		catch (PDOException $e){
+			if($this->model->isAdmin)
+				Error::displayError($e);
+		}
+		
 		$this->view->assign(array('pageTitle' => 'File d\'attente'));
 		$this->view->addAdditionalJs('queue.js');
 		try{
@@ -185,25 +266,20 @@ class PlayModel extends BaseModel
 	public function canPlay(){
 		$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.locked = false EXCEPT SELECT games.refrobot FROM games');
 		$query->execute();
-		$tab1 =$query->fetch(PDO::FETCH_ASSOC);
-		$dispo=$tab1['id'];
-		if (!$dispo)
-			return false;
-		else
-			return $dispo;
+		try{
+			$tab1 =$query->fetch(PDO::FETCH_ASSOC);
+			$dispo=$tab1['id'];
+			if (!$dispo)
+				return false;
+			else
+				return $dispo;
+			}
+		catch (PDOException $e){
+			if($this->model->isAdmin)
+			Error::displayError($e);
+		}
 	}
 	
-	public function canPlayAdmin(){
-		//TODO l'admin doit pouvoir choisir son robot
-		$query = $this->db->prepare('SELECT robots.id FROM robots EXCEPT SELECT games.refrobot FROM games');
-		$query->execute();
-		$tab1 =$query->fetch(PDO::FETCH_ASSOC);
-		$dispo=$tab1['id'];
-		if (!$dispo)
-			return false;
-		else
-			return $dispo;
-	}
 	
 	/*public function checkInput(){         JAVASCRIPT/AJAX
 		$query = $this->db->prepare('SELECT lastinput FROM games WHERE refmember=?');

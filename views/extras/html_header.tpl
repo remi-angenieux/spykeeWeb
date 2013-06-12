@@ -57,66 +57,50 @@
 													{if $isAdmin}
 													<li>
 														<a href="{$rootUrl}Admin" class="arrow">Admin</a>
-														<ul>
+														<ul >
 															<li><a href="{$rootUrl}Admin">Panneau d'administrateur</a></li>
-															<li><a href="{$rootUrl}admin/listUser">Listes des utilisateurs</a></li>
-															<form method="post" id="form1" action="{$rootUrl}Admin/takeControlAs">
-															<li>
-																<span class="arrow">Entrer en partie En tant que :</span>
-																
-																<ul>
-																	{foreach name=outer item=arr from=$adminRobots}
-    																	 {foreach key=key item=item from=$arr}
-     														 	    		 <input type="hidden" name="takeControlAs" value="{$item}">
-  																		    <a href="javascript:;" onclick="javascript: document.getElementById('form1') .submit()">{$item}</a>
-  																	 	 {/foreach}
-																	{/foreach}
-																	
-																</ul>
-																
-															</li>
-															</form>
-														</ul>
-													</li>
-													{/if}
-													<li><a href="{$rootUrl}play">Jouer</a></li>
-													{if !$isConnected}
-													<li><a href="{$rootUrl}account/login">Se connecter</a></li>
-													<li><a href="{$rootUrl}account/register">S'inscrire</a></li>
-													{else}
-													<li><a href="{$rootUrl}account">Profil</a></li>
-													<li><a href="{$rootUrl}account/logout">Se déconnecter</a></li>
-													{/if}
-												</ul>
-											</nav>
-									
+																<li><a href="{$rootUrl}admin/listUser">Listes des utilisateurs</a></li>
+																	</ul>
+																</li>
+																{/if}
+																<li><a href="{$rootUrl}play">Jouer</a></li>
+																{if !$isConnected}
+																<li><a href="{$rootUrl}account/login">Se connecter</a></li>
+																<li><a href="{$rootUrl}account/register">S'inscrire</a></li>
+																{else}
+																<li><a href="{$rootUrl}account">Profil</a></li>
+																<li><a href="{$rootUrl}account/logout">Se déconnecter</a></li>
+																{/if}
+															</ul>
+														</nav>
+												
+												</div>
+											</header>
+			
 									</div>
-								</header>
-
+								</div>
+							</div>
 						</div>
-					</div>
-				</div>
-			</div>
-		
-		<!-- Main Wrapper -->
-			<div id="main-wrapper">
-				{if !empty($littleMessage) || !empty($littleError)}
-				<div id="messages" class="ui-widget" style="float: left; margin-bottom: 25px;">
-				{/if}
-					{if !empty($littleMessage)}
-					<div class="ui-state-highlight ui-corner-all" style="margin-top: 15px; padding: 0 .7em; font-size:11px; line-height:1.3em; width: 600px; margin-left: 90px; margin-bottom: 15px">
-						<p style="padding:0px; margin:0px; margin-top: 11px; margin-bottom: 11px; font-size: 1.1em;"><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>
-							<strong style="color: rgb(46, 125, 178); font-weight: bold;">{$littleMessageTitle}</strong> {$littleMessage}</p>
-					</div>
-					{/if}
-					{if !empty($littleError)}
-					<div class="ui-state-error ui-corner-all" style="margin-top: 15px; padding: 0 .7em; font-size:11px; line-height:1.3em; width: 600px; margin-left: 90px; margin-bottom: 15px">
-						<p style="padding:0px; margin:0px; margin-top: 11px; margin-bottom: 11px; font-size: 1.1em;"><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>
-							<strong style="color: rgb(17, 17, 17); font-weight: bold;">{$littleErrorTitle}</strong> {$littleError}</p>
-					</div>
-					{/if}
-				{if !empty($littleMessage) || !empty($littleError)}
-				</div>
-				{/if}
-				<div class="main-wrapper-style2">
-					<div class="inner">
+					
+					<!-- Main Wrapper -->
+						<div id="main-wrapper">
+							{if !empty($littleMessage) || !empty($littleError)}
+							<div id="messages" class="ui-widget" style="float: left; margin-bottom: 25px;">
+							{/if}
+								{if !empty($littleMessage)}
+								<div class="ui-state-highlight ui-corner-all" style="margin-top: 15px; padding: 0 .7em; font-size:11px; line-height:1.3em; width: 600px; margin-left: 90px; margin-bottom: 15px">
+									<p style="padding:0px; margin:0px; margin-top: 11px; margin-bottom: 11px; font-size: 1.1em;"><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>
+										<strong style="color: rgb(46, 125, 178); font-weight: bold;">{$littleMessageTitle}</strong> {$littleMessage}</p>
+								</div>
+								{/if}
+								{if !empty($littleError)}
+								<div class="ui-state-error ui-corner-all" style="margin-top: 15px; padding: 0 .7em; font-size:11px; line-height:1.3em; width: 600px; margin-left: 90px; margin-bottom: 15px">
+									<p style="padding:0px; margin:0px; margin-top: 11px; margin-bottom: 11px; font-size: 1.1em;"><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>
+										<strong style="color: rgb(17, 17, 17); font-weight: bold;">{$littleErrorTitle}</strong> {$littleError}</p>
+								</div>
+								{/if}
+							{if !empty($littleMessage) || !empty($littleError)}
+							</div>
+							{/if}
+							<div class="main-wrapper-style2">
+								<div class="inner">

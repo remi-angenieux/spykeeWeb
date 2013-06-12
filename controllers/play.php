@@ -13,6 +13,24 @@ class PlayController extends BaseController
 	//default method
 	protected function index()
 	{
+		if(isset($this->urlValues['wellLeaveQueue']))
+			$this->view->littleMessage('Vous avez été quitté de la partie avec succés.');
+		if(isset($this->urlValues['wellLeaveQueue']))
+			$this->view->littleMessage('Vous avez été quitté de la file d\'attente avec succés.');
+		if(isset($this->urlValues['badLeaveQueue']))
+			$this->view->littleError('Erreur dans le processus en vue de quitter la file.');
+		if(isset($this->urlValues['badLeaveGame']))
+			$this->view->littleError('Erreur dans le processus en vue de quitter la partie.');
+		if(isset($this->urlValues['wellAddRobot']))
+			$this->view->littleMessage('Le robot à été ajouté avec succés.');
+		if(isset($this->urlValues['wellAddRobot']))
+			$this->view->littleMessage('Le robot à été ajouté avec succés.');
+		if(isset($this->urlValues['wellAddRobot']))
+			$this->view->littleMessage('Le robot à été ajouté avec succés.');
+		if(isset($this->urlValues['InfoNoRobot']))
+			$this->view->littleMessage('Aucun robot n\'est disponible pour le moment.');
+		
+		$this->view->addAdditionalCss('admin.css');
 		$this->model->displayAdminRobots();
 		if ($this->model->isConnected()){
 			$this->model->index();
@@ -54,23 +72,24 @@ class PlayController extends BaseController
 	}
 	
 	protected function queue(){
-		//TODO afficher message pas de robot dispo
+	/*if(!$this->model->isRobotOn()){
+		$this->view->redirect('play/queue?InfoNoRobot');
+	}*/
+		
 	if ($this->model->isInQueue()){
     	$this->model->displayQueue();
-    	$this->model->displayImg();
 	}	
 	else{
 		if ($this->model->isConnected()){
 			$this->model->enterQueue();
 			$this->model->displayQueue();
-			$this->model->displayImg();
 		}
 		else{
 			$this->model->showNotConnected();
 		}
 	}
 	if($this->model->isAdmin()){
-		if($this->model->isFirst() && $this->model->canPlayAdmin()){
+		if($this->model->isFirst() && $this->model->canPlay()){
 			$this->view->addAdditionalJs('askplay.js');
 		}
 	}
@@ -84,15 +103,6 @@ class PlayController extends BaseController
 	protected function play(){
 		
 		if($this->model->isInGame()){
-			if(!$this->model->isAdmin())
-			$this->model->leaveGame();
-			else{
-			$this->model->play();
-			}
-		}
-		else if($this->model->isAdmin())
-		{
-			$this->model->enterGameAdmin();
 			$this->model->play();
 		}
 		else {
@@ -101,9 +111,8 @@ class PlayController extends BaseController
 			}
 			else{
 				if($this->model->isFirst()){//if the user is the 1st of the queue
-					if(!$this->model->isInGame())
 						$this->model->enterGame();
-					$this->model->play();
+						$this->model->play();
 				}
 				else{
 					$this->model->showNotAllowed();

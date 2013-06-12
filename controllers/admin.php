@@ -19,10 +19,14 @@ class AdminController extends BaseController
 			$this->model->displaySelectsUser();
 			$this->model->displayGames();
 			$this->model->displayUser();
+			$this->model->displayQueue();
+			$this->model->displayMemberInQueue();
 			if(isset($this->urlValues['wellAddRobot']))
 				$this->view->littleMessage('Le robot à été ajouté avec succés.');
 			if(isset($this->urlValues['wellAddAdmin']))
 				$this->view->littleMessage('L\'administrateur été ajouté avec succés.');
+			if(isset($this->urlValues['wellDelAdmin']))
+				$this->view->littleMessage('L\'administrateur été enlevé avec succés.');
 			if(isset($this->urlValues['wellBlock']))
 				$this->view->littleMessage('Le robot à été bloqué avec succés.');
 			if(isset($this->urlValues['wellChangePass']))
@@ -49,27 +53,32 @@ class AdminController extends BaseController
 				$this->view->littleError('L\'addresse IP rentrée n\'est pas valide.');
 			if(isset($this->urlValues['badModIdSame']))
 				$this->view->littleError('L\'id rentré existe déjà.');
-			
-
+			if(isset($this->urlValues['wellPutOutOfQueue']))
+				$this->view->littleError('L\'id rentré existe déjà.');
 		}
 		else{
 			$this->model->showNotAllowed();
 		}
 	}
 	
-
+	protected function delAdmin(){
+		$this->model->delAdmin($_POST);
+	}
 	protected function delUser(){
 		$this->model->delUser($_POST);
 	}
-	
+	protected function putOutOfQueue(){
+		$this->model->putOutOfQueue();
+	}
 	
 	protected function listUser(){
+		$this->view->addAdditionalCss('queue.css');
 		$this->model->displayUser();
 	}
 	
 	protected function block(){
 		if($this->model->isAdmin() && $this->model->isConnected()){
-			$this->model->block($_POST['block']);
+			$this->model->block($_POST);
 		}
 		
 		else{
@@ -78,7 +87,7 @@ class AdminController extends BaseController
 	}
 	protected function deblock(){
 		if($this->model->isAdmin() && $this->model->isConnected()){
-			$this->model->deblock($_POST['deblock']);
+			$this->model->deblock($_POST);
 		}
 		else{
 			$this->model->showNotAllowed();
@@ -98,7 +107,7 @@ class AdminController extends BaseController
 	
 	protected function delRobot(){
 		if($this->model->isAdmin() && $this->model->isConnected()){
-			$this->model->delRobot($_POST['delRobot']);
+			$this->model->delRobot($_POST);
 		}
 		else{
 			$this->model->showNotAllowed();
@@ -108,8 +117,7 @@ class AdminController extends BaseController
 	
 	protected function takeControlAs(){
 		if($this->model->isAdmin() && $this->model->isConnected()){
-			$this->model->takeControlAs($_POST['takeControlAs']);
-			print_r($_POST);
+			$this->model->takeControlAs($_POST);
 		}
 		else{
 			$this->model->showNotAllowed();
@@ -139,7 +147,7 @@ class AdminController extends BaseController
 	
 	protected function setNotUsed(){
 		if($this->model->isAdmin() && $this->model->isConnected()){
-			$this->model->setNotUsed($_POST['setNotUsed']);
+			$this->model->setNotUsed($_POST);
 		}
 		else{
 			$this->model->showNotAllowed();

@@ -9,6 +9,6 @@
 				</header>
 				<p>{$message}</p>
 				{if !empty($url)}
-				<p>Cliquez <a href="{$rootUrl}{$url}">ici</a> pour être redirigé</p>
+				<a href="{$rootUrl}{$url}" class="button">Cliquez ici pour être redirigé</a>
 				{/if}
 			</article>

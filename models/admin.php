@@ -7,6 +7,11 @@ public function index(){
 	$this->view->assign(array('pageTitle' => 'Panneau d\'Administrateur'));
 }
 
+public function showNotAllowed(){
+	$message="Vous n'êtes pas autorisé à entrer dans cette page";
+	$this->view->message('Erreur',$message,'/admin/play/play');
+}
+
 public function displayAdminRobots(){
 	$query = $this->db->prepare('SELECT name FROM robots
 									 EXCEPT
@@ -17,6 +22,9 @@ public function displayAdminRobots(){
 		foreach ($result as $key=>$value){
 		$adminRobots[]=$value;
 		}
+		if(!$adminRobots){
+			$$adminRobots['1']='Pas de robot disponible';
+		}
 		$this->view->assign('adminRobots',$adminRobots);
 	}
 	catch(PDOException $e){
@@ -24,17 +32,30 @@ public function displayAdminRobots(){
 	}
 }
 
-public function delUser($var){
-	$query = $this->db->prepare('DELETE FROM members WHERE id=?') ;
-	$query->execute(array($var['id']));
-	try{
-		$this->view->redirect('admin/?wellDelUser');
+
+public function displayQueue(){
+		$var=1;
+		$query = $this->db->prepare('SELECT members.id,pseudo,timestamp FROM queue INNER JOIN members ON refmember=id ORDER BY timestamp ASC') ;
+		$query->execute();
+		try{
+			$file= $query->fetchAll(PDO::FETCH_ASSOC);
+			foreach( $file as $key=>$value ){  //Extraction of pseudo and timestamp from array $result
+				$file[$key]['place']=$var;
+				$file[$key]['timestamp']=time()-$file[$key]['timestamp'];
+				$var=$var+1;
+			}
+			if(!$file){
+				$file[0]['id']='';
+				$file[0]['pseudo']='';
+				$file[0]['timestamp']='Pas d\'utilisateur en file';
+			}
+			$this->view->assign('file',$file);
+			
 		}
-	
-	catch(PDOException $e){
-			Error::displayError($e);
-	}
-	
+		catch(PDOException $e){
+			Error::diplayError($e);
+			$file='';
+		}
 }
 
 public function displayUser(){
@@ -96,6 +117,9 @@ public function displayRobot(){
 				$array[$key]['locked']='NON';
 			}
 		}
+		if(!$array){
+			$array['1']='Pas de robot.';
+		}
 	$this->view->assign('array',$array);
 	}
 		
@@ -109,12 +133,33 @@ public function displayGames(){
 	$query->execute();
 	try{
 		$array3 = $query->fetchAll(PDO::FETCH_ASSOC);
+		if(!$array3){
+			$array3['0']['refmember']='';
+			$array3['0']['pseudo']='Pas de partie en cours';
+
+		}
 		$this->view->assign('array3',$array3);
 		}
 	catch(PDOException $e){
 		Error::displayError($e);
 	}
 	
+}
+
+public function displayMemberInQueue(){
+	$query = $this->db->prepare('SELECT pseudo FROM members INNER JOIN queue ON refmember=members.id') ;
+	$query->execute();
+	try{
+		$member_queue = $query->fetchAll(PDO::FETCH_ASSOC);
+		if(!$member_queue){
+			$member_queue['1']='Pas d\'utilisateur en file';
+		}
+		$this->view->assign('member_queue',$member_queue);
+	}
+	catch(PDOException $e){
+		Error::displayError($e);
+	}
+
 }
 
 
@@ -132,6 +177,9 @@ public function displaySelectsRobot(){
 		$result = $query->fetchAll(PDO::FETCH_ASSOC);
 		foreach ($result as $key=>$value){
 			$array2[]=$value;
+		}
+		if(!$array2){
+			$array2['1']='Pas de robot.';
 		}
 		$this->view->assign('array2',$array2);
 	}
@@ -153,10 +201,22 @@ public function changePass($var){
 	}
 }
 
-	
-public function block($var){
-	$query = $this->db->prepare('UPDATE robots SET locked=true WHERE name=?') ;
+
+public function putOutOfQueue($var){
+	$query = $this->db->prepare('DELETE FROM QUEUE WHERE pseudo=?') ;
 	$query->execute(array($var));
+	try{
+		$this->view->redirect('admin/?wellPutOutOfQueue');
+	}
+	catch(PDOException $e){
+		Error::displayError($e);
+	}
+}
+
+public function block($var){
+	$robot=$var['robot'];
+	$query = $this->db->prepare('UPDATE robots SET locked=true WHERE name=?') ;
+	$query->execute(array($robot));
 	try{
 		$this->view->redirect('admin/?wellBlock');
 	}
@@ -166,8 +226,9 @@ public function block($var){
 }
 
 public function deblock($var){
+	$robot=$var['robot'];
 	$query = $this->db->prepare('UPDATE robots SET locked=false WHERE name=?') ;
-	$query->execute(array($var));
+	$query->execute(array($robot));
 	try{
 		$this->view->redirect('admin/?wellDeblock');
 	}
@@ -176,14 +237,22 @@ public function deblock($var){
 	}
 }
 
-public function showNotAllowed(){
-	$message="Vous n'êtes pas autorisé à entrer dans cette page";
-	$this->view->message('Erreur',$message,'/admin/play/play');
+public function setNotUsed($var){
+	$robot=$var['robot'];
+	$query = $this->db->prepare('DELETE FROM games WHERE refrobot=(SELECT robots.id FROM robots WHERE robots.name=?)') ;
+	$query->execute(array($robot));
+	try{
+		$this->view->redirect('admin/?wellSetNotUsed');
+	}
+	catch(PDOException $e){
+		Error::displayError($e);
+	}
 }
 
 public function takeControlAs($var){
+	$robot=$var['robot'];
 	$query = $this->db->prepare('SELECT robots.id FROM robots WHERE name=?') ;
-	$query->execute(array($var));
+	$query->execute(array($robot));
 	try{
 		$value2 = $query->fetch(PDO::FETCH_ASSOC);
 		$value3=$value2['id'];
@@ -205,13 +274,14 @@ public function takeControlAs($var){
 }
 
 public function delRobot($var){
+	$robot=$var['robot'];
 	$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.name=?') ;
-	$query->execute(array($var));
+	$query->execute(array($robot));
 	try{
 		$value2 = $query->fetch(PDO::FETCH_ASSOC);
 		$value3=$value2['id'];
 		$query = $this->db->prepare('DELETE FROM robots WHERE robots.name=?') ;
-		$query->execute(array($var));
+		$query->execute(array($robot));
 		try{
 			$this->view->redirect('admin/?wellDelRobot');
 		}
@@ -224,18 +294,21 @@ public function delRobot($var){
 	}
 }
 
-public function setNotUsed($var){
-	$query = $this->db->prepare('DELETE FROM games WHERE refrobot=(SELECT robots.id FROM robots WHERE robots.name=?)') ;
-	$query->execute(array($var));
+public function delUser($var){
+	$query = $this->db->prepare('DELETE FROM members WHERE id=?') ;
+	$query->execute(array($var['id']));
 	try{
+		$this->view->redirect('admin/listUser/?wellDelUser');
 	}
+
 	catch(PDOException $e){
 		Error::displayError($e);
 	}
 
+}
 	
 
-}
+
 
 /*public function isIp($string){
 	if (preg_match('#^([0-9]{1,3}\.){3}[0-9]{1,3}$#', $string) == 1)
@@ -412,20 +485,23 @@ public function addRobot($var){
 }
 
 public function addAdmin($var){
-	$value=$var['addAdmin'];
-	$query = $this->db->prepare('SELECT members.id FROM members WHERE members.pseudo=?') ;
-	$query->execute(array($value));
+	$pseudo=$var['pseudo'];
+	$query = $this->db->prepare('INSERT INTO admin (refmember) VALUES ((SELECT id FROM members WHERE pseudo=?))');
+	$query->execute(array($pseudo));
 	try{
-		$value2 = $query->fetch(PDO::FETCH_ASSOC);
-		$value3=$value2['id'];
+		$this->view->redirect('admin/?wellAddAdmin');
 	}
 	catch(PDOException $e){
 		Error::displayError($e);
 	}
-	$query = $this->db->prepare('INSERT INTO admin refmember) VALUES (?');
-	$query->execute(array($value3));
+}
+
+public function delAdmin($var){
+	$pseudo=$var['pseudo'];
+	$query = $this->db->prepare('DELETE FROM admin WHERE refmember=(SELECT id FROM members WHERE pseudo=?)');
+	$query->execute(array($pseudo));
 	try{
-		$this->view->redirect('admin/?wellAddAdmin');
+		$this->view->redirect('admin/?wellDelAdmin');
 	}
 	catch(PDOException $e){
 		Error::displayError($e);

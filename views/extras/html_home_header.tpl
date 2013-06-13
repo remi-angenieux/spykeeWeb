@@ -60,22 +60,6 @@
 														<ul>
 															<li><a href="{$rootUrl}Admin">Panneau d'administrateur</a></li>
 															<li><a href="{$rootUrl}admin/listUser">Listes des utilisateurs</a></li>
-															<form method="post" id="form1" action="{$rootUrl}Admin/takeControlAs">
-															<li>
-																<span class="arrow">Entrer en partie En tant que :</span>
-																
-																<ul>
-																	{foreach name=outer item=arr from=$adminRobots}
-    																	 {foreach key=key item=item from=$arr}
-     														 	    		 <input type="hidden" name="takeControlAs" value="{$item}">
-  																		    <a href="javascript:;" onclick="javascript: document.getElementById('form1') .submit()">{$item}</a>
-  																	 	 {/foreach}
-																	{/foreach}
-																	
-																</ul>
-																
-															</li>
-															</form>
 														</ul>
 													</li>
 													{/if}
@@ -96,7 +80,7 @@
 							<!-- Banner -->
 								<div id="banner">
 									<h2><strong>Spykee Play:</strong> Une application web fun<br />
-									qui vous permet de controller un robot</h2>
+									qui vous permet de contrôler un robot</h2>
 									<p>Testez tout de suite, c'est gratuit ;)</p>
 									<a href="/play" class="button button-big button-icon button-icon-check">Jouer !</a>
 								</div>

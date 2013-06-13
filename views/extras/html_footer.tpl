@@ -17,16 +17,6 @@
 									<h2>Filler Links</h2>
 									<ul class="style2">
 										<li><a href="#">Quam turpis feugiat sit dolor</a></li>
-										<li><a href="#">Amet ornare in hendrerit in lectus</a></li>
-										<li><a href="#">Semper mod quisturpis nisi</a></li>
-										<li><a href="#">Consequat etiam lorem phasellus</a></li>
-										<li><a href="#">Amet turpis, feugiat et sit amet</a></li>
-										<li><a href="#">Ornare in hendrerit in lectus</a></li>
-										<li><a href="#">Semper mod quis eget mi dolore</a></li>
-										<li><a href="#">Amet ornare in hendrerit in lectus</a></li>
-										<li><a href="#">Consequat etiam lorem phasellus</a></li>
-										<li><a href="#">Amet turpis, feugiat et sit amet</a></li>
-										<li><a href="#">Semper mod quisturpis nisi</a></li>
 									</ul>
 								</section>
 						
@@ -38,9 +28,6 @@
 									<h2>More Filler</h2>
 									<ul class="style2">
 										<li><a href="#">Quam turpis feugiat sit dolor</a></li>
-										<li><a href="#">Amet ornare in hendrerit in lectus</a></li>
-										<li><a href="#">Semper mod quisturpis nisi</a></li>
-										<li><a href="#">Consequat etiam lorem phasellus</a></li>
 									</ul>
 								</section>
 						
@@ -49,9 +36,6 @@
 									<h2>Even More Filler</h2>
 									<ul class="style2">
 										<li><a href="#">Quam turpis feugiat sit dolor</a></li>
-										<li><a href="#">Amet ornare in hendrerit in lectus</a></li>
-										<li><a href="#">Semper mod quisturpis nisi</a></li>
-										<li><a href="#">Consequat etiam lorem phasellus</a></li>
 									</ul>
 								</section>
 						

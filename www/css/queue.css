@@ -1,0 +1,50 @@
+	.text
+	{
+		display: block;
+		font-weight: 700;
+		letter-spacing: 0.065em;
+		font-size: 1.1em;
+		font-family: Ariel;
+		color: #474747;
+		text-align:center;
+	
+	}
+	.soustitre
+	{
+		text-transform: uppercase;
+		font-weight: 800;
+		letter-spacing: 0.04em;
+		color: #474747;
+		margin: 0 0 1em 0;
+	}
+		.titre
+	{
+		padding-left:275px;
+		text-transform: uppercase;
+		font-weight: 800;
+		letter-spacing: 0.04em;
+		color: #474747;
+		margin: 0 0 1em 0;
+		font-size: 2.5em;
+	}
+	.textpasalign
+	{
+		padding:0,100,0,20;
+		display: block;
+		font-weight: 700;
+		letter-spacing: 0.065em;
+		font-size: 1.1em;
+		font-family: Ariel;
+		color: #474747;
+	}
+	
+		.askplay
+	{
+		display: block;
+		font-weight: 700;
+		letter-spacing: 0.065em;
+		font-size: 1.1em;
+		color: #100100100;
+		text-align:center;
+			}
+	

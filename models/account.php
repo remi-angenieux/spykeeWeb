@@ -11,19 +11,6 @@ class AccountModel extends BaseModel
 		$this->view->addAdditionalCss('profil.css');
 	}
 	
-	public function displayAdminRobots(){
-		$query = $this->db->prepare('SELECT name FROM robots
-									 EXCEPT
-									SELECT name FROM robots INNER JOIN games ON refrobot=robots.id WHERE robots.id=(SELECT refrobot FROM games)') ;
-		$query->execute();
-		$result = $query->fetchAll(PDO::FETCH_ASSOC);
-		foreach ($result as $key=>$value){
-			$adminRobots[]=$value;
-		}
-		$this->view->assign('adminRobots',$adminRobots);
-	
-	}
-	
 	public function showProfile(){
 		$this->view->assign('pageTitle', 'Votre profil');
 	}
@@ -63,8 +50,7 @@ class AccountModel extends BaseModel
 				$query->execute(array($values['pseudo']));
 				$result = $query->fetchAll(PDO::FETCH_ASSOC);
 				if (count($result) >= 1){
-					$message = 'Nous somme désolé mais ce pseudo est déjà utilisé.';
-					$this->view->littleError($message);
+					$this->view->redirect('account/?badAccountSame');
 				}
 				else{
 					$query = $this->db->prepare('INSERT INTO members (pseudo, password, email) VALUES (?, ?, ?)');
@@ -77,7 +63,7 @@ class AccountModel extends BaseModel
 				if($this->model->isAdmin)
 				Error::displayError($e);
 				else
-					$this->view->littleError('Erreur dans votre inscription.');
+					$this->view->redirect('account/?badRegister');
 				}
 				
 			}
@@ -110,7 +96,7 @@ class AccountModel extends BaseModel
 			if($this->model->isAdmin)
 				Error::displayError($e);
 			else 
-			$this->view->littleError('Erreur dans le chargement de la liste des utlisateurs.');
+			$this->view->redirect('account/?badListUser');
 		}
 	}
 	
@@ -131,7 +117,7 @@ class AccountModel extends BaseModel
 			if($this->model->isAdmin)
 				Error::displayError($e);
 			else
-				$this->view->littleError('Erreur dans le chargement du profil de l\'utilisateur.');
+				$this->view->redirect('account/?badProfilUser');
 		}
 	}
 	
@@ -160,8 +146,7 @@ class AccountModel extends BaseModel
 				
 				// Si la connexion à échoué
 				if (count($response) != 1){
-					$message = 'Vous avez du vous tromper dans le pseudo ou le mot de passe.';
-					$this->view->littleError($message);
+					$this->view->redirect('account/?badPass');
 				}
 				else{
 					$_SESSION['id'] = $response[0]['id'];
@@ -172,7 +157,7 @@ class AccountModel extends BaseModel
 				if($this->model->isAdmin)
 					Error::displayError($e);
 				else
-					$this->view->littleError('Erreur dans la connexion a votre compte.');
+					$this->view->redirect('account/?badAccountCon');
 			}
 		}
 	}
@@ -206,7 +191,7 @@ class AccountModel extends BaseModel
 			if($this->model->isAdmin)
 				Error::displayError($e);
 			else
-				$this->view->littleError('Erreur dans le chargement du profil.');
+				$this->view->redirect('account/?badProfil');
 		}
 
 	
@@ -222,7 +207,7 @@ class AccountModel extends BaseModel
 			if($this->model->isAdmin)
 				Error::displayError($e);
 			else
-				$this->view->littleError('Erreur dans le changement du mot de passe.');
+				$this->view->redirect('account/?badChangePass');
 		}
 
 	}
@@ -237,7 +222,7 @@ class AccountModel extends BaseModel
 			if($this->model->isAdmin)
 				Error::displayError($e);
 			else
-				$this->view->littleError('Erreur dans la suppression de l\'historique.');
+				$this->view->redirect('account/?badDelHistory');
 		}
 	
 	}
@@ -249,14 +234,14 @@ class AccountModel extends BaseModel
 			$query->execute(array(sha1($var['email']),$this->user->id));
 			$this->view->redirect('account/?wellChangeEmail');
 			if(!$this->isMail($var)){
-			$this->view->littleError('Erreur dans le changement de votre e-mail.');
+			$this->view->redirect('account/?badEmail');
 			}
 		}
 		catch(PDOException $e){
 			if($this->model->isAdmin)
 				Error::displayError($e);
 			else
-				$this->view->littleError('Erreur dans le changement de votre e-mail.');
+				$this->view->redirect('account/?badEmail');
 		}
 	
 	}
@@ -278,7 +263,7 @@ class AccountModel extends BaseModel
 			if($this->model->isAdmin)
 				Error::displayError($e);
 			else
-				$this->view->littleError('Erreur dans le chargement de l\historique.');
+				$this->view->redirect('account/?badHistory');
 		}
 
 	
@@ -293,67 +278,76 @@ class AccountModel extends BaseModel
 		if ($var['icone']['error'] > 0) {
 		switch($var['icone']['error']){
 				case 1:
-			$this->view->littleError('L\'image est trop volumineuse :(');
+			$this->view->redirect('account/?badUploadSize');
 					break;
 				case 2:
-			$this->view->littleError('L\'image est trop volumineuse :(');
+			$this->view->redirect('account/?badUploadSize');
 					break;
 				case 3:
-			$this->view->littleError('Le fichier n\'été que partiellement téléchargé :(');
+			$this->view->redirect('account/?badUpload');
 					break;
 			
 				case 4:
-			$this->view->littleError('Un dossier est manquant :(');
+			$this->view->redirect('account/?badUpload');
 					break;
 				case 6:
-			$this->view->littleError('Echec de l\'écriture des fichiers :(');
+			$this->view->redirect('account/?badUpload');
 					break;
 	
 				case 7:
-			$this->view->littleError('Une extension PHP a arrêté l\'envoi de fichier , contacter un administrateur :(');
+			$this->view->redirect('account/?badUpload');
 					break;
 				case 8:
 								
-			$this->view->littleError('L\'image est trop volumineuse :(');
+			$this->view->redirect('account/?badUploadWeight');
 					break;
 			}
 		}
-		if ($var['icone']['size'] > $this->config->upload->maximgsize){
-			$this->view->littleError('L\'image est trop volumineuse :(');
-		}
-	
-		$image_sizes = getimagesize($var['icone']['tmp_name']);
-			if ($image_sizes[0] > $this->config->upload->maximgwidth OR $image_sizes[1] >$this->config->upload->maximgheight){
-			$this->view->littleError('L\'image est trop volumineuse :(');
-		}
-	
-		$extensions_valides = array( 'jpg' , 'jpeg' , 'gif' , 'png' );
-			$extension_upload = strtolower(  substr(  strrchr($var['icone']['name'], '.')  ,1)  );
-	
-		if (! in_array($extension_upload,$extensions_valides) ){
-			$this->view->littleError('L\'extension de l\'image est invalide :(');
-		}
-	
-		$imgdir = "{$this->user->global->rootUrl}images/profils/{$this->user->id}{$extension_upload}";
-		$resultat = move_uploaded_file($var['icone']['tmp_name'],$imgdir);
-		if ($resultat){
-			$query = $this->db->prepare('UPDATE members SET image=? WHERE members.id=?') ;
-			try{
-				$query->execute(array($this->user->id.".".$extension_upload,$this->user->id));
-				$this->view->redirect('?wellChangeImg');
-			}
-			catch(PDOException $e){
-				if($this->model->isAdmin)
-					Error::displayError($e);
-				else
-					$this->view->littleError('Erreur dans l\'upload de votre image :(');
-			}
-		}
 		else{
-			$message = 'L\'upload de l\'image a échoué ';
-			$this->view->littleError('L\'upload de l\'image échoué.');
+			if ($var['icone']['size'] > $this->config->upload->maximgsize){
+				$this->view->redirect('account/?badUploadWeight');
 			}
+			else{
+				$image_sizes = getimagesize($var['icone']['tmp_name']);
+				if ($image_sizes[0] > $this->config->upload->maximgwidth OR $image_sizes[1] >$this->config->upload->maximgheight){
+					$this->view->redirect('account/?badUploadSize');
+				}
+				else{
+					$extensions_valides = array( 'jpg' , 'jpeg' , 'gif' , 'png' );
+					$extension_upload = strtolower(  substr(  strrchr($var['icone']['name'], '.')  ,1)  );
+						
+					if (! in_array($extension_upload,$extensions_valides) ){
+						$this->view->redirect('account/?badUploadExt');
+					}
+					else{
+						$imgdir = "{$this->user->global->rootUrl}images/profils/{$this->user->id}.{$extension_upload}";
+						$resultat = move_uploaded_file($var['icone']['tmp_name'],$imgdir);
+						if ($resultat){
+							$query = $this->db->prepare('UPDATE members SET image=? WHERE members.id=?') ;
+							try{
+								$query->execute(array($this->user->id.".".$extension_upload,$this->user->id));
+								$this->view->redirect('account?wellChangeImg');
+							}
+							catch(PDOException $e){
+								if($this->model->isAdmin)
+									Error::displayError($e);
+								else
+									$this->view->redirect('account/?badUpload');
+							}
+						}
+						else{
+							$this->view->redirect('account/?badUpload');
+						}
+						}
+						}
+					}	
+				
+				}	
+				
+			
+		
 		}
+		
 	
 	
 	public function displayImg(){

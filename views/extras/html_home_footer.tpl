@@ -13,16 +13,6 @@
 									<h2>Filler Links</h2>
 									<ul class="style2">
 										<li><a href="#">Quam turpis feugiat sit dolor</a></li>
-										<li><a href="#">Amet ornare in hendrerit in lectus</a></li>
-										<li><a href="#">Semper mod quisturpis nisi</a></li>
-										<li><a href="#">Consequat etiam lorem phasellus</a></li>
-										<li><a href="#">Amet turpis, feugiat et sit amet</a></li>
-										<li><a href="#">Ornare in hendrerit in lectus</a></li>
-										<li><a href="#">Semper mod quis eget mi dolore</a></li>
-										<li><a href="#">Amet ornare in hendrerit in lectus</a></li>
-										<li><a href="#">Consequat etiam lorem phasellus</a></li>
-										<li><a href="#">Amet turpis, feugiat et sit amet</a></li>
-										<li><a href="#">Semper mod quisturpis nisi</a></li>
 									</ul>
 								</section>
 						
@@ -34,9 +24,6 @@
 									<h2>More Filler</h2>
 									<ul class="style2">
 										<li><a href="#">Quam turpis feugiat sit dolor</a></li>
-										<li><a href="#">Amet ornare in hendrerit in lectus</a></li>
-										<li><a href="#">Semper mod quisturpis nisi</a></li>
-										<li><a href="#">Consequat etiam lorem phasellus</a></li>
 									</ul>
 								</section>
 						
@@ -45,9 +32,6 @@
 									<h2>Even More Filler</h2>
 									<ul class="style2">
 										<li><a href="#">Quam turpis feugiat sit dolor</a></li>
-										<li><a href="#">Amet ornare in hendrerit in lectus</a></li>
-										<li><a href="#">Semper mod quisturpis nisi</a></li>
-										<li><a href="#">Consequat etiam lorem phasellus</a></li>
 									</ul>
 								</section>
 						
@@ -55,15 +39,6 @@
 						<div class="6u">
 						
 							<!-- About -->
-								<section>
-									<h2><strong>ZeroFour</strong> by HTML5 Up!</h2>
-									<p>Hello! This is <strong>ZeroFour</strong>, a free, fully responsive HTML5 site
-									template by <a href="http://n33.co/">n33</a> for <a href="http://html5up.net/">HTML5 Up!</a>
-									It's <a href="http://html5up.net/license/">Creative Commons Attribution</a>
-									licensed so use it for any personal or commercial project (just credit us
-									for the design!)</p>
-									<a href="http://html5up.net/" class="button button-alt button-icon button-icon-rarrow">More @ HTML5Up.net</a>
-								</section>
 						
 							<!-- Contact -->
 								<section>

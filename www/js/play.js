@@ -16,7 +16,7 @@ var constants = {
 	$("#imgStream").attr('src', '/videoStream/video.jpeg#'+ new Date().getTime());
 }*/
 
-window.setInterval(function(){refreshImgStream();}, constants.INTERVAL_REFRESH_IMG);
+//window.setInterval(function(){refreshImgStream();}, constants.INTERVAL_REFRESH_IMG);
 /*
  * Gestion des actions du robot
  */

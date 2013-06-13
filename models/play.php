@@ -7,28 +7,10 @@ class PlayModel extends BaseModel
 
 	//data passed to the home index view
 	public function index(){
-		
+		$this->view->assign(array('pageTitle' => 'Play'));
 	}
 	
 
-	public function displayAdminRobots(){
-		$query = $this->db->prepare('SELECT name FROM robots
-									 EXCEPT
-									SELECT name FROM robots INNER JOIN games ON refrobot=robots.id WHERE robots.id=(SELECT refrobot FROM games)') ;
-		$query->execute();
-		try{
-			$result = $query->fetchAll(PDO::FETCH_ASSOC);
-		foreach ($result as $key=>$value){
-			$adminRobots[]=$value;
-		}
-		$this->view->assign('adminRobots',$adminRobots);
-		}
-			catch (PDOException $e){
-				if($this->model->isAdmin){
-					Error::displayError($e);
-				}
-	       }
-	}
 	public function showNotConnected(){
 		$this->view->assign(array('pageTitle' => 'Erreur'));
 		$message = 'Vous devez être connecté pour pouvoir jouer';
@@ -47,6 +29,8 @@ class PlayModel extends BaseModel
 		$query = $this->db->prepare('INSERT INTO queue (refmember,timestamp) VALUES(?,?)') ;
 		$query->execute(array($this->user->id,time()));
 		try{
+			
+			
 		}
 		catch (PDOException $e){
 			if($this->model->isAdmin){
@@ -327,7 +311,7 @@ class PlayModel extends BaseModel
                 $json = $response->jsonFormat();
             }
             else
-                $json = '{"state": 0, data: "", "description: "'.$e->getMessage().', idDescription: 0"}';
+                $json = '{"state": 0, data: "", "description: "'.$e->getMessage().', "idDescription: 0"}';
             $this->view->assign('content', $response->jsonFormat());
             return FALSE;
         }

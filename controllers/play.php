@@ -13,6 +13,7 @@ class PlayController extends BaseController
 	//default method
 	protected function index()
 	{
+		
 		if(isset($this->urlValues['wellLeaveGame']))
 			$this->view->littleMessage('Vous avez été quitté de la partie avec succés.');
 		if(isset($this->urlValues['wellLeaveQueue']))
@@ -29,9 +30,7 @@ class PlayController extends BaseController
 			$this->view->littleMessage('Le robot à été ajouté avec succés.');
 		if(isset($this->urlValues['InfoNoRobot']))
 			$this->view->littleMessage('Aucun robot n\'est disponible pour le moment.');
-		
 		$this->view->addAdditionalCss('admin.css');
-		$this->model->displayAdminRobots();
 		if ($this->model->isConnected()){
 			$this->model->index();
 			if($this->model->isInQueue()){

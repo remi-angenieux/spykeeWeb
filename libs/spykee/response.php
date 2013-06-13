@@ -178,9 +178,9 @@ class SpykeeResponse{
 	 */
 	public function jsonFormat(){
 		$return = '{';
-		$return .= '"state": '.$this->getState().', ';
-		$return .= '"data": "'.$this->getData().'", ';
-		$return .= '"description": "'.$this->getDescription().'", ';
+		$return .= '"state": '.$this->getState().',';
+		$return .= '"data": '.$this->getData().',';
+		$return .= '"description": '.$this->getDescription().',';
 		$return .= '"idDescription": '.$this->getIdDescription();
 		$return .= '}';
 		return $return;

@@ -12,26 +12,6 @@ public function showNotAllowed(){
 	$this->view->message('Erreur',$message,'home');
 }
 
-public function displayAdminRobots(){
-	$query = $this->db->prepare('SELECT name FROM robots
-									 EXCEPT
-									SELECT name FROM robots INNER JOIN games ON refrobot=robots.id WHERE robots.id=(SELECT refrobot FROM games)') ;
-	$query->execute();
-	try{
-		$result = $query->fetchAll(PDO::FETCH_ASSOC);
-		foreach ($result as $key=>$value){
-		$adminRobots[]=$value;
-		}
-		if(!$adminRobots){
-			$$adminRobots['1']='Pas de robot disponible';
-		}
-		$this->view->assign('adminRobots',$adminRobots);
-	}
-	catch(PDOException $e){
-			Error::displayError($e);
-	}
-}
-
 
 public function displayQueue(){
 		$var=1;

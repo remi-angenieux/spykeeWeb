@@ -13,7 +13,6 @@ class AdminController extends BaseController
 	protected function index(){
 		if($this->model->isAdmin() && $this->model->isConnected()){
 			$this->model->index();
-			$this->model->displayAdminRobots();
 			$this->model->displayRobot();
 			$this->model->displaySelectsRobot();
 			$this->model->displaySelectsUser();

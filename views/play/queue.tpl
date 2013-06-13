@@ -1,3 +1,4 @@
+
 <head>
 
 <script src="{$rootUrl}js/jquery-ui-1.10.3.dialog.js"></script>
@@ -10,6 +11,7 @@
  <span class="askplay" >It's your turn!</span>
 </div>
 </head>
+
 
 <div class="5grid-layout box-feature1">
 	<div class="row">
@@ -51,7 +53,6 @@
 				<a href="/play" target="_self" class="button button-alt button-icon button-icon-rarrow">Se retirer de la liste d'attente</a>
 			</div>
 		</div>
-
 
 
 	</div>

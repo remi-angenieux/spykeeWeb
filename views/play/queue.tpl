@@ -1,15 +1,12 @@
 
 <head>
-
+<script src="{$rootUrl}js/jquery-1.9.1.js"></script>
+<script src="{$rootUrl}js/askplay.js"></script>
 <script src="{$rootUrl}js/jquery-ui-1.10.3.dialog.js"></script>
 <script src="{$rootUrl}js/jquery-ui-1.10.3.dialog.min.js"></script>
+<link rel="stylesheet" href="{$rootUrl}css/ui-darkness/jquery-ui-1.10.3.dialog.css" type="text/css" />
+<link rel="stylesheet" href="{$rootUrl}css/queue.css" type="text/css" />		
 
-<link rel="stylesheet" href="{$rootUrl}/css/ui-darkness/jquery-ui-1.10.3.dialog.css" type="text/css" />
-<link rel="stylesheet" href="{$rootUrl}/css/ui-darkness/jquery-ui-1.10.3.dialog.min.css" type="text/css" />		
-<link rel="stylesheet" href="{$rootUrl}/css/queue.css" type="text/css" />		
-<div id="dialog" title="Wanna play ?">
- <span class="askplay" >It's your turn!</span>
-</div>
 </head>
 
 
@@ -53,7 +50,11 @@
 				<a href="/play" target="_self" class="button button-alt button-icon button-icon-rarrow">Se retirer de la liste d'attente</a>
 			</div>
 		</div>
+<div id="askplay" title="Wanna play ?">
+ <span class="askplay" >It's your turn!</span>
+</div>
 
+<p><a href="#" id="dialog-link" class="ui-state-default ui-corner-all"><span class="ui-icon ui-icon-newwin"></span>Open Dialog</a></p>
 
 	</div>
 </div>

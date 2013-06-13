@@ -111,7 +111,7 @@ class PlayModel extends BaseModel
 				$query->execute(array($duration));
 				try{
 					$this->view->setTemplate('index.tpl');
-					$this->view->redirect('play?wellLeaveQueue');
+					$this->view->redirect('play?wellLeaveGame');
 				}
 				catch (PDOException $e){
 					if($this->model->isAdmin)
@@ -216,22 +216,14 @@ class PlayModel extends BaseModel
 	
 	
 	public function displayQueue(){
-<<<<<<< HEAD
 		$imgDir=$this->config->global->rootUrl."images/profils/";
-=======
-		$imgDir=$this->config->global->rootUrl."images/";
->>>>>>> 19d07f82b531c6d048b13a4d214660d70c931b25
 		$query = $this->db->prepare('SELECT image FROM members INNER JOIN games ON games.refmember=members.id') ;
 		$query->execute();
 		try{
 			$array = $query->fetch(PDO::FETCH_ASSOC);
 			$resultat=$array['image'];
 			if(!$resultat){
-<<<<<<< HEAD
 				$src=$imgDir.'blanc.jpg';
-=======
-				$src=$imgDir.'default.jpg';
->>>>>>> 19d07f82b531c6d048b13a4d214660d70c931b25
 			}
 			else{
 				$src=$imgDir.$resultat;

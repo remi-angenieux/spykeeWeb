@@ -203,14 +203,9 @@ public function changePass($var){
 
 
 public function putOutOfQueue($var){
-<<<<<<< HEAD
 	$pseudo=$var['pseudo'];
 	$query = $this->db->prepare('DELETE FROM queue WHERE refmember=(SELECT members.id from members WHERE pseudo=?)') ;
 	$query->execute(array($pseudo));
-=======
-	$query = $this->db->prepare('DELETE FROM QUEUE WHERE pseudo=?') ;
-	$query->execute(array($var));
->>>>>>> 19d07f82b531c6d048b13a4d214660d70c931b25
 	try{
 		$this->view->redirect('admin/?wellPutOutOfQueue');
 	}

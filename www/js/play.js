@@ -12,9 +12,9 @@ var constants = {
  * Gestion du stream vidéo
  */
 // Rafraichie l'image qui compose le flux vidéo
-function refreshImgStream(){
+/*function refreshImgStream(){
 	$("#imgStream").attr('src', '/videoStream/video.jpeg#'+ new Date().getTime());
-}
+}*/
 
 window.setInterval(function(){refreshImgStream();}, constants.INTERVAL_REFRESH_IMG);
 /*

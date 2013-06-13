@@ -88,20 +88,9 @@ class PlayController extends BaseController
 			$this->model->showNotConnected();
 		}
 	}
-	if($this->model->isAdmin()){
 		if($this->model->isFirst() && $this->model->canPlay()){
 			$this->view->addAdditionalJs('askplay.js');
 		}
-	}
-	else{
-		if($this->model->isFirst() && $this->model->canPlay()){
-			$this->view->addAdditionalJs('askplay.js');
-			$this->view->addAdditionalJs('jquery-ui-1.10.3.custom.min.js');
-			$this->view->addAdditionalJs('jquery-ui-1.10.3.custom.js');
-			$this->view->addAdditionalJs('jquery-1.9.1.js');
-		}
-	}
-
 	}
 	protected function play(){
 		

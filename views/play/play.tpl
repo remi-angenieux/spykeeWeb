@@ -65,5 +65,7 @@
 					</header>
 					<p><img src="{$rootUrl}videoStream/video.jpeg" alt="Vidéo" id="imgStream" /></p>
 				</section>
-
-
+			</div>
+		</div>
+	</div>
+</div>

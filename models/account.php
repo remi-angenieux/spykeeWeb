@@ -83,11 +83,10 @@ class AccountModel extends BaseModel
 	
 
 	public function displayUser(){
-		$query = $this->db->prepare('SELECT pseudo FROM members 
+		try{
+			$query = $this->db->prepare('SELECT pseudo FROM members
 								     EXCEPT
 									 SELECT pseudo FROM members WHERE id=? OR id=? OR id=?') ;
-		
-		try{
 			$query->execute(array($this->user->id,$this->config->global->banId,$this->config->global->guestId));
 			$array2 = $query->fetchAll(PDO::FETCH_ASSOC);
 			$this->view->assign('array2',$array2);
@@ -101,8 +100,8 @@ class AccountModel extends BaseModel
 	}
 	
 	public function visitProfil($var){
-		$query = $this->db->prepare('SELECT id FROM members WHERE pseudo=?') ;
 		try{
+				$query = $this->db->prepare('SELECT id FROM members WHERE pseudo=?') ;
 				$query->execute(array($var['pseudo']));
 				$array1 = $query->fetchAll(PDO::FETCH_ASSOC);
 				foreach($array1 as $key=>$value){
@@ -231,7 +230,7 @@ class AccountModel extends BaseModel
 		
 		$query = $this->db->prepare('UPDATE members SET email=? WHERE id=?') ;
 		try{
-			$query->execute(array(sha1($var['email']),$this->user->id));
+			$query->execute(array($var['email'],$this->user->id));
 			$this->view->redirect('account/?wellChangeEmail');
 			if(!$this->isMail($var)){
 			$this->view->redirect('account/?badEmail');

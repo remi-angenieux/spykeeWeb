@@ -1,14 +1,13 @@
 
 <head>
-<script src="{$rootUrl}js/jquery-1.9.1.js"></script>
-<script src="{$rootUrl}js/askplay.js"></script>
 <script src="{$rootUrl}js/jquery-ui-1.10.3.dialog.js"></script>
 <script src="{$rootUrl}js/jquery-ui-1.10.3.dialog.min.js"></script>
 <link rel="stylesheet" href="{$rootUrl}css/ui-darkness/jquery-ui-1.10.3.dialog.css" type="text/css" />
 <link rel="stylesheet" href="{$rootUrl}css/queue.css" type="text/css" />		
-
 </head>
-
+<script>
+var lastId={$lastId}
+</script>
 
 <div class="5grid-layout box-feature1">
 	<div class="row">
@@ -54,7 +53,36 @@
  <span class="askplay" >It's your turn!</span>
 </div>
 
-<p><a href="#" id="dialog-link" class="ui-state-default ui-corner-all"><span class="ui-icon ui-icon-newwin"></span>Open Dialog</a></p>
 
-	</div>
+
+<div id="conteneur">
+ <h4>It's your turn!</h4>
+ <form action="#" method="post">
+						    <input type="submit" value="Tchatter !" class="button button-alt button-icon button-icon-rarrow"/>
+						    
+						</form>
 </div>
+<div id="chat">
+							{foreach name=outer item=arr from=$data}
+								    {foreach key=key item=item from=$arr}
+								        <span>{$item}</span>
+								    {/foreach}
+								    <br />
+								{/foreach}
+</div>
+
+<div id="chatForm"  >
+<form method="post" action="#">
+
+	<div style="margin-right:110px;">
+		<textarea name="message"></textarea>
+	</div>
+	<div>
+		<input type="submit" value="Envoyer" class="button"/>
+	</div>
+</form>
+	
+</div>
+<div id="loader">
+		
+	</div>

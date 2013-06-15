@@ -26,17 +26,17 @@ class PlayModel extends BaseModel
 
 	//add member to queue
 	public function enterQueue(){
-		$query = $this->db->prepare('INSERT INTO queue (refmember,timestamp) VALUES(?,?)') ;
-		$query->execute(array($this->user->id,time()));
+	
 		try{
-			
-			
+			$query = $this->db->prepare('INSERT INTO queue (refmember,timestamp) VALUES(?,?)') ;
+			$query->execute(array($this->user->id,time()));
 		}
 		catch (PDOException $e){
 			if($this->model->isAdmin){
 				Error::displayError($e);
-				$this->view->redirect('?badEnterQueue');
 			}
+			else 
+			$this->view->redirect('?badEnterQueue');
 		}
 	}
 	
@@ -46,16 +46,17 @@ class PlayModel extends BaseModel
 
 
 		public function enterGame(){
-		$dispo=$this->canPlay();
-		$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?');
-		$query->execute(array($this->user->id));
+	
 		try{
-			$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)');
-			$query->execute(array($this->user->id, $dispo,time()));
+			$dispo=$this->canPlay();
+			$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?');
+			$query->execute(array($this->user->id));
 			try{
-				$query = $this->db->prepare('INSERT INTO gameshistory (refmember,refrobot,date,duration) VALUES(?,?,?,?)') ;
-				$query->execute(array($this->user->id,$dispo,date('c'),time()));
+				$query = $this->db->prepare('INSERT INTO games (refmember,refrobot,starttime) VALUES(?,?,?)');
+				$query->execute(array($this->user->id, $dispo,time()));
 				try{
+					$query = $this->db->prepare('INSERT INTO gameshistory (refmember,refrobot,date,duration) VALUES(?,?,?,?)') ;
+					$query->execute(array($this->user->id,$dispo,date('c'),time()));
 				}
 				catch (PDOException $e){
 					if($this->model->isAdmin)
@@ -63,38 +64,44 @@ class PlayModel extends BaseModel
 				}
 			}
 			catch (PDOException $e){
-				if($this->model->isAdmin)
+				if($this->model->isAdmin){
 					Error::displayError($e);
-					$this->view->setTemplate('index.tpl');
-					$this->view->redirect('play?badEnterGame');
+			}
+			else {
+				$this->view->redirect('play?badEnterGame');
+				$this->view->setTemplate('index');
 			}
 		}
+	}
 		catch (PDOException $e){
 			if($this->model->isAdmin)
 				Error::displayError($e);
-			$this->view->setTemplate('index.tpl');
+			else{
+			$this->view->setTemplate('index');
 			$this->view->redirect('play?badLeaveQueue');
+			}
 		}
-		
-		
 	}
-		
+
 	
 	
 	public function leaveGame(){
-		$this->view->assign(array('pageTitle' => 'Partie quittée'));
-		$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
-		$query->execute(array($this->user->id));
+		
 		try{
-			$query = $this->db->prepare('SELECT duration FROM gameshistory WHERE refmember=? AND date=(SELECT MAX(date) FROM gameshistory)');
+			$this->view->assign(array('pageTitle' => 'Partie quittée'));
+			$query = $this->db->prepare('DELETE FROM games WHERE refmember=?') ;
 			$query->execute(array($this->user->id));
+			
 			try{
-				$result =$query->fetch(PDO::FETCH_ASSOC);
-				$duration=time()-$result['duration'];
-				$query = $this->db->prepare('UPDATE gameshistory SET duration=? WHERE date=(SELECT MAX(date) FROM gameshistory) ') ;
-				$query->execute(array($duration));
+				$query = $this->db->prepare('SELECT duration FROM gameshistory WHERE refmember=? AND date=(SELECT MAX(date) FROM gameshistory)');
+				$query->execute(array($this->user->id));
+				
 				try{
-					$this->view->setTemplate('index.tpl');
+					$result =$query->fetch(PDO::FETCH_ASSOC);
+					$duration=time()-$result['duration'];
+					$query = $this->db->prepare('UPDATE gameshistory SET duration=? WHERE date=(SELECT MAX(date) FROM gameshistory) ') ;
+					$query->execute(array($duration));
+					$this->view->setTemplate('index');
 					$this->view->redirect('play?wellLeaveGame');
 				}
 				catch (PDOException $e){
@@ -121,9 +128,9 @@ class PlayModel extends BaseModel
 	
 
 	public function isInQueue(){                                    
-			$query = $this->db->prepare('SELECT refmember FROM queue WHERE refmember=?');
-			$query->execute(array($this->user->id));
 			try{
+				$query = $this->db->prepare('SELECT refmember FROM queue WHERE refmember=?');
+				$query->execute(array($this->user->id));
 				$result =$query->fetch(PDO::FETCH_ASSOC);
 				$resultat=$result['refmember'];
 				if ($resultat==null){
@@ -141,9 +148,10 @@ class PlayModel extends BaseModel
 	
 
 	public function isInGame(){
-		$query = $this->db->prepare('SELECT refmember FROM games WHERE refmember=?');
-		$query->execute(array($this->user->id));
+		
 		try{
+			$query = $this->db->prepare('SELECT refmember FROM games WHERE refmember=?');
+			$query->execute(array($this->user->id));
 			$result = $query->fetch(PDO::FETCH_ASSOC);
 			$resultat=$result['refmember'];
 			if (!$resultat){
@@ -162,10 +170,9 @@ class PlayModel extends BaseModel
 	
 
 	public function isFirst(){
-
-			$query = $this->db->prepare('SELECT refmember FROM queue WHERE timestamp =(SELECT MIN(timestamp) FROM queue)');
-			$query->execute();
 			try{
+				$query = $this->db->prepare('SELECT refmember FROM queue WHERE timestamp =(SELECT MIN(timestamp) FROM queue)');
+				$query->execute();
 				$result =$query->fetch(PDO::FETCH_ASSOC);
 				$resultat=$result['refmember'];
 				if ($this->user->id==$resultat){
@@ -185,10 +192,10 @@ class PlayModel extends BaseModel
 
 
 	public function leaveQueue(){
-			$this->view->assign(array('pageTitle' => 'File quittée'));
-			$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?') ;
-			$query->execute(array($this->user->id));
 			try{
+				$this->view->assign(array('pageTitle' => 'File quittée'));
+				$query = $this->db->prepare('DELETE FROM queue WHERE refmember=?') ;
+				$query->execute(array($this->user->id));
 				$this->view->setTemplate('play.tpl');
 				$this->view->redirect('play?wellLeaveQueue');
 				}
@@ -200,10 +207,11 @@ class PlayModel extends BaseModel
 	
 	
 	public function displayQueue(){
-		$imgDir=$this->config->global->rootUrl."images/profils/";
-		$query = $this->db->prepare('SELECT image FROM members INNER JOIN games ON games.refmember=members.id') ;
-		$query->execute();
+		$this->view->assign('pageTitle', 'Chat');
 		try{
+			$imgDir=$this->config->global->rootUrl."images/profils/";
+			$query = $this->db->prepare('SELECT image FROM members INNER JOIN games ON games.refmember=members.id') ;
+			$query->execute();
 			$array = $query->fetch(PDO::FETCH_ASSOC);
 			$resultat=$array['image'];
 			if(!$resultat){
@@ -219,9 +227,10 @@ class PlayModel extends BaseModel
 				Error::displayError($e);
 		}
 		
-		$this->view->assign(array('pageTitle' => 'File d\'attente'));
-		$this->view->addAdditionalJs('queue.js');
+		
 		try{
+			$this->view->assign(array('pageTitle' => 'File d\'attente'));
+			//$this->view->addAdditionalJs('queue.js');
 			$query = $this->db->prepare('SELECT timestamp,pseudo FROM queue INNER JOIN members ON refmember=id ORDER BY timestamp ASC') ;
 			$query->execute();
 			$result = $query->fetchAll(PDO::FETCH_ASSOC);
@@ -247,10 +256,63 @@ class PlayModel extends BaseModel
 		$this->view->addAdditionalCss('robot.css');
 	}
 	
-	public function canPlay(){
-		$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.locked = false EXCEPT SELECT games.refrobot FROM games');
-		$query->execute();
+	public function displayOldChat(){
+		$this->view->addAdditionalJs('jquery-ui-1.10.3.custom.min.js');
+		$this->view->assign('pageTitle', 'Chat');
+		//$this->view->addAdditionalCss('loader.css');
+		$this->view->addAdditionalJs('chat.js');
 		try{
+			$data=array();
+			$query = $this->db->prepare('SELECT pseudo,date,message FROM chat INNER JOIN members ON members.id=refmember ORDER BY date ASC limit 15 ');
+			$query->execute();
+			$data = $query->fetchAll(PDO::FETCH_ASSOC);
+			
+			$this->view->assign('data',$data);
+		}
+		
+		
+		catch(PDOException $e){
+			if($this->model->isAdmin()){
+				Error::displayError($e);
+			}
+		
+		}
+		try{
+			$query = $this->db->prepare('SELECT id FROM chat ORDER BY id DESC LIMIT 1') ;
+			$query->execute();
+			$lastidt = $query->fetch(PDO::FETCH_ASSOC);
+			$lastId=$lastidt['id'];
+			$this->view->assign('lastId',$lastId);
+		}
+		catch(PDOException $e){
+			if($this->model->isAdmin()){
+				Error::displayError($e);
+					
+			}
+		}
+	/*	try{
+			$query = $this->db->prepare('INSERT INTO chat (refmember,message,timestamp) VALUES(?,?,?,?)');
+			$query->execute(array($this->user->id, 'initialisation',time()));
+			$messages = $query->fetchAll(PDO::FETCH_ASSOC);
+
+		}
+		catch(PDOException $e){
+			if($this->model->isAdmin){
+				Error::displayError($e);
+			}
+			else{
+				$this->view->redirect('play/play?badChat');
+			}
+		}*/
+	
+	}
+
+
+	public function canPlay(){
+		
+		try{
+			$query = $this->db->prepare('SELECT robots.id FROM robots WHERE robots.locked = false EXCEPT SELECT games.refrobot FROM games');
+			$query->execute();
 			$tab1 =$query->fetch(PDO::FETCH_ASSOC);
 			$dispo=$tab1['id'];
 			if (!$dispo)
@@ -288,6 +350,8 @@ class PlayModel extends BaseModel
 	}
 	*/
 	public function ajax(){
+		
+		
 		require_once(PATH.'libs/spykee/spykee-controller/controllerClient.php');
         try{
             $query = $this->db->prepare('SELECT name,ctrip,ctrport FROM robots INNER JOIN games ON robots.id=games.refrobot WHERE refmember=? ') ;
@@ -304,20 +368,96 @@ class PlayModel extends BaseModel
             $this->_spykee = new SpykeeControllerClient($result['ctrip'], $result['ctrport']);
         }
         catch (SpykeeException $e){
-
+        	
+        	require_once (PATH.'libs/spykee/response.php');
             if (!$this->user->isAdmin){
-                require_once PATH.'libs/spykee/response.php';
                 $response = new SpykeeResponse(SpykeeControllerClient::STATE_ERROR, SpykeeResponse::UNABLE_TO_CONNECT_TO_CONTROLLER);
                 $json = $response->jsonFormat();
             }
-            else
-                $json = '{"state": 0, data: "", "description: "'.$e->getMessage().', "idDescription: 0"}';
-            $this->view->assign('content', $response->jsonFormat());
+            else{
+            $response = '{"state": 0,"data": ,"description": '.$e->getMessage().', "idDescription":0}';
+            $json = $response->jsonFormat();
+            }
+            $this->view->assign('content', $json);
             return FALSE;
         }
         return TRUE;
+        
 	}
 	
+	
+		public function addMessages(){
+			
+			/**
+			 * Action : addMessage
+			 * Permet l'ajout d'un message
+			 */
+				try{
+					$query = $this->db->prepare('INSERT INTO chat(refmember,message) VALUES(?,?)') ;
+					$query->execute(array($this->user->id,$_POST['message']));
+					//$result = $query->fetch(PDO::FETCH_ASSOC);
+				}
+				catch (SpykeeException $e){
+					if($this->model->isAdmin){
+						Error::displayError($e);
+					}
+				}
+		}
+		
+		public function	getLastId(){	
+		try{
+			$query = $this->db->prepare('SELECT id FROM chat ORDER BY id DESC LIMIT 1') ;
+			$query->execute();
+			$lastidt = $query->fetch(PDO::FETCH_ASSOC);
+			$lastId=$lastidt['id'];
+			$this->view->assign('lastId',$lastId);
+			return $lastId;
+		}
+		catch(PDOException $e){
+			if($this->model->isAdmin()){
+				Error::displayError($e);
+					
+			}
+		}
+	}
+		
+		public function getMessages(){
+			/**
+			 * Action : getMessages
+			 * Permet de recevoir les messages
+			 */
+	
+				try{
+					$query = $this->db->prepare('SELECT pseudo,date,message FROM chat INNER JOIN members ON members.id=refmember WHERE chat.id>? ORDER BY date ASC') ;
+					$query->execute(array($_POST['lastId']));
+					$lastMess = $query->fetchAll(PDO::FETCH_ASSOC);
+					$data="";
+					//$json['message']="";
+					foreach($lastMess as $value){
+						$lastMessage=$value;
+						$data .=$lastMessage['date'].'   <strong>'.$lastMessage['pseudo'].'</strong> :'.$lastMessage['message'].'<br />';
+						$json = '{';
+						$json .='"lastId": ';
+						$json .='"';
+						$json .= $this->getLastId();
+						$json .='"';
+						$json .=',';	
+						$json .= '"text": ';
+						$json .='"';
+						$json .=$data;
+						$json .='"';
+						$json .= '}';
+						$this->view->assign('chatContent', $json);
+					}
+					
+				}
+				catch(SpykeeException $e){
+					if($this->model->isAdmin){
+						Error::displayError($e);
+					}
+			}
+			//return $json['message'];
+		}
 	public function up(){
 		$this->view->assign('content', $this->_spykee->forward()->jsonFormat());
 	}

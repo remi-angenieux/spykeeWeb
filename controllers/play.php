@@ -71,17 +71,16 @@ class PlayController extends BaseController
 	}
 	
 	protected function queue(){
-	/*if(!$this->model->isRobotOn()){
-		$this->view->redirect('play/queue?InfoNoRobot');
-	}*/
-		
+	$this->view->assign('pageTitle', 'File');
 	if ($this->model->isInQueue()){
     	$this->model->displayQueue();
+    	$this->model->displayOldChat();
 	}	
 	else{
 		if ($this->model->isConnected()){
 			$this->model->enterQueue();
 			$this->model->displayQueue();
+			$this->model->displayOldChat();
 		}
 		else{
 			$this->model->showNotConnected();
@@ -91,8 +90,8 @@ class PlayController extends BaseController
 			$this->view->addAdditionalJs('askplay.js');
 		}
 	}
+	
 	protected function play(){
-		
 		if($this->model->isInGame()){
 			$this->model->play();
 		}
@@ -113,7 +112,17 @@ class PlayController extends BaseController
 		
 	}
 	
-	
+	protected function chatAjax(){
+	$this->view->setEnvironement('empty');
+		if (!empty($_POST['action'])){
+	if($_POST['action']=='addMessages'){
+		$this->model->addMessages();
+	}
+	if($_POST['action']=='getMessages'){
+		$this->model->getMessages();
+	}
+}
+				}
 	protected function ajax(){
 		$this->view->setEnvironement('empty');
 		if ($this->model->ajax()){

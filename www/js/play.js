@@ -26,6 +26,13 @@ var holding = {
 	'left': false,
 	'right': false
 };
+var keyStatus = { // false = key Up
+	'up': false,
+	'down': false,
+	'left': false,
+	'right': false,
+	'ctr': false
+};
 
 // Pour envoyer des paquets au controller
 function sendAction(action, callback, data){
@@ -227,24 +234,59 @@ function setSpeed(){
 // Assigne les touches fléchées aux actions du robot
 $(document).keydown(function(e){
 	switch(e.keyCode){
-		case constants.KEY_LEFT: 
-	    	holdingLeft();
+		case constants.KEY_LEFT:
+			if (keyStatus.left == false)
+				holdingLeft();
+			keyStatus.left = true;
 	    	return false;
 	    	break;
 		case constants.KEY_UP:
-			holdingUp();
+			if (keyStatus.up == false)
+				holdingUp();
+			keyStatus.up = true;
 			return false;
 			break;
 		case constants.KEY_RIGHT:
-			holdingRight();
+			if (keyStatus.right == false)
+				holdingRight();
+			keyStatus.right = true;
 			return false;
 			break;
 		case constants.KEY_DOWN:
-			holdingDown();
+			if (keyStatus.down == false)
+				holdingDown();
+			keyStatus.down = true;
 			return false;
 			break;
 		case constants.KEY_CTR:
-			stop();
+			if (keyStatus.ctr == false)
+				stop();
+			keyStatus.ctr = true;
+			return false;
+			break;
+	}
+});
+
+$(document).keyup(function(e){
+	switch(e.keyCode){
+		case constants.KEY_LEFT: 
+			keyStatus.left = false;
+	    	return false;
+	    	break;
+		case constants.KEY_UP:
+			keyStatus.up = false;
+			return false;
+			break;
+		case constants.KEY_RIGHT:
+			keyStatus.right = false;
+			return false;
+			break;
+		case constants.KEY_DOWN:
+			keyStatus.down = false;
+			return false;
+			break;
+		case constants.KEY_CTR:
+			keyStatus.ctr = false;
 			return false;
 			break;
 	}

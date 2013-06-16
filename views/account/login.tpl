@@ -20,5 +20,5 @@
 					</table>
 					<input type="submit" name="submit" value="Se connecter" class="button button-alt button-icon button-icon-rarrow" />
 				</form>
-				<p><br /><strong>Si tu n'as pas de compte tu peux t'en faire un : <strong><a href="{$rootUrl}account/register" class="button">Clique ici</a>.</p>
+				<p><br /><strong>Si tu n'as pas de compte tu peux t'en faire un : </strong><a href="{$rootUrl}account/register" class="button">Clique ici</a>.</p>
 			</article>

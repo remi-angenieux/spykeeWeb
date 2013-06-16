@@ -9,6 +9,43 @@
 		text-align:center;
 	
 	}
+	
+		.chatText
+	{
+		display: block;
+		font-weight: 700;
+		letter-spacing: 0.065em;
+		font-size: 1.1em;
+		font-family: Ariel;
+		color: #474747;
+	
+	}
+	
+		.chatText2
+	{
+		font-weight: 700;
+		letter-spacing: 0.065em;
+		font-size: 1.1em;
+		font-family: Ariel;
+		color: #474747;
+	
+	}
+	
+		.chat
+	{
+	width: 30%;
+	overflow: auto;
+	max-height: 15em;
+	}
+	
+			.textarea
+	{
+	width: 30%;
+	overflow: auto;
+	max-height: 4em;
+	}
+	
+	
 	.soustitre
 	{
 		text-transform: uppercase;

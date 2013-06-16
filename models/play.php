@@ -205,6 +205,13 @@ class PlayModel extends BaseModel
 			}
 	}
 	
+	public function leavePlayer(){
+		$query = $this->db->prepare('SELECT refmember FROM games WHERE starttime>? ') ;
+		$query->execute(array());
+		$array = $query->fetch(PDO::FETCH_ASSOC);
+		
+	
+	}
 	
 	public function displayQueue(){
 		$this->view->assign('pageTitle', 'Chat');
@@ -258,14 +265,19 @@ class PlayModel extends BaseModel
 	
 	public function displayOldChat(){
 		$this->view->addAdditionalJs('jquery-ui-1.10.3.custom.min.js');
-		$this->view->assign('pageTitle', 'Chat');
+		$this->view->assign('pageTitle', 'File d\'attente');
 		//$this->view->addAdditionalCss('loader.css');
 		$this->view->addAdditionalJs('chat.js');
 		try{
 			$data=array();
-			$query = $this->db->prepare('SELECT pseudo,date,message FROM chat INNER JOIN members ON members.id=refmember ORDER BY date ASC limit 15 ');
+			$query = $this->db->prepare('SELECT date,pseudo,message FROM chat INNER JOIN members ON members.id=refmember ORDER BY date ASC limit 15 ');
 			$query->execute();
 			$data = $query->fetchAll(PDO::FETCH_ASSOC);
+			foreach($data as $key=>$value){
+				$data[$key]['date'] .='&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
+				$data[$key]['pseudo'] .='&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
+			}
+			
 			
 			$this->view->assign('data',$data);
 		}
@@ -435,7 +447,7 @@ class PlayModel extends BaseModel
 					//$json['message']="";
 					foreach($lastMess as $value){
 						$lastMessage=$value;
-						$data .=$lastMessage['date'].'   <strong>'.$lastMessage['pseudo'].'</strong> :'.$lastMessage['message'].'<br />';
+						$data .=$lastMessage['date'].'&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<strong class=chatText2>'.$lastMessage['pseudo'].':</strong>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp '.$lastMessage['message'].'<br />';
 						$json = '{';
 						$json .='"lastId": ';
 						$json .='"';
@@ -458,6 +470,7 @@ class PlayModel extends BaseModel
 			}
 			//return $json['message'];
 		}
+
 	public function up(){
 		$this->view->assign('content', $this->_spykee->forward()->jsonFormat());
 	}

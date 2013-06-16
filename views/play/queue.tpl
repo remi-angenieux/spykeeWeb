@@ -61,24 +61,40 @@ var lastId={$lastId}
 						    <input type="submit" value="Tchatter !" class="button button-alt button-icon button-icon-rarrow"/>
 						    
 						</form>
-</div>
-<div id="chat">
+		</div>
+			<div id="chat" class="chat">
+			<table style="margin:0">
+						<tr>
+							<th>Date</th>
+							<th><strong>Pseudo</strong></th>
+							<th>Message</th>
+						</tr>
+						
 							{foreach name=outer item=arr from=$data}
+							 <tr>
 								    {foreach key=key item=item from=$arr}
-								        <span>{$item}</span>
+								   
+								   		 <td>
+								   		 {if $item==$arr['pseudo']}
+								       		 <span class="chatText">{$item}</span>
+								         {else}
+								        	{$item}
+								         {/if}
+								        </td>
 								    {/foreach}
-								    <br />
+								    </tr>
 								{/foreach}
-</div>
+							</table>
+						</div>
 
 <div id="chatForm"  >
 <form method="post" action="#">
 
 	<div style="margin-right:110px;">
-		<textarea name="message"></textarea>
+		<input type="text" class="textarea" name="message"/>
 	</div>
 	<div>
-		<input type="submit" value="Envoyer" class="button"/>
+		<input type="submit" value="Envoyer" class="button" onclick="name.message.value=''"/>
 	</div>
 </form>
 	

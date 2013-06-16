@@ -71,7 +71,7 @@ class PlayController extends BaseController
 	}
 	
 	protected function queue(){
-	$this->view->assign('pageTitle', 'File');
+	$this->view->assign('pageTitle', 'File d\'attente');
 	if ($this->model->isInQueue()){
     	$this->model->displayQueue();
     	$this->model->displayOldChat();
@@ -110,6 +110,18 @@ class PlayController extends BaseController
 			}
 		}
 		
+	}
+	
+	protected function queueAjax(){
+		$this->view->setEnvironement('empty');
+		if (!empty($_POST['action'])){
+			if($_POST['action']=='addQueue'){
+				$this->model->addQueue();
+			}
+			if($_POST['action']=='delQueue'){
+				$this->model->DelQueue();
+			}
+		}
 	}
 	
 	protected function chatAjax(){

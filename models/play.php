@@ -429,17 +429,10 @@ class PlayModel extends BaseModel
 			foreach($lastMess as $message){
 				$data .= date($this->config->global->dateFormat, $message['date']).'&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<strong class=chatText2>'.$message['pseudo'].':</strong>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp '.$message['message'].'<br />';
 				$json = '{';
-				$json .='"lastId": ';
-				$json .='"';
-				$json .= $this->getLastId();
-				$json .='"';
-				$json .=',';
-				$json .= '"text": ';
-				$json .='"';
-				$json .=$data;
-				$json .='"';
+				$json .='"lastId": "'.$this->getLastId().'",';
+				$json .= '"text": "'.$data;
 				$json .= '}';
-				$this->view->assign('chatContent', $json);
+				$this->view->assign('content', $json);
 			}
 				
 		}

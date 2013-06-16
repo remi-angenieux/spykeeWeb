@@ -125,16 +125,15 @@ class PlayController extends BaseController
 	}
 	
 	protected function chatAjax(){
-	$this->view->setEnvironement('empty');
+		$this->view->setEnvironement('empty');
 		if (!empty($_POST['action'])){
-	if($_POST['action']=='addMessages'){
-		$this->model->addMessages();
+			if($_POST['action']=='addMessages')
+				$this->model->addMessages();
+			if($_POST['action']=='getMessages')
+				$this->model->getMessages();
+		}
+		$this->view->setTemplate('ajax');
 	}
-	if($_POST['action']=='getMessages'){
-		$this->model->getMessages();
-	}
-}
-				}
 	protected function ajax(){
 		$this->view->setEnvironement('empty');
 		if ($this->model->ajax()){

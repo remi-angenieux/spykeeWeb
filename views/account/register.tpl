@@ -7,7 +7,7 @@
 				<header class="major">
 					<h2>Inscription</h2>
 				</header>
-				<form method="post" action="/account/register">
+				<form method="post" action="https://srv-prj.iut-acy.local/RT/Projet28/spykeeWeb-master/views/account/register.tpl">
 					<table>
 						<tr>
 							<td><label for="pseudo">Pseudo : </label></td>
